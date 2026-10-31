@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.0";
+const HC_VERSION = "1.1.1";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -1759,18 +1759,20 @@ button{font:inherit;color:inherit}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
 .pill{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;background:var(--hc-card);border-radius:32px;padding:8px;min-height:60px;cursor:pointer;border:0;width:100%;text-align:left}
-.pill.compact{min-height:56px;padding:6px}
+.pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--bubble-border,0.8px solid rgba(120,120,120,.18));background:var(--bubble-main-background-color,radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,.12),transparent 70%),var(--hc-card))}
+.pill.compact .ico{width:38px;height:38px}
+.pill.compact .ico svg{width:20px;height:20px}
 :host{container-type:inline-size}
-.qs{position:relative;display:flex;align-items:center;gap:6px;margin-left:auto;flex:none;z-index:1}
-.qb{position:relative;height:40px;min-width:40px;border-radius:20px;border:0;background:var(--hc-s2);color:var(--hc-text);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
+.qs{position:relative;display:flex;align-items:center;gap:5px;margin-left:auto;flex:none;z-index:1}
+.qb{position:relative;height:36px;min-width:36px;border-radius:18px;border:0;background:var(--bubble-sub-button-background-color,var(--hc-s2));color:var(--hc-text);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
 .qb.on{background:var(--hc-accent);color:#141414}
 .qsel select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px}
 .qstep{padding:0 2px;gap:0;cursor:default}
-.qstep button{width:30px;height:36px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:18px}
+.qstep button{width:28px;height:36px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:18px}
 .qstep .stepval{min-width:38px;text-align:center;font-variant-numeric:tabular-nums}
-.pill.compact .txt{min-width:72px;flex:1}
-@container (max-width: 380px){.qlow{display:none}}
-@container (max-width: 340px){.pill.compact:has(.qs) .val{display:none}.qb{min-width:36px;height:36px;padding:0 8px}.qstep .stepval{min-width:32px}.qstep button{width:24px}}
+.pill.compact .txt{min-width:64px;flex:1}
+@container (max-width: 290px){.qlow{display:none}}
+@container (max-width: 360px){.qstep button{width:22px}.qstep .stepval{min-width:30px}.qb{padding:0 6px}.pill.compact .txt .name{font-size:14px}.pill.compact:has(.qs) .val{display:none}}
 .pill .fill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--hc-accent) 16%,transparent);transition:width 1s linear}
 .ico{position:relative;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
 .ico.off{background:color-mix(in srgb,var(--hc-accent) 12%,transparent);color:color-mix(in srgb,var(--hc-accent) 65%,var(--hc-muted))}
