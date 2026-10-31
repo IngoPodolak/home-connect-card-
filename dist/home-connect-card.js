@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.2";
+const HC_VERSION = "1.1.3";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -1762,7 +1762,12 @@ button{font:inherit;color:inherit}
 .pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--bubble-border,0.8px solid rgba(120,120,120,.18));background:var(--bubble-main-background-color,radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,.12),transparent 70%),var(--hc-card))}
 .pill.compact .ico{width:38px;height:38px}
 .pill.compact .ico svg{width:20px;height:20px}
-:host{container-type:inline-size}
+:host{container-type:inline-size;position:relative}
+.ddm{position:absolute;z-index:20;display:flex;flex-direction:column;gap:2px;padding:6px;overflow-y:auto;background:var(--bubble-main-background-color,var(--hc-card));background-color:var(--card-background-color,#1c1e22);border:0.8px solid var(--hc-line2);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.45);backdrop-filter:blur(12px);animation:ddin .14s ease-out}
+@keyframes ddin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.ddi{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:var(--hc-text);font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;white-space:nowrap}
+.ddi:hover,.ddi:focus-visible{background:var(--hc-s2);outline:none}
+.ddi.on{background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:color-mix(in srgb,var(--hc-accent) 55%,var(--hc-text));font-weight:600}
 .qs{position:relative;display:flex;align-items:center;gap:5px;margin-left:auto;flex:none;z-index:1}
 .qb{position:relative;height:36px;min-width:36px;border-radius:18px;border:0;background:var(--bubble-sub-button-background-color,var(--hc-s2));color:var(--hc-text);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
 .qb.on{background:var(--hc-accent);color:#141414}
@@ -1893,7 +1898,8 @@ summary::-webkit-details-marker{display:none}
 .morelist{display:flex;flex-direction:column;gap:8px;padding:4px 0 14px}
 .morerow{display:flex;align-items:center;gap:10px;min-height:44px}
 .morerow .ml{flex:1;min-width:0;font-size:13px}
-select.dd{height:40px;border-radius:14px;border:0;background:var(--hc-s2);color:var(--hc-text);font:inherit;font-size:13px;padding:0 10px;max-width:60%}
+select.dd{height:40px;border-radius:20px;border:0;background:var(--hc-s2);color:var(--hc-text);font:inherit;font-size:13px;font-weight:600;padding:0 32px 0 14px;max-width:60%;appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23a0a6af%27 stroke-width=%273%27 stroke-linecap=%27round%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+select option{background:var(--card-background-color,#1c1e22);color:var(--hc-text)}
 .empty{padding:20px;text-align:center;color:var(--hc-muted);font-size:13px}
 .phases{display:flex;align-items:flex-start}
 .phases div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--hc-muted);text-align:center}
@@ -2493,8 +2499,62 @@ class HomeConnectCard extends HTMLElement {
   }
 
   /* ---------- Bedienung ---------- */
+  // Eigenes Auswahlmenü statt der nativen Dropdown-Liste (sieht in jedem Browser gleich aus)
+  _openDD(sel) {
+    this._closeDD();
+    if (sel.disabled) return;
+    const host = this.getBoundingClientRect();
+    const anchor = sel.closest(".qb") || sel;
+    const r = anchor.getBoundingClientRect();
+    const menu = document.createElement("div");
+    menu.className = "ddm";
+    menu.setAttribute("role", "listbox");
+    menu.innerHTML = [...sel.options].map((o, i) => `<button type="button" role="option" class="ddi ${o.selected ? "on" : ""}" data-i="${i}" aria-selected="${o.selected}"><span>${esc(o.textContent)}</span>${o.selected ? ic("check", 16, 2.4) : ""}</button>`).join("");
+    this.shadowRoot.appendChild(menu);
+    const mw = Math.max(r.width, Math.min(260, menu.scrollWidth + 4));
+    menu.style.minWidth = `${mw}px`;
+    const mh = Math.min(menu.scrollHeight, 300);
+    const below = window.innerHeight - r.bottom, above = r.top;
+    const up = below < mh + 12 && above > below;
+    menu.style.top = `${(up ? r.top - mh - 6 : r.bottom + 6) - host.top}px`;
+    let left = r.right - mw - host.left;
+    if (r.left - host.left + mw <= host.width) left = r.left - host.left;
+    menu.style.left = `${Math.max(4, left)}px`;
+    menu.style.maxHeight = "300px";
+    const cur = menu.querySelector(".ddi.on"); if (cur) cur.scrollIntoView({ block: "nearest" });
+    menu.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const b = ev.target.closest(".ddi"); if (!b) return;
+      sel.selectedIndex = +b.dataset.i;
+      this._closeDD();
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    menu.addEventListener("keydown", (ev) => {
+      const items = [...menu.querySelectorAll(".ddi")]; const i = items.indexOf(this.shadowRoot.activeElement);
+      if (ev.key === "Escape") { this._closeDD(); sel.focus(); }
+      else if (ev.key === "ArrowDown") { ev.preventDefault(); items[Math.min(items.length - 1, i + 1)]?.focus(); }
+      else if (ev.key === "ArrowUp") { ev.preventDefault(); items[Math.max(0, i - 1)]?.focus(); }
+    });
+    (cur || menu.querySelector(".ddi"))?.focus({ preventScroll: true });
+    this._ddOut = (ev) => { if (!ev.composedPath().includes(menu) && !ev.composedPath().includes(sel)) this._closeDD(); };
+    setTimeout(() => { document.addEventListener("pointerdown", this._ddOut, true); window.addEventListener("scroll", this._ddOut, true); }, 0);
+    this._dd = menu;
+    this.style.zIndex = "10";
+  }
+  _closeDD() {
+    if (this._dd) { this._dd.remove(); this._dd = null; this.style.zIndex = ""; }
+    if (this._ddOut) { document.removeEventListener("pointerdown", this._ddOut, true); window.removeEventListener("scroll", this._ddOut, true); this._ddOut = null; }
+  }
   _bind(m) {
     const R = this.shadowRoot;
+    this._closeDD();
+    R.querySelectorAll("select").forEach((sel) => {
+      const open = (ev) => { ev.preventDefault(); ev.stopPropagation(); this._dd ? this._closeDD() : this._openDD(sel); };
+      sel.addEventListener("mousedown", open);
+      sel.addEventListener("touchstart", open, { passive: false });
+      sel.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); });
+      sel.addEventListener("keydown", (ev) => { if (["Enter", " ", "ArrowDown"].includes(ev.key)) open(ev); });
+    });
     R.querySelectorAll("[data-act]").forEach((el) => el.addEventListener("click", (ev) => { ev.stopPropagation(); this._action(el.dataset.act); }));
     R.querySelectorAll("[data-expand]").forEach((el) => el.addEventListener("click", () => {
       const t = el.dataset.expand; this._ui.expanded = { ...(this._ui.expanded || {}), [t]: !this._ui.expanded?.[t] };
