@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.2.0";
+const HC_VERSION = "0.2.2";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -38,6 +38,7 @@ const I18N = {
     water_temp: "Wassertemperatur", size: "Größe", aroma: "Aroma", cups: "Tassen", double: "2 Tassen",
     wash_temp: "Temperatur", spin: "Schleudern (U/min)", level: "Stufe", meat_probe: "Kerntemperatur",
     energy: "Energie", water: "Wasser", phase: "Phase", turn_food: "Jetzt wenden",
+    show_all: "Alle {n} anzeigen", show_less: "Weniger anzeigen",
     no_device: "Kein Gerät gewählt", choose_device: "Bitte im Karten-Editor ein Home-Connect-Gerät oder einen Demo-Typ wählen.",
     not_found: "Gerät nicht gefunden", demo: "DEMO", demo_note: "Demo – keine echte Steuerung",
     ok: "OK", low: "Bald leer", empty: "Leer", full: "Voll", not_inserted: "Fehlt", needed: "Fällig",
@@ -80,6 +81,7 @@ const I18N = {
     water_temp: "Water temperature", size: "Size", aroma: "Aroma", cups: "Cups", double: "2 cups",
     wash_temp: "Temperature", spin: "Spin (rpm)", level: "Level", meat_probe: "Core temperature",
     energy: "Energy", water: "Water", phase: "Phase", turn_food: "Turn food now",
+    show_all: "Show all {n}", show_less: "Show less",
     no_device: "No device selected", choose_device: "Choose a Home Connect device or a demo type in the card editor.",
     not_found: "Device not found", demo: "DEMO", demo_note: "Demo – no real control",
     ok: "OK", low: "Low", empty: "Empty", full: "Full", not_inserted: "Missing", needed: "Due",
@@ -1137,6 +1139,18 @@ const ICON = {
   robot: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M9 5.5h6"/>',
   cookit: '<path d="M5 10h14l-1.5 9a2 2 0 0 1-2 1.7h-7a2 2 0 0 1-2-1.7z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/><path d="M12 13v4"/>',
   micro: '<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="6" y="8" width="9" height="8" rx="1"/><path d="M18 9v1M18 13v1"/>',
+  steam: '<path d="M8 20c0-2 2-2 2-4s-2-2-2-4 2-2 2-4M14 20c0-2 2-2 2-4s-2-2-2-4 2-2 2-4"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  alarm: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M5 3L2 6M19 3l3 3"/>',
+  leaf: '<path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z"/><path d="M5 19l7-7"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  half: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 12h16"/><path d="M6 16h12" opacity=".5"/>',
+  flame: '<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z"/>',
+  shield: '<path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+  snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
+  star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  cups: '<path d="M3 9h7v5a3.5 3.5 0 0 1-7 0z"/><path d="M13 9h7v5a3.5 3.5 0 0 1-7 0z"/>',
   euro: '<path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10.5h9M4 13.5h9"/>',
   camera: '<path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/>',
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',
@@ -1317,7 +1331,10 @@ button{font:inherit;color:inherit}
 .tile small{font-size:11px;font-weight:500;color:var(--hc-muted)}
 .search{display:flex;align-items:center;gap:10px;height:48px;border-radius:24px;background:var(--hc-s2);padding:0 16px}
 .search input{flex:1;min-width:0;height:44px;border:0;background:transparent;color:var(--hc-text);font:inherit;font-size:15px;outline:none}
-.list{display:flex;flex-direction:column;gap:6px;max-height:330px;overflow-y:auto}
+.list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.morebtn{align-self:center;border:0;background:transparent;color:var(--hc-muted);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0 12px;border-radius:18px;cursor:pointer}
+.morebtn:hover{background:var(--hc-s1)}
+.morebtn.up svg{transform:rotate(180deg)}
 .item{min-height:52px;border-radius:16px;border:0;background:var(--hc-s2);display:flex;align-items:center;gap:12px;padding:8px 14px 8px 8px;font-size:14px;text-align:left;cursor:pointer;width:100%}
 .item.on{background:color-mix(in srgb,var(--hc-accent) 16%,transparent);box-shadow:inset 0 0 0 2px var(--hc-accent)}
 .item .ii{width:36px;height:36px;border-radius:12px;background:var(--hc-s2);display:flex;align-items:center;justify-content:center;flex:none;color:var(--hc-accent)}
@@ -1328,6 +1345,11 @@ button{font:inherit;color:inherit}
 .stepval{font-size:18px;font-weight:700;text-align:center;flex:1;white-space:nowrap}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .grid2s{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;border-radius:22px;border:1px solid var(--hc-line2);background:transparent;display:inline-flex;align-items:center;gap:8px;padding:0 16px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s}
+.chip svg{flex:none}
+.chip.on{background:color-mix(in srgb,var(--hc-accent) 20%,transparent);border-color:var(--hc-accent);color:color-mix(in srgb,var(--hc-accent) 45%,var(--hc-text))}
+.chip:disabled{opacity:.45;cursor:default}
 .tog{min-height:48px;border-radius:16px;border:0;background:var(--hc-s2);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:13px;font-weight:500;text-align:left;cursor:pointer}
 .tog.on{background:color-mix(in srgb,var(--hc-accent) 16%,transparent)}
 .sw{width:32px;height:20px;border-radius:10px;background:var(--hc-line2);position:relative;flex:none;margin-left:auto;transition:background .2s}
@@ -1641,14 +1663,23 @@ class HomeConnectCard extends HTMLElement {
       tab = cur && cur.cat !== "clean" ? cur.cat : cats.find((c) => c !== "clean") || cats[0];
     }
     const tabs = cats.length > 1 ? `<div class="seg">${cats.map((c) => `<button class="${c === tab ? "on" : ""}" data-tab="${c}">${esc(T[`tab_${c}`] || c)}</button>`).join("")}</div>` : "";
-    const list = m.programs.filter((p) => p.cat === tab);
+    let list = m.programs.filter((p) => p.cat === tab);
     const useTiles = (m.type === "coffee" && ["fav", "drink", "world"].includes(tab)) || (tab === "heat" && list.length <= 12) || (list.length <= 8 && tab !== "dish");
     let body;
+    const T2 = I18N[this.lang];
     if (useTiles) {
-      body = `<div class="tiles">${list.map((p) => `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(p.label)}</span></button>`).join("")}</div>`;
+      const limit = this._ui.expanded?.[tab] ? Infinity : 6;
+      const total = list.length;
+      if (total > limit) {
+        const sel = list.find((p) => p.canon === m.selectedCanon);
+        list = list.slice(0, limit);
+        if (sel && !list.includes(sel)) list[limit - 1] = sel;
+      }
+      const moreBtn = total > 6 ? `<button class="morebtn" data-expand="${tab}">${esc(this._ui.expanded?.[tab] ? T2.show_less : T2.show_all.replace("{n}", total))}${ic("chev", 16, 2)}</button>` : "";
+      body = `<div class="tiles">${list.map((p) => `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(p.label)}</span></button>`).join("")}</div>${moreBtn}`;
     } else {
       const q = this._ui.search || "";
-      body = `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label><div class="list" data-cat="${tab}"></div>`;
+      body = `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label><div class="list" data-cat="${tab}"></div><button class="morebtn" data-expand="${tab}" hidden></button>`;
     }
     return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${body}</div>`;
   }
@@ -1677,7 +1708,19 @@ class HomeConnectCard extends HTMLElement {
     let list = m.programs.filter((p) => p.cat === cat);
     if (q) list = list.filter((p) => norm(p.label).includes(q) || p.canon.includes(canon(q)));
     const total = list.length;
-    list = list.slice(0, 60);
+    const expanded = this._ui.expanded?.[cat];
+    const limit = expanded ? 60 : 4;
+    if (!q && !expanded) {
+      const sel = list.find((p) => p.canon === m.selectedCanon);
+      if (sel) list = [sel, ...list.filter((p) => p !== sel)];
+    }
+    list = list.slice(0, limit);
+    const mb = this.shadowRoot.querySelector(`.morebtn[data-expand="${cat}"]`);
+    if (mb) {
+      mb.hidden = total <= 4;
+      mb.innerHTML = `${esc(expanded ? T.show_less : T.show_all.replace("{n}", total))}${ic("chev", 16, 2)}`;
+      mb.classList.toggle("up", !!expanded);
+    }
     const qc = this.shadowRoot.querySelector(".qc");
     if (qc) qc.textContent = `${total} ${T.results}`;
     box.innerHTML = list.length ? list.map((p) => {
@@ -1695,7 +1738,7 @@ class HomeConnectCard extends HTMLElement {
     for (const k of ["beans"]) if (c[k]) out.push(this._beans(k, c[k]));
     for (const k of ["ratio"]) if (c[k]) out.push(this._ratio(k, c[k]));
     for (const k of ["washTemp", "spin", "dry", "level", "rooms", "size", "waterTemp", "aroma"]) if (c[k] && c[k].options) out.push(this._segment(k, c[k]));
-    if (c.multi) out.push(`<button class="tog ${c.multi.value === "on" ? "on" : ""}" data-ctl="multi" data-kind="toggle">${esc(c.multi.label)}<span class="sw"><i></i></span></button>`);
+    if (c.multi) out.push(`<div class="chips"><button class="chip ${c.multi.value === "on" ? "on" : ""}" data-ctl="multi" data-kind="toggle" aria-pressed="${c.multi.value === "on"}">${ic("cups", 16, 2)}${esc(c.multi.label)}</button></div>`);
     if (c.startIn) out.push(c.startIn.options ? this._segment("startIn", c.startIn) : this._startIn("startIn", c.startIn, T));
     if (!out.length) return "";
     return `<div class="box"><span class="lbl">${esc(T.settings)}</span>${out.join("")}</div>`;
@@ -1758,9 +1801,19 @@ class HomeConnectCard extends HTMLElement {
     const info = ch ? `<div class="row lbl" style="gap:6px">${ic("euro", 14, 2)}<span>${esc(T.cheapest)}: ${ch.h > 0 ? `+${String(Math.round(ch.h * 100) / 100).replace(".", ",")} h` : esc(T.now)} · Ø ${esc(fmtPrice(ch.avg, ch.unit))}${save > 0 ? ` · ${esc(T.save.replace("{p}", save))}` : ""}</span></div>` : "";
     return `<div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">${esc(ctl.label)}</span><div class="seg">${chBtn}${presets.map((h) => `<button class="${!chOn && Math.abs(toUnit(h) - cur) < 1e-6 ? "on" : ""}" data-ctl="${k}" data-num="${toUnit(h)}" ${ctl.avail ? "" : "disabled"}>${h === 0 ? esc(T.now) : `+${h} h`}</button>`).join("")}</div>${info}</div>`;
   }
+  _optIcon(label) {
+    const k = norm(label);
+    const map = [[/vorheiz|preheat|speed|vario|schnell|turbo|boost/, "bolt"], [/dampf|steam/, "steam"], [/kinder|child|lock|verriegel|sperre/, "lock"],
+      [/wecker|alarm|timer/, "alarm"], [/eco|spar/, "leaf"], [/leise|silence|stille|nacht|night/, "moon"], [/trocken|dry/, "sun"],
+      [/halb|half/, "half"], [/intensiv|intensive/, "flame"], [/hygien/, "shield"], [/super.*k|frost|gefrier|kuhl|cool/, "snow"],
+      [/sabbat|feiertag/, "star"], [/licht|light|beleucht/, "bulb"], [/wasser|water|aqua/, "drop"], [/tassen|cups|getranke|beverag|doppel/, "cups"],
+      [/vorwasch|prewash/, "drop"], [/knitter|wrinkle|schon|gentle/, "leaf"], [/energ/, "bolt"]];
+    for (const [re, icon] of map) if (re.test(k)) return icon;
+    return "check";
+  }
   _m_options(m, T) {
     if (!m.options.length) return "";
-    return `<div class="box"><span class="lbl">${esc(T.options)}</span><div class="grid2s">${m.options.map((o, i) => `<button class="tog ${o.on ? "on" : ""}" data-opt-i="${i}" ${o.avail ? "" : "disabled"}>${esc(o.label)}<span class="sw"><i></i></span></button>`).join("")}</div></div>`;
+    return `<div class="box"><span class="lbl">${esc(T.options)}</span><div class="chips">${m.options.map((o, i) => `<button class="chip ${o.on ? "on" : ""}" data-opt-i="${i}" aria-pressed="${o.on ? "true" : "false"}" ${o.avail ? "" : "disabled"}>${ic(this._optIcon(o.label), 16, 2)}${esc(o.label)}</button>`).join("")}</div></div>`;
   }
   _m_consumables(m, T) {
     if (!m.consumables.length && !m.counters.length) return "";
@@ -1803,6 +1856,10 @@ class HomeConnectCard extends HTMLElement {
   _bind(m) {
     const R = this.shadowRoot;
     R.querySelectorAll("[data-act]").forEach((el) => el.addEventListener("click", (ev) => { ev.stopPropagation(); this._action(el.dataset.act); }));
+    R.querySelectorAll("[data-expand]").forEach((el) => el.addEventListener("click", () => {
+      const t = el.dataset.expand; this._ui.expanded = { ...(this._ui.expanded || {}), [t]: !this._ui.expanded?.[t] };
+      if (el.previousElementSibling?.classList.contains("list")) { this._fillList(); this._bindList(); } else { this._sig = ""; this._update(true); }
+    }));
     R.querySelectorAll("[data-tab]").forEach((el) => el.addEventListener("click", () => { this._ui.tab = el.dataset.tab; this._ui.search = ""; this._sig = ""; this._update(true); }));
     R.querySelectorAll("[data-prog]").forEach((el) => el.addEventListener("click", () => this._selectProgram(el.dataset.prog)));
     const q = R.querySelector("input.q");
