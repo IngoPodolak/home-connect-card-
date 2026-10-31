@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.1";
+const HC_VERSION = "1.1.2";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -1772,6 +1772,7 @@ button{font:inherit;color:inherit}
 .qstep .stepval{min-width:38px;text-align:center;font-variant-numeric:tabular-nums}
 .pill.compact .txt{min-width:64px;flex:1}
 @container (max-width: 290px){.qlow{display:none}}
+@container (max-width: 380px){.pill:not(.compact) > .badge{display:none}}
 @container (max-width: 360px){.qstep button{width:22px}.qstep .stepval{min-width:30px}.qb{padding:0 6px}.pill.compact .txt .name{font-size:14px}.pill.compact:has(.qs) .val{display:none}}
 .pill .fill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--hc-accent) 16%,transparent);transition:width 1s linear}
 .ico{position:relative;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
