@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.2.2";
+const HC_VERSION = "0.2.3";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -1324,11 +1324,13 @@ button{font:inherit;color:inherit}
 .seg::-webkit-scrollbar{display:none}
 .seg button{flex:1 0 auto;min-width:44px;height:40px;border:0;border-radius:20px;background:transparent;color:var(--hc-muted);font-size:13px;font-weight:500;cursor:pointer;padding:0 10px;white-space:nowrap}
 .seg button.on{background:var(--hc-accent);color:#141414;font-weight:600}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
-.tile{min-height:84px;border-radius:20px;border:0;background:var(--hc-s2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:8px;text-align:center;line-height:1.2}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start}
+.tiles.scroll{max-height:290px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:var(--hc-line2) transparent}
+.tiles.scroll::-webkit-scrollbar{width:6px}.tiles.scroll::-webkit-scrollbar-thumb{background:var(--hc-line2);border-radius:3px}
+.tile{min-height:90px;border-radius:20px;border:0;background:var(--hc-s2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:8px;text-align:center;line-height:1.2}
 .tile.on{background:color-mix(in srgb,var(--hc-accent) 22%,transparent);box-shadow:inset 0 0 0 2px var(--hc-accent)}
 .tile span{overflow-wrap:anywhere;hyphens:auto}
-.tile small{font-size:11px;font-weight:500;color:var(--hc-muted)}
+.tile small{font-size:10px;font-weight:500;color:var(--hc-muted);overflow-wrap:anywhere;hyphens:auto;max-width:100%}
 .search{display:flex;align-items:center;gap:10px;height:48px;border-radius:24px;background:var(--hc-s2);padding:0 16px}
 .search input{flex:1;min-width:0;height:44px;border:0;background:transparent;color:var(--hc-text);font:inherit;font-size:15px;outline:none}
 .list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
@@ -1368,7 +1370,8 @@ button{font:inherit;color:inherit}
 .bean{width:44px;height:44px;border-radius:50%;border:0;background:var(--hc-s2);color:var(--hc-line2);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .bean.f{background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
 .bean.sel{box-shadow:inset 0 0 0 2px var(--hc-accent)}
-.ratio{display:flex;height:44px;border-radius:22px;overflow:hidden;cursor:pointer}
+.ratio{position:relative;display:flex;height:44px;border-radius:22px;overflow:hidden;cursor:pointer}
+.rslider{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;touch-action:none}
 .ratio .c{background:#7a4a26;display:flex;align-items:center;padding-left:14px;font-size:12px;font-weight:600;color:#f6dcbc;transition:width .3s}
 .ratio .m{flex:1;background:#ece2d4;display:flex;align-items:center;justify-content:flex-end;padding-right:14px;font-size:12px;font-weight:600;color:#3b2a1a}
 .ratio .gap{width:4px;background:var(--hc-card)}
@@ -1663,24 +1666,10 @@ class HomeConnectCard extends HTMLElement {
       tab = cur && cur.cat !== "clean" ? cur.cat : cats.find((c) => c !== "clean") || cats[0];
     }
     const tabs = cats.length > 1 ? `<div class="seg">${cats.map((c) => `<button class="${c === tab ? "on" : ""}" data-tab="${c}">${esc(T[`tab_${c}`] || c)}</button>`).join("")}</div>` : "";
-    let list = m.programs.filter((p) => p.cat === tab);
-    const useTiles = (m.type === "coffee" && ["fav", "drink", "world"].includes(tab)) || (tab === "heat" && list.length <= 12) || (list.length <= 8 && tab !== "dish");
-    let body;
-    const T2 = I18N[this.lang];
-    if (useTiles) {
-      const limit = this._ui.expanded?.[tab] ? Infinity : 6;
-      const total = list.length;
-      if (total > limit) {
-        const sel = list.find((p) => p.canon === m.selectedCanon);
-        list = list.slice(0, limit);
-        if (sel && !list.includes(sel)) list[limit - 1] = sel;
-      }
-      const moreBtn = total > 6 ? `<button class="morebtn" data-expand="${tab}">${esc(this._ui.expanded?.[tab] ? T2.show_less : T2.show_all.replace("{n}", total))}${ic("chev", 16, 2)}</button>` : "";
-      body = `<div class="tiles">${list.map((p) => `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(p.label)}</span></button>`).join("")}</div>${moreBtn}`;
-    } else {
-      const q = this._ui.search || "";
-      body = `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label><div class="list" data-cat="${tab}"></div><button class="morebtn" data-expand="${tab}" hidden></button>`;
-    }
+    const count = m.programs.filter((p) => p.cat === tab).length;
+    const q = this._ui.search || "";
+    const search = count > 12 ? `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label>` : "";
+    const body = `${search}<div class="tiles ${count > 9 ? "scroll" : ""}" data-cat="${tab}"></div>`;
     return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${body}</div>`;
   }
   _progIcon(m, p) {
@@ -1699,7 +1688,7 @@ class HomeConnectCard extends HTMLElement {
     return ic(TYPE_META[m.type]?.icon || "generic", 24, 1.6);
   }
   _fillList() {
-    const box = this.shadowRoot.querySelector(".list[data-cat]");
+    const box = this.shadowRoot.querySelector(".tiles[data-cat]");
     const m = this._m;
     if (!box || !m) return;
     const T = I18N[this.lang];
@@ -1708,25 +1697,18 @@ class HomeConnectCard extends HTMLElement {
     let list = m.programs.filter((p) => p.cat === cat);
     if (q) list = list.filter((p) => norm(p.label).includes(q) || p.canon.includes(canon(q)));
     const total = list.length;
-    const expanded = this._ui.expanded?.[cat];
-    const limit = expanded ? 60 : 4;
-    if (!q && !expanded) {
+    if (!q) {
       const sel = list.find((p) => p.canon === m.selectedCanon);
       if (sel) list = [sel, ...list.filter((p) => p !== sel)];
     }
-    list = list.slice(0, limit);
-    const mb = this.shadowRoot.querySelector(`.morebtn[data-expand="${cat}"]`);
-    if (mb) {
-      mb.hidden = total <= 4;
-      mb.innerHTML = `${esc(expanded ? T.show_less : T.show_all.replace("{n}", total))}${ic("chev", 16, 2)}`;
-      mb.classList.toggle("up", !!expanded);
-    }
+    list = list.slice(0, 150);
     const qc = this.shadowRoot.querySelector(".qc");
     if (qc) qc.textContent = `${total} ${T.results}`;
     box.innerHTML = list.length ? list.map((p) => {
       const parts = p.label.split(" · ");
-      return `<button class="item ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}"><span class="ii">${this._progIcon(m, p)}</span><span class="il"><span>${esc(parts[0])}</span>${parts[1] ? `<span class="lbl">${esc(parts[1])}</span>` : ""}</span>${p.canon === m.selectedCanon ? ic("check", 18, 2.4) : ""}</button>`;
-    }).join("") : `<div class="empty">${esc(T.no_results)}</div>`;
+      return `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(parts[0])}</span>${parts[1] ? `<small>${esc(parts[1])}</small>` : ""}</button>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1">${esc(T.no_results)}</div>`;
+    box.scrollTop = 0;
   }
   _m_controls(m, T) {
     const c = m.controls;
@@ -1785,7 +1767,8 @@ class HomeConnectCard extends HTMLElement {
     const T = I18N[this.lang];
     return `<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><span class="lbl sp">${esc(ctl.label)}</span><span class="mv">${isNaN(v) ? "–" : `${coffee} : ${100 - coffee}`}</span></div>
       <div class="row"><button class="stepbtn" data-ctl="${k}" data-cycle="-1" aria-label="−" ${ctl.avail ? "" : "disabled"}>${ic("minus", 18, 2.2)}</button>
-      <div class="ratio sp"><div class="c" style="width:${coffee}%">${esc(T.coffee)}</div><div class="gap"></div><div class="m">${esc(T.milk)}</div></div>
+      <div class="ratio sp"><div class="c" style="width:${coffee}%">${esc(T.coffee)}</div><div class="gap"></div><div class="m">${esc(T.milk)}</div>
+        <input type="range" class="rslider" data-ctl="${k}" min="0" max="${Math.max(0, opts.length - 1)}" step="1" value="${Math.max(0, opts.indexOf(ctl.value))}" aria-label="${esc(ctl.label)}" ${ctl.avail ? "" : "disabled"}></div>
       <button class="stepbtn" data-ctl="${k}" data-cycle="1" aria-label="+" ${ctl.avail ? "" : "disabled"}>${ic("plus", 18, 2.2)}</button></div></div>`;
   }
   _startIn(k, ctl, T) {
@@ -1861,13 +1844,21 @@ class HomeConnectCard extends HTMLElement {
       if (el.previousElementSibling?.classList.contains("list")) { this._fillList(); this._bindList(); } else { this._sig = ""; this._update(true); }
     }));
     R.querySelectorAll("[data-tab]").forEach((el) => el.addEventListener("click", () => { this._ui.tab = el.dataset.tab; this._ui.search = ""; this._sig = ""; this._update(true); }));
-    R.querySelectorAll("[data-prog]").forEach((el) => el.addEventListener("click", () => this._selectProgram(el.dataset.prog)));
     const q = R.querySelector("input.q");
-    if (q) {
-      q.addEventListener("input", () => { this._ui.search = q.value; this._fillList(); this._bindList(); });
-      this._fillList(); this._bindList();
-    }
+    if (q) q.addEventListener("input", () => { this._ui.search = q.value; this._fillList(); this._bindList(); });
+    if (R.querySelector(".tiles[data-cat]")) { this._fillList(); this._bindList(); }
     R.querySelectorAll("[data-ctl]").forEach((el) => {
+      if (el.classList.contains("rslider")) {
+        const ctl = m.controls[el.dataset.ctl];
+        const upd = () => {
+          const o = ctl.options[+el.value]; const v = parseInt(o, 10);
+          const box = el.parentElement; box.querySelector(".c").style.width = `${v}%`;
+          const mv = box.parentElement.parentElement.querySelector(".mv"); if (mv) mv.textContent = `${v} : ${100 - v}`;
+        };
+        el.addEventListener("input", upd);
+        el.addEventListener("change", () => this._control(el));
+        return;
+      }
       const ev = el.tagName === "SELECT" ? "change" : "click";
       el.addEventListener(ev, () => this._control(el));
     });
@@ -1886,7 +1877,7 @@ class HomeConnectCard extends HTMLElement {
     if (pill) pill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") this._action("tap"); });
   }
   _bindList() {
-    this.shadowRoot.querySelectorAll(".list [data-prog]").forEach((el) => el.addEventListener("click", () => this._selectProgram(el.dataset.prog)));
+    this.shadowRoot.querySelectorAll(".tiles[data-cat] [data-prog]").forEach((el) => el.addEventListener("click", () => this._selectProgram(el.dataset.prog)));
   }
   _toast(msg) {
     const t = this.shadowRoot.querySelector(".toast");
@@ -1960,6 +1951,7 @@ class HomeConnectCard extends HTMLElement {
       return this._call("homeassistant", ctl.value === "on" ? "turn_off" : "turn_on", { entity_id: ctl.entity });
     }
     if (el.tagName === "SELECT") value = el.value;
+    else if (el.classList.contains("rslider")) value = ctl.options[+el.value];
     else if (el.dataset.opt != null) value = el.dataset.opt;
     else if (el.dataset.cycle != null) {
       const i = ctl.options.indexOf(ctl.value);
