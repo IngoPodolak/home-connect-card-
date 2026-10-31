@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.2.3";
+const HC_VERSION = "0.3.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -38,7 +38,9 @@ const I18N = {
     water_temp: "Wassertemperatur", size: "Größe", aroma: "Aroma", cups: "Tassen", double: "2 Tassen",
     wash_temp: "Temperatur", spin: "Schleudern (U/min)", level: "Stufe", meat_probe: "Kerntemperatur",
     energy: "Energie", water: "Wasser", phase: "Phase", turn_food: "Jetzt wenden",
-    show_all: "Alle {n} anzeigen", show_less: "Weniger anzeigen",
+    show_all: "Alle {n} anzeigen", show_less: "Weniger anzeigen", ago: "vor {t}", refresh: "Aktualisieren",
+    cam_old: "Kamerabild ist älter als {m} min", idos: "i-DOS Dosierung", detergent: "Waschmittel", softener: "Weichspüler",
+    left: "noch {n}", m_idos: "i-DOS", days: "Tagen", e_camage: "Kamerabild max. Alter (Minuten)",
     no_device: "Kein Gerät gewählt", choose_device: "Bitte im Karten-Editor ein Home-Connect-Gerät oder einen Demo-Typ wählen.",
     not_found: "Gerät nicht gefunden", demo: "DEMO", demo_note: "Demo – keine echte Steuerung",
     ok: "OK", low: "Bald leer", empty: "Leer", full: "Voll", not_inserted: "Fehlt", needed: "Fällig",
@@ -81,7 +83,9 @@ const I18N = {
     water_temp: "Water temperature", size: "Size", aroma: "Aroma", cups: "Cups", double: "2 cups",
     wash_temp: "Temperature", spin: "Spin (rpm)", level: "Level", meat_probe: "Core temperature",
     energy: "Energy", water: "Water", phase: "Phase", turn_food: "Turn food now",
-    show_all: "Show all {n}", show_less: "Show less",
+    show_all: "Show all {n}", show_less: "Show less", ago: "{t} ago", refresh: "Refresh",
+    cam_old: "Camera image is older than {m} min", idos: "i-DOS dosing", detergent: "Detergent", softener: "Softener",
+    left: "{n} left", m_idos: "i-DOS", days: "days", e_camage: "Camera image max. age (minutes)",
     no_device: "No device selected", choose_device: "Choose a Home Connect device or a demo type in the card editor.",
     not_found: "Device not found", demo: "DEMO", demo_note: "Demo – no real control",
     ok: "OK", low: "Low", empty: "Empty", full: "Full", not_inserted: "Missing", needed: "Due",
@@ -474,6 +478,11 @@ const CONCEPTS = {
   level: { d: ["select"], re: /(^|[._ ])stufe|steamassistlevel|microwave_?power/, not: /pyrolys/ },
   notification: { d: ["sensor"], re: /latest_notification_title/ },
   turnFood: { d: ["binary_sensor"], re: /turn_food_now/ },
+  snapTime: { d: ["sensor"], re: /image_acquisition_time|last_snapshot_time|snapshot_time|image_time/ },
+  snapAge: { d: ["sensor"], re: /snapshot_age|image_age/ },
+  camRefresh: { d: ["button"], re: /refresh_snapshot|refresh_image|snapshot_refresh|refresh_camera/ },
+  idosLevel: { d: ["sensor"], re: /i_?dos|dosier/, not: /active|aktiv/ },
+  idosSwitch: { d: ["switch", "select"], re: /i_?dos|auto_?dos|dosier|stain|flecken/ },
   turnFoodMsg: { d: ["sensor"], re: /turn_food_message/ },
   salt: { d: ["sensor"], re: /(^|[._ ])(salz|salt)/ },
   rinseAid: { d: ["sensor"], re: /klarspuler|rinse_?aid|rinseaid/ },
@@ -712,7 +721,16 @@ function buildModel(hass, g, cfg, lang) {
   else if (lightStatus?.avail) model.light = { entity: lightStatus.eid, on: lightStatus.st.state === "on", control: false };
   const cams = pick(g, "camera", { all: true });
   cams.forEach(mark);
-  if (cams.length) model.camera = cams[0].eid;
+  if (cams.length) {
+    model.camera = cams[0].eid;
+    const sT = P("snapTime"), sA = P("snapAge");
+    if (sT?.avail && !isNaN(Date.parse(sT.st.state))) model.camTime = Date.parse(sT.st.state);
+    else if (sA?.avail && !isNaN(parseFloat(sA.st.state))) model.camTime = Date.now() - toSeconds(sA.st) * 1000;
+    const rb = P("camRefresh");
+    if (rb) model.camRefresh = rb.eid;
+    model.camMax = (parseFloat(cfg.camera_max_age) || 5) * 60;
+    model.camStale = model.camTime != null && (Date.now() - model.camTime) / 1000 > model.camMax;
+  }
 
   // Hinweise (Oven Private)
   const turn = P("turnFood"), turnMsg = P("turnFoodMsg"), notif = P("notification");
@@ -770,6 +788,25 @@ function buildModel(hass, g, cfg, lang) {
     if (c) { c.value = u === "s" ? c.h * 3600 : u === "min" ? c.h * 60 : c.h; sic.cheap = c; }
   }
 
+  // i-DOS (Waschmaschine)
+  if (["washer", "washerdryer"].includes(model.type)) {
+    const lv = P("idosLevel", { all: true }).filter((e) => e.domain === "sensor" && e.avail);
+    const sw = P("idosSwitch", { all: true }).filter((e) => e.domain === "switch");
+    const tanks = []; const tSeen = new Set();
+    for (const e of lv) {
+      const n = parseFloat(e.st.state);
+      const two = /2|weich|soft/.test(e.k);
+      const key = two ? 2 : 1;
+      if (tSeen.has(key)) continue; tSeen.add(key);
+      let pct = isNaN(n) ? null : n; let text = isNaN(n) ? optionLabel(hass, e.st, e.st.state, lang) : `${Math.round(n)} %`;
+      const lvl = String(e.st.state).toLowerCase();
+      if (pct == null) pct = /empty|leer/.test(lvl) ? 6 : /low|nearly|niedrig/.test(lvl) ? 25 : 80;
+      tanks.push({ label: two ? T.softener : T.detergent, pct, text, level: pct < 15 ? "bad" : pct < 30 ? "warn" : "ok" });
+    }
+    const sws = []; const sSeen = new Set();
+    for (const e of sw) { const k = canon(norm(e.name)); if (sSeen.has(k)) continue; sSeen.add(k); sws.push({ entity: e.eid, label: e.name, on: e.st?.state === "on", avail: e.avail }); }
+    if (tanks.length || sws.length) model.idos = { tanks, switches: sws };
+  }
   // Optionen (Schalter)
   const childlock = P("childlock");
   const fast = P("fastpreheat");
@@ -809,14 +846,15 @@ function buildModel(hass, g, cfg, lang) {
       pct = level === "bad" ? 6 : level === "warn" ? 25 : 90;
       if (/^(full|ok)$/.test(lv)) text = T.ok;
     } else if (kind === "tray") {
-      if (/full|voll/.test(lv)) { level = "bad"; text = T.full; } else if (/notinserted|not_inserted/.test(lv)) { level = "bad"; text = T.not_inserted; } else text = T.ok;
+      if (/full|voll/.test(lv)) { level = "bad"; text = T.full; pct = 95; } else if (/nearly|almost|bald/.test(lv)) { level = "warn"; text = T.low; pct = 70; } else if (/notinserted|not_inserted/.test(lv)) { level = "bad"; text = T.not_inserted; pct = 0; } else { text = T.ok; pct = 15; }
     } else if (kind === "binEmpty") {
-      level = v === "on" ? "bad" : "ok"; text = v === "on" ? T.empty : T.ok;
+      level = v === "on" ? "bad" : "ok"; text = v === "on" ? T.empty : T.ok; pct = v === "on" ? 6 : 80;
     } else if (kind === "count") {
       const n = parseFloat(v);
       if (isNaN(n)) return;
-      text = n <= 0 ? T.needed : T.in_cups.replace("{n}", Math.round(n));
+      text = n <= 0 ? T.needed : T.left.replace("{n}", Math.round(n));
       level = n <= 0 ? "bad" : n <= 20 ? "warn" : "ok";
+      pct = n <= 0 ? 4 : Math.max(8, Math.min(100, n <= 20 ? n * 1.5 : 30 + n / 5));
     } else if (kind === "pct") {
       const n = parseFloat(v); if (isNaN(n)) return;
       pct = n; text = `${Math.round(n)} %`; level = n < 15 ? "bad" : n < 30 ? "warn" : "ok";
@@ -832,8 +870,6 @@ function buildModel(hass, g, cfg, lang) {
   cons("cleanIn", T.clean, "count");
   cons("calcInfo", T.calcnclean, "count");
   cons("filterIn", T.water_filter, "count");
-  cons("idos1", T.idos1, "pct");
-  cons("idos2", T.idos2, "pct");
   const ef = P("energyF"), wf = P("waterF");
   if (ef?.avail) model.forecast = Object.assign(model.forecast || {}, { energy: parseFloat(ef.st.state) });
   if (wf?.avail) model.forecast = Object.assign(model.forecast || {}, { water: parseFloat(wf.st.state) });
@@ -1002,7 +1038,7 @@ function demoModel(type, lang, cfg, state) {
       { entity: "demo", label: lang === "de" ? "Kindersicherung" : "Child lock", on: false, avail: true }];
     m.consumables = [{ label: T.water_tank, level: "ok", text: T.ok, pct: 90 }];
     m.light = { entity: "demo", on: true, control: true };
-    m.camera = "demo";
+    m.camera = "demo"; m.camTime = Date.now() - 95000; m.camMax = 300;
     m.door = "closed";
   } else if (type === "dishwasher") {
     m.programs = progs(["eco50", "auto2", "intensiv70", "quick45", "glas40", "prerinse", "nightwash", "machinecare"], "prog");
@@ -1023,7 +1059,9 @@ function demoModel(type, lang, cfg, state) {
     m.phase = T[`ph_${m.phaseKey}`];
     m.controls.washTemp = seg(T.wash_temp, ["cold", "20", "30", "40", "60", "90"], [lang === "de" ? "Kalt" : "Cold", "20°", "30°", "40°", "60°", "90°"], pickSel("washTemp", "40"));
     m.controls.spin = seg(T.spin, ["400", "800", "1000", "1200", "1400"], null, pickSel("spin", "1400"));
-    m.consumables = [{ label: T.idos1, level: "ok", text: "64 %", pct: 64 }, { label: T.idos2, level: "warn", text: "22 %", pct: 22 }];
+    m.idos = { tanks: [{ label: T.detergent, pct: 64, text: "64 %", level: "ok" }, { label: T.softener, pct: 22, text: "22 %", level: "warn" }],
+      switches: [{ entity: "demo", label: lang === "de" ? "Auto-Dosierung" : "Auto dosing", on: true, avail: true }, { entity: "demo", label: lang === "de" ? "Fleckenautomatik" : "Stain removal", on: false, avail: true }] };
+    m.consumables = [{ label: lang === "de" ? "Trommel" : "Drum", level: "ok", text: T.ok, pct: 80 }, { label: lang === "de" ? "Flusensieb" : "Lint filter", level: "warn", text: lang === "de" ? "Reinigen" : "Clean", pct: 25 }];
     m.options = ["Speed Perfect", "Eco Perfect", lang === "de" ? "Vorwäsche" : "Prewash", lang === "de" ? "Wasser Plus" : "Water plus"]
       .map((l, i) => ({ entity: "demo", label: l, on: i === 1, avail: true }));
     m.controls.startIn = { entity: "demo", kind: "startin", label: lang === "de" ? "Fertig in" : "Finish in", avail: true, value: String(pickSel("startIn", 0)), min: 0, max: 24, step: 1, unit: "h",
@@ -1055,7 +1093,7 @@ function demoModel(type, lang, cfg, state) {
     m.controls.waterTemp = seg(T.water_temp, ["normal", "high", "max"], lang === "de" ? ["Normal", "Hoch", "Max"] : ["Normal", "High", "Max"], pickSel("waterTemp", "high"));
     m.controls.multi = { entity: "demo", kind: "toggle", label: T.double, avail: true, value: "off" };
     m.consumables = [{ label: T.water_tank, level: "ok", text: T.ok, pct: 70 }, { label: T.bean_container, level: "ok", text: T.ok, pct: 60 },
-      { label: T.descale, level: "ok", text: T.in_cups.replace("{n}", 322), pct: null }, { label: T.drip_tray, level: "warn", text: lang === "de" ? "Bald voll" : "Nearly full", pct: 75 }];
+      { label: T.descale, level: "ok", text: T.left.replace("{n}", 322), pct: 95 }, { label: T.drip_tray, level: "warn", text: lang === "de" ? "Bald voll" : "Nearly full", pct: 75 }];
     m.phaseKey = pct < 20 ? "grinding" : pct < 60 ? "coffeebrewing" : "milkfroth"; m.phase = T[`ph_${m.phaseKey}`];
   } else if (type === "fridge" || type === "freezer") {
     m.status = "run"; m.running = false; m.progress = null; m.remaining = null; m.end = null; m.statusText = type === "fridge" ? "4 °C · −18 °C" : "−18 °C";
@@ -1161,7 +1199,7 @@ const ICON = {
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   bean: '<ellipse cx="12" cy="12" rx="5.5" ry="8" transform="rotate(30 12 12)" fill="currentColor" stroke="none"/>',
   home: '<path d="M4 11l8-7 8 7v9H4z"/>', cloud: '<path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-1 9z"/>',
-  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', drop: '<path d="M12 3c-3.5 4.5-6 7.6-6 10.5a6 6 0 0 0 12 0C18 10.6 15.5 7.5 12 3z"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>', drop: '<path d="M12 3c-3.5 4.5-6 7.6-6 10.5a6 6 0 0 0 12 0C18 10.6 15.5 7.5 12 3z"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', door: '<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="15" cy="12" r="1"/>',
   turn: '<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/>',
 };
@@ -1309,6 +1347,8 @@ button{font:inherit;color:inherit}
 .cam img{width:100%;height:100%;object-fit:cover;display:block}
 .cam .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#a0a6af;font-size:13px}
 .cam .tl{position:absolute;left:12px;top:12px}.cam .tr{position:absolute;right:12px;top:12px}
+.cam .bl{position:absolute;left:12px;bottom:12px}.cam .camrf{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff}
+.cam.stale{cursor:default;background:var(--hc-card)}.cam.stale .ph{color:var(--hc-muted);text-align:center;padding:12px}
 .banner{background:color-mix(in srgb,var(--hc-accent) 12%,var(--hc-card));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--hc-accent) 55%,transparent)}
 .btitle{font-size:12px;color:var(--hc-accent);font-weight:600}.btext{font-size:16px;font-weight:700}
 .hero{display:flex;align-items:center;gap:16px}
@@ -1348,6 +1388,7 @@ button{font:inherit;color:inherit}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .grid2s{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips.scroll{max-height:156px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:var(--hc-line2) transparent}
 .chip{min-height:44px;border-radius:22px;border:1px solid var(--hc-line2);background:transparent;display:inline-flex;align-items:center;gap:8px;padding:0 16px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s}
 .chip svg{flex:none}
 .chip.on{background:color-mix(in srgb,var(--hc-accent) 20%,transparent);border-color:var(--hc-accent);color:color-mix(in srgb,var(--hc-accent) 45%,var(--hc-text))}
@@ -1359,6 +1400,13 @@ button{font:inherit;color:inherit}
 .tog.on .sw{background:var(--hc-accent)}.tog.on .sw i{left:14px;background:#fff}
 .mini{background:var(--hc-card);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .mini.warn{box-shadow:inset 0 0 0 1.5px var(--hc-warn)}.mini.bad{box-shadow:inset 0 0 0 1.5px var(--hc-bad)}
+.tanks{display:flex;flex-wrap:wrap;gap:14px 12px}
+.tank{display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;text-align:center}
+.tk{width:40px;height:72px;border-radius:12px;background:var(--hc-s2);display:flex;align-items:flex-end;overflow:hidden}
+.tk i{display:block;width:100%;transition:height .4s}
+.tk.warn{box-shadow:inset 0 0 0 1.5px var(--hc-warn)}.tk.bad{box-shadow:inset 0 0 0 1.5px var(--hc-bad)}
+.tv{font-size:12px;font-weight:700;line-height:1.2}.tl2{font-size:11px;color:var(--hc-muted);line-height:1.2;hyphens:auto;overflow-wrap:break-word;max-width:100%}
+.steps{display:flex;align-items:flex-end;gap:3px;height:20px}.steps i{display:block;width:8px;border-radius:2px;background:var(--hc-line)}
 .bar{height:6px;border-radius:3px;background:var(--hc-s2);overflow:hidden}.bar i{display:block;height:6px;border-radius:3px}
 .mv{font-size:13px;font-weight:600}
 .minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
@@ -1424,7 +1472,7 @@ select.dd{height:40px;border-radius:14px;border:0;background:var(--hc-s2);color:
 /* ------------------------------------------------------------------ */
 /* Karte                                                               */
 /* ------------------------------------------------------------------ */
-const MODULES = ["banner", "hero", "camera", "programs", "controls", "options", "consumables", "actions", "more"];
+const MODULES = ["banner", "hero", "camera", "programs", "controls", "idos", "options", "consumables", "actions", "more"];
 
 class HomeConnectCard extends HTMLElement {
   constructor() {
@@ -1461,6 +1509,11 @@ class HomeConnectCard extends HTMLElement {
     if (this._config?.demo) { this._update(); return; }
     if (this._tickN % 30 === 0 && this._m) { const T = I18N[this.lang]; this._updateLive(this._m, { state: this._statusText(this._m, T) }); }
     if (this._tickN % 10 === 0) this._refreshCam();
+    if (this._tickN % 15 === 0 && this._m?.camTime != null) {
+      this.shadowRoot.querySelectorAll(".hc-camage").forEach((el) => { el.textContent = this._ago(this._m.camTime); });
+      const stale = (Date.now() - this._m.camTime) / 1000 > this._m.camMax;
+      if (stale !== this._m.camStale) { this._sig = ""; this._update(true); }
+    }
   }
   _refreshCam() {
     const img = this.shadowRoot.querySelector(".cam img[data-src]");
@@ -1500,7 +1553,7 @@ class HomeConnectCard extends HTMLElement {
     }
     const T = I18N[this.lang];
     const live = m ? { state: this._statusText(m, T) } : null;
-    const sm = m && { ...m, end: null, remaining: m.remaining != null, progress: m.progress != null, temp: m.temp ? { ...m.temp, current: m.temp.current != null } : null, statusText: null };
+    const sm = m && { ...m, camTime: null, end: null, remaining: m.remaining != null, progress: m.progress != null, temp: m.temp ? { ...m.temp, current: m.temp.current != null } : null, statusText: null };
     const sig = JSON.stringify([sm, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
     if (sig === this._sig) { this._updateLive(m, live); return; }
     this._sig = sig;
@@ -1602,14 +1655,30 @@ class HomeConnectCard extends HTMLElement {
   }
   _m_camera(m, T) {
     if (!m.camera) return "";
-    if (m.demo) return `<div class="cam" data-act="cam"><div class="ph" style="background:linear-gradient(160deg,#2a1d14,#120c08)">${ic("camera", 34, 1.5)}<span>${esc(T.camera)} (Demo)</span></div><span class="badge tl" style="background:rgba(255,92,92,.9);color:#fff">● ${T.live}</span>${m.temp?.current != null ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}</div>`;
+    if (m.demo) return `<div class="cam" data-act="cam"><div class="ph" style="background:linear-gradient(160deg,#2a1d14,#120c08)">${ic("camera", 34, 1.5)}<span>${esc(T.camera)} (Demo)</span></div><span class="badge tl" style="background:rgba(255,92,92,.9);color:#fff">● ${T.live}</span>${m.temp?.current != null ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}${m.camTime ? `<span class="badge bl" style="background:rgba(0,0,0,.6);color:#fff;height:26px;font-size:12px">${ic("clock", 13, 2)}<span class="hc-camage">${esc(this._ago(m.camTime))}</span></span>` : ""}<button class="sub camrf" data-act="camrefresh" aria-label="${esc(T.refresh)}">${ic("refresh", 18, 2)}</button></div>`;
     const st = this._hass.states[m.camera];
     const pic = st?.attributes?.entity_picture;
     const live = st && ["streaming", "recording"].includes(st.state);
     if (!st || st.state === "unavailable") return "";
+    const age = m.camTime != null ? `<span class="badge bl" style="background:rgba(0,0,0,.6);color:#fff;height:26px;font-size:12px">${ic("clock", 13, 2)}<span class="hc-camage">${esc(this._ago(m.camTime))}</span></span>` : "";
+    if (m.camStale) {
+      return `<div class="cam stale"><div class="ph">${ic("camera", 30, 1.5)}<span>${esc(T.cam_old.replace("{m}", Math.round(m.camMax / 60)))}</span>
+        <button class="sub on" data-act="camrefresh" style="margin-top:6px">${ic("refresh", 18, 2)}${esc(T.refresh)}</button></div>${age}</div>`;
+    }
     return `<div class="cam" data-act="cam">${pic ? `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div><img data-src="${esc(pic)}" src="${esc(pic)}" alt="" loading="lazy" style="position:relative" onerror="this.style.display='none'">` : `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div>`}
       ${live ? `<span class="badge tl" style="background:rgba(255,92,92,.9);color:#fff">● ${T.live}</span>` : ""}
-      ${m.temp?.current != null && m.running ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}</div>`;
+      ${m.temp?.current != null && m.running ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}
+      ${age}<button class="sub camrf" data-act="camrefresh" aria-label="${esc(T.refresh)}">${ic("refresh", 18, 2)}</button></div>`;
+  }
+  _ago(t) {
+    const T = I18N[this.lang];
+    const s = Math.max(0, (Date.now() - t) / 1000);
+    let txt;
+    if (s < 60) txt = `${Math.round(s)} s`;
+    else if (s < 3600) txt = `${Math.round(s / 60)} min`;
+    else if (s < 86400) txt = `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min`;
+    else txt = `${Math.round(s / 86400)} ${T.days}`;
+    return T.ago.replace("{t}", txt);
   }
   _m_banner(m, T) {
     const b = m.banner;
@@ -1651,7 +1720,8 @@ class HomeConnectCard extends HTMLElement {
       extra = `<div class="phases">${ph.map((p, i) => `<div class="${i < cur ? "done" : i === cur ? "cur" : ""}"><span class="d"></span>${esc(T[`ph_${p}`])}</div>`).join("")}</div>`;
     }
     if (m.forecast) {
-      extra += `<div class="grid2s">${m.forecast.energy != null ? `<div class="mini" style="background:var(--hc-s1)"><span class="lbl">${esc(T.energy)}</span><div class="bar"><i style="width:${m.forecast.energy}%;background:var(--hc-accent)"></i></div><span class="mv">${Math.round(m.forecast.energy)} %</span></div>` : ""}${m.forecast.water != null ? `<div class="mini" style="background:var(--hc-s1)"><span class="lbl">${esc(T.water)}</span><div class="bar"><i style="width:${m.forecast.water}%;background:#5aa9ff"></i></div><span class="mv">${Math.round(m.forecast.water)} %</span></div>` : ""}</div>`;
+      const steps = (v, c) => `<div class="row" style="gap:8px"><div class="steps">${[6, 10, 14, 18].map((h, i) => `<i style="height:${h}px;${v > i * 25 ? `background:${c}` : ""}"></i>`).join("")}</div><span class="mv">${Math.round(v)} %</span></div>`;
+      extra += `<div class="grid2s">${m.forecast.energy != null ? `<div class="mini" style="background:var(--hc-s1)"><span class="lbl">${esc(T.energy)}</span>${steps(m.forecast.energy, "var(--hc-accent)")}</div>` : ""}${m.forecast.water != null ? `<div class="mini" style="background:var(--hc-s1)"><span class="lbl">${esc(T.water)}</span>${steps(m.forecast.water, "#5aa9ff")}</div>` : ""}</div>`;
     }
     return `<div class="box"><div class="hero"><div class="ring">${ring}${inner}</div><div class="info">${info.join("")}</div></div>${extra}</div>`;
   }
@@ -1796,14 +1866,23 @@ class HomeConnectCard extends HTMLElement {
   }
   _m_options(m, T) {
     if (!m.options.length) return "";
-    return `<div class="box"><span class="lbl">${esc(T.options)}</span><div class="chips">${m.options.map((o, i) => `<button class="chip ${o.on ? "on" : ""}" data-opt-i="${i}" aria-pressed="${o.on ? "true" : "false"}" ${o.avail ? "" : "disabled"}>${ic(this._optIcon(o.label), 16, 2)}${esc(o.label)}</button>`).join("")}</div></div>`;
+    return `<div class="box"><span class="lbl">${esc(T.options)}</span><div class="chips ${m.options.length > 9 ? "scroll" : ""}">${m.options.map((o, i) => `<button class="chip ${o.on ? "on" : ""}" data-opt-i="${i}" aria-pressed="${o.on ? "true" : "false"}" ${o.avail ? "" : "disabled"}>${ic(this._optIcon(o.label), 16, 2)}${esc(o.label)}</button>`).join("")}</div></div>`;
+  }
+  _tank(c) {
+    const col = { ok: "color-mix(in srgb,var(--hc-accent) 70%,transparent)", warn: "var(--hc-warn)", bad: "var(--hc-bad)" }[c.level || "ok"];
+    const tcol = { ok: "var(--hc-text)", warn: "var(--hc-warn)", bad: "var(--hc-bad)" }[c.level || "ok"];
+    const pct = c.pct == null ? 80 : Math.max(0, Math.min(100, c.pct));
+    return `<div class="tank"><div class="tk ${c.level !== "ok" ? c.level : ""}"><i style="height:${pct}%;background:${col}"></i></div><span class="tv" style="color:${tcol}">${esc(c.text)}</span><span class="tl2">${esc(c.label)}</span></div>`;
   }
   _m_consumables(m, T) {
     if (!m.consumables.length && !m.counters.length) return "";
-    const col = { ok: "var(--hc-ok)", warn: "var(--hc-warn)", bad: "var(--hc-bad)" };
-    const tiles = m.consumables.map((c) => `<div class="mini ${c.level !== "ok" ? c.level : ""}" style="background:var(--hc-s1)"><span class="lbl">${esc(c.label)}</span>${c.pct != null ? `<div class="bar"><i style="width:${Math.max(4, Math.min(100, c.pct))}%;background:${col[c.level]}"></i></div>` : ""}<span class="mv" style="${c.level !== "ok" ? `color:${col[c.level]}` : ""}">${esc(c.text)}</span></div>`);
     const counters = m.counters.map((c) => `<div class="mini" style="background:var(--hc-s1)"><span class="lbl">${esc(c.label)}</span><span class="mv">${esc(c.value)}</span></div>`);
-    return `<div class="box"><span class="lbl">${esc(T.consumables)}</span><div class="minis">${tiles.join("")}${counters.join("")}</div></div>`;
+    return `<div class="box"><span class="lbl">${esc(T.consumables)}</span>${m.consumables.length ? `<div class="tanks">${m.consumables.map((c) => this._tank(c)).join("")}</div>` : ""}${counters.length ? `<div class="minis">${counters.join("")}</div>` : ""}</div>`;
+  }
+  _m_idos(m, T) {
+    if (!m.idos) return "";
+    const chips = m.idos.switches.map((o, i) => `<button class="chip ${o.on ? "on" : ""}" data-idos-i="${i}" aria-pressed="${o.on}" ${o.avail ? "" : "disabled"}>${esc(o.label)}</button>`).join("");
+    return `<div class="box"><span class="lbl">${esc(T.idos)}</span><div class="row" style="align-items:center;gap:16px;flex-wrap:wrap"><div class="tanks" style="flex:none">${m.idos.tanks.map((c) => this._tank(c)).join("")}</div>${chips ? `<div class="chips" style="flex:1;flex-direction:column;align-items:flex-end;min-width:140px">${chips}</div>` : ""}</div></div>`;
   }
   _m_actions(m, T) {
     const a = m.actions;
@@ -1867,6 +1946,11 @@ class HomeConnectCard extends HTMLElement {
       if (m.demo) { o.on = !o.on; el.classList.toggle("on"); return; }
       this._call("homeassistant", o.on ? "turn_off" : "turn_on", { entity_id: o.entity });
     }));
+    R.querySelectorAll("[data-idos-i]").forEach((el) => el.addEventListener("click", () => {
+      const o = m.idos.switches[+el.dataset.idosI];
+      if (m.demo) { o.on = !o.on; el.classList.toggle("on"); return; }
+      this._call("homeassistant", o.on ? "turn_off" : "turn_on", { entity_id: o.entity });
+    }));
     R.querySelectorAll("[data-more]").forEach((el) => {
       const ev = el.tagName === "SELECT" ? "change" : "click";
       el.addEventListener(ev, () => this._moreControl(el));
@@ -1906,6 +1990,11 @@ class HomeConnectCard extends HTMLElement {
         else if (!m.demo) { const g = this._group(); const e = g?.entities.find((x) => isOpState(x)) || g?.entities[0]; if (e) this._moreInfo(e.eid); }
         break;
       case "cam": if (m.camera && !m.demo) this._moreInfo(m.camera); else this._toast(I18N[this.lang].demo_note); break;
+      case "camrefresh":
+        if (m.demo) { this._toast(I18N[this.lang].demo_note); break; }
+        if (m.camRefresh) this._call("button", "press", { entity_id: m.camRefresh });
+        else this._call("homeassistant", "update_entity", { entity_id: m.camera });
+        this._toast("↻"); break;
       case "light":
         if (!m.light?.control) break;
         if (m.demo) { this._ui.demoLight = !this._ui.demoLight; this._toast(I18N[this.lang].demo_note); break; }
@@ -2017,9 +2106,10 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "color", selector: { color_rgb: {} } },
       { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
       { name: "price_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "camera_max_age", selector: { number: { min: 1, max: 1440, mode: "box", unit_of_measurement: "min" } } },
       { name: "hide", selector: { select: { multiple: true, mode: "list", options: MODULES.map((m) => ({ value: m, label: T[`m_${m}`] })) } } },
     ];
-    const labels = { device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price };
+    const labels = { device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, camera_max_age: T.e_camage };
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => labels[s.name] || s.name;

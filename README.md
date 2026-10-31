@@ -17,7 +17,8 @@ Eine Home-Assistant-Dashboard-Karte für **Home-Connect-Geräte** (Bosch, Siemen
 - **Animierte Statusanzeige** – Ring für den Fortschritt, innen eine Animation je nach Programm, Phase oder Getränk (Heißluft, Ober-/Unterhitze, Grill, Mikrowelle, Dampf, Waschen/Spülen/Schleudern, Sprüharm/Trocknen, Kaffee, Cappuccino, Latte Macchiato …).
 - **Programme und Gerichte** mit Reitern (Gerichte, Heizarten, Mikrowelle, Dampf, Pflege, Getränke …) und **Suche**.
 - **Erkanntes bzw. vorgeschlagenes Gericht** beim Backofen, sofern das Gerät eins meldet, sowie der Hinweis „Jetzt wenden“ (Oven Private).
-- **Kamera** (Backofen, Kühlschrank), wenn eine `camera`-Entität vorhanden ist.
+- **Kamera** (Backofen, Kühlschrank), wenn eine `camera`-Entität vorhanden ist – mit Bildalter. Ist das Bild älter als 5 Minuten (einstellbar), erscheint statt des Bildes ein Aktualisieren-Knopf.
+- **i-DOS** bei Waschmaschinen: Füllstände als Tanks plus Auto-Dosierung.
 - **Einstellungen kompakt statt als Liste**: Temperatur, Dauer, Startzeit, Bohnenmenge, Kaffee/Milch, Füllmenge, Waschtemperatur, Schleudern, Optionen als Schalter, Verbrauchsmaterial (Salz, Klarspüler, Wassertank, Auffangschale, i-DOS …).
 - Alles Übrige steht unter **„Weitere Einstellungen“**, ohne doppelte Einträge aus mehreren Quellen.
 - **Günstigster Start** für Spülmaschine, Waschmaschine und Trockner: berechnet aus der Strompreis-Prognose und der Programmdauer und setzt die Startverzögerung.
@@ -65,8 +66,9 @@ demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee
 | `color` | Akzentfarbe (Farbwähler im Editor oder `"#ff8a3d"`), Standard: eigene Farbe je Gerätetyp |
 | `device_type` | Gerätetyp erzwingen, falls falsch erkannt |
 | `price_entity` | Strompreis-Sensor mit Prognose für „Günstigster Start“ (Tibber, EPEX Spot, Nordpool …) – wird sonst automatisch gesucht, `none` schaltet ab |
-| `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `options`, `consumables`, `actions`, `more` |
+| `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `idos`, `options`, `consumables`, `actions`, `more` |
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
+| `camera_max_age` | maximales Alter des Kamerabilds in Minuten (Standard 5) |
 | `entities` | einzelne Zuordnungen überschreiben, z. B. `camera: camera.mein_ofen` |
 
 ### In einem Bubble-Card-Popup (eigenständiges Format ab Bubble Card 3.2)
