@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.5";
+const HC_VERSION = "1.1.6";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -57,7 +57,7 @@ const I18N = {
     t_washerdryer: "Waschtrockner", t_coffee: "Kaffeevollautomat", t_fridge: "Kühlschrank", t_freezer: "Gefrierschrank",
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
-    cheapest: "Günstigster Start", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
+    cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
     e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
@@ -102,7 +102,7 @@ const I18N = {
     t_washerdryer: "Washer dryer", t_coffee: "Coffee machine", t_fridge: "Fridge", t_freezer: "Freezer",
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
-    cheapest: "Cheapest start", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
+    cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
     e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
@@ -1774,6 +1774,9 @@ button{font:inherit;color:inherit}
 .pill.compact .ico{width:38px;height:38px}
 .pill.compact .ico svg{width:20px;height:20px}
 :host{container-type:inline-size;position:relative}
+.confirm{position:absolute;z-index:21;display:flex;flex-direction:column;gap:12px;padding:14px;background-color:var(--card-background-color,#1c1e22);border:0.8px solid var(--hc-line2);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:ddin .14s ease-out;color:var(--hc-text)}
+.confirm .ct{font-weight:700;font-size:14px;margin-bottom:2px}.confirm > .row > svg{color:var(--hc-accent);flex:none;margin-top:1px}
+.confirm .sub.on{background:var(--hc-accent);color:#141414;gap:6px}
 .ddm{position:absolute;z-index:20;display:flex;flex-direction:column;gap:2px;padding:6px;overflow-y:auto;background:var(--bubble-main-background-color,var(--hc-card));background-color:var(--card-background-color,#1c1e22);border:0.8px solid var(--hc-line2);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.45);backdrop-filter:blur(12px);animation:ddin .14s ease-out}
 @keyframes ddin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .ddi{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:var(--hc-text);font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;white-space:nowrap}
@@ -2652,7 +2655,7 @@ class HomeConnectCard extends HTMLElement {
     if (pill) pill.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") this._action("tap"); });
   }
   _bindList() {
-    this.shadowRoot.querySelectorAll(".tiles[data-cat] [data-prog]").forEach((el) => el.addEventListener("click", () => this._selectProgram(el.dataset.prog)));
+    this.shadowRoot.querySelectorAll(".tiles[data-cat] [data-prog]").forEach((el) => el.addEventListener("click", () => this._selectProgram(el.dataset.prog, el)));
   }
   _toast(msg) {
     const t = this.shadowRoot.querySelector(".toast");
@@ -2710,11 +2713,40 @@ class HomeConnectCard extends HTMLElement {
     }
   }
   // Gerät einschalten und warten, bis es bereit ist (Home Connect lehnt sonst Programmwahl/Start ab)
-  async _ensureOn() {
+  // Rückfrage im Kartenstil: "Gerät ist aus – einschalten?"
+  _confirmOn(anchor) {
+    const T = I18N[this.lang];
+    this._closeDD();
+    this.shadowRoot.querySelector(".confirm")?.remove();
+    return new Promise((resolve) => {
+      const box = document.createElement("div");
+      box.className = "confirm"; box.setAttribute("role", "alertdialog");
+      box.innerHTML = `<div class="row" style="gap:10px;align-items:flex-start">${ic("power", 20, 2)}<div><div class="ct">${esc(T.off_title)}</div><div class="lbl">${esc(T.off_text)}</div></div></div>
+        <div class="grid2s"><button class="sub" data-c="0">${esc(T.cancel)}</button><button class="sub on" data-c="1">${ic("power", 16, 2)}${esc(T.switch_on)}</button></div>`;
+      this.shadowRoot.appendChild(box);
+      const host = this.getBoundingClientRect();
+      const r = (anchor && anchor.isConnected ? anchor : this).getBoundingClientRect();
+      const w = Math.min(host.width - 16, 340);
+      box.style.width = `${w}px`;
+      box.style.left = `${Math.max(8, Math.min(host.width - w - 8, r.left - host.left + r.width / 2 - w / 2))}px`;
+      const h = box.offsetHeight;
+      const below = r.bottom - host.top + 8;
+      box.style.top = `${r.bottom + h + 12 > window.innerHeight && r.top - h - 8 > 0 ? r.top - host.top - h - 8 : below}px`;
+      this.style.zIndex = "10";
+      const done = (v) => { box.remove(); this.style.zIndex = ""; document.removeEventListener("pointerdown", out, true); resolve(v); };
+      const out = (ev) => { if (!ev.composedPath().includes(box)) done(false); };
+      box.addEventListener("click", (ev) => { ev.stopPropagation(); const b = ev.target.closest("[data-c]"); if (b) done(b.dataset.c === "1"); });
+      box.querySelector('[data-c="1"]').focus({ preventScroll: true });
+      box.addEventListener("keydown", (ev) => { if (ev.key === "Escape") done(false); });
+      setTimeout(() => document.addEventListener("pointerdown", out, true), 0);
+    });
+  }
+  async _ensureOn(anchor) {
     const m = this._m;
     const offish = (x) => ["off", "inactive", "standby"].includes(x?.status) || (x?.power && !x.power.on);
     if (!m || m.demo || !m.power || !offish(m)) return true;
     const T = I18N[this.lang];
+    if (!(await this._confirmOn(anchor))) return false;
     this._toast(T.switching_on);
     await this._call(m.power.svcDomain || "switch", "turn_on", { entity_id: m.power.entity });
     for (let i = 0; i < 50; i++) {
@@ -2727,7 +2759,7 @@ class HomeConnectCard extends HTMLElement {
   }
   async _start() {
     if (this._m?.demo) { this._toast(I18N[this.lang].demo_note); return; }
-    if (!(await this._ensureOn())) return;
+    if (!(await this._ensureOn(this.shadowRoot.querySelector('[data-act="start"]')))) return;
     const m = this._m;
     const pre = this._cheapPre(m);
     if (pre) {
@@ -2749,9 +2781,9 @@ class HomeConnectCard extends HTMLElement {
     }
     return null;
   }
-  async _selectProgram(c) {
+  async _selectProgram(c, el) {
     if (this._m.demo) { this._ui.demoSel = { ...this._ui.demoSel, prog: c }; this._sig = ""; this._update(true); return; }
-    if (!(await this._ensureOn())) return;
+    if (!(await this._ensureOn(el))) return;
     const m = this._m;
     for (const s of m.programSelects) {
       const opt = s.options.find((o) => canon(o) === c);
