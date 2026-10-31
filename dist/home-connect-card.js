@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.4";
+const HC_VERSION = "1.1.5";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -1792,6 +1792,8 @@ button{font:inherit;color:inherit}
 @container (max-width: 360px){.qstep button{width:22px}.qstep .stepval{min-width:30px}.qb{padding:0 6px}.pill.compact .txt .name{font-size:14px}.pill.compact:has(.qs) .val{display:none}}
 .pill .fill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--hc-accent) 16%,transparent);transition:width 1s linear}
 .ico{position:relative;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
+.pill.compact .ico.idle{background:var(--bubble-icon-background-color,#000);color:var(--primary-text-color,#e1e1e1)}
+.pill.compact .name{font-size:14px;font-weight:700;line-height:18px}.pill.compact .state{font-size:12.5px}
 .ico.off{background:color-mix(in srgb,var(--hc-accent) 12%,transparent);color:color-mix(in srgb,var(--hc-accent) 65%,var(--hc-muted))}
 .txt{position:relative;flex:1;min-width:0;display:flex;flex-direction:column}
 .name{font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2147,8 +2149,9 @@ class HomeConnectCard extends HTMLElement {
     const right = m.running && m.remaining != null ? `<span class="val hc-rem">${esc(fmtDur(m.remaining, this.lang))}</span>` : "";
     const cam = m.camera ? `<button class="sub" data-act="cam" aria-label="${esc(T.camera)}">${ic("camera", 18)}</button>` : "";
     const fill = m.running && m.progress != null ? `<div class="fill" style="width:${m.progress}%"></div>` : "";
+    const active = done || m.running || ["run", "pause", "delayedstart", "actionrequired"].includes(m.status);
     return `<div class="pill compact" data-act="tap" role="button" tabindex="0" ${done ? 'style="box-shadow:inset 0 0 0 2px var(--hc-accent)"' : ""}>${fill}
-      <div class="ico ${off ? "off" : ""}" ${done ? 'style="background:var(--hc-accent);color:#141414"' : ""}>${ic(done ? "check" : icon, 22, done ? 2.2 : 1.8)}</div>
+      <div class="ico ${active ? "" : "idle"}" ${done ? 'style="background:var(--hc-accent);color:#141414"' : ""}>${ic(done ? "check" : icon, 22, done ? 2.2 : 1.8)}</div>
       <div class="txt"><span class="name">${esc(m.name)}</span><span class="state hc-state">${esc(this._statusText(m, T))}</span></div>${right}${this._quick(m, T, cam)}</div>`;
   }
   // Schnellwahl-Knöpfe (wie Bubble-Card-Sub-Buttons)
