@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.1.0";
+const HC_VERSION = "0.1.1";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -204,6 +204,9 @@ const DISH_WORDS = {
   chipsfrozen: "Pommes, tiefgekühlt", pizzafrozen: "Pizza, tiefgekühlt", pizzachilled: "Pizza, gekühlt", pizzabaguettefrozen: "Pizzabaguette, tiefgekühlt",
   breadrollsfrozen: "Brötchen, tiefgekühlt", strudelfrozen: "Strudel, tiefgekühlt", lasagnefrozen: "Lasagne, tiefgekühlt",
   sweetstrudel: "Süßer Strudel", spongecakewithdrytopping: "Rührkuchen mit trockenem Belag", whitebread: "Weißbrot", wholemealbread: "Vollkornbrot",
+  drying: "Trocknen", fruits: "Früchte", herbs: "Kräuter", melting: "Schmelzen", butter: "Butter", chocolate: "Schokolade",
+  oil: "Öl", flavouring: "aromatisieren", large: "groß", slowcook: "Niedertemperatur", yoghurt: "Joghurt", warming: "Wärmen",
+  plates: "Teller", cups: "Tassen", proving: "gehen lassen", eggs: "Eier", defrosting: "Auftauen", keepwarm: "Warmhalten",
   reheatplatedmeal: "Tellergericht aufwärmen", reheatsmallamounts: "Kleine Mengen aufwärmen", cup: "Tasse",
 };
 const DISH_MOD = {
@@ -367,6 +370,7 @@ function _discover(hass) {
     const ident = ids.find((i) => SOURCES[i[0]]);
     if (!ident) continue;
     const platform = ident[0];
+    if (canon(ident[1]) === "homeconnect") continue; // Dienst-Gerät von Home Connect Alt
     const m = String(ident[1]).match(/\d{9,}/);
     const key = m ? m[0] : canon(ident[1]) || id;
     if (!groups.has(key)) groups.set(key, { key, devices: [], entities: [] });
@@ -436,7 +440,7 @@ const CONCEPTS = {
   cavity: { d: ["sensor"], re: /cavity|garraum|aktuelle_temperatur|current_?temp/, not: /camera/ },
   setpoint: { d: ["number"], re: /setpoint|solltemperatur|sollwert_?temp|target_?temp/ },
   duration: { d: ["number"], re: /(^|[._ ])(duration|dauer)([._ ]|$)|option_duration/ },
-  startIn: { d: ["number"], re: /start_?in|starten_?in|startinrelative|fertig_?in|finish_?in/ },
+  startIn: { d: ["number", "select"], re: /start_?in|starten_?in|startinrelative|fertig_?in|finish_?in/ },
   light: { d: ["light"], re: /./ },
   lightSwitch: { d: ["switch"], re: /beleuchtung|light/ },
   lightStatus: { d: ["binary_sensor"], re: /innenbeleuchtung|illumination/ },
@@ -741,8 +745,11 @@ function buildModel(hass, g, cfg, lang) {
   const fast = P("fastpreheat");
   const optCand = [];
   if (fast) optCand.push(fast);
-  g.entities.filter((e) => e.domain === "switch" && !used.has(e.eid) && !e.cat
-    && !/kamera|camera|tastenton|signal|einschalter|power/.test(e.k)).forEach((e) => optCand.push(e));
+  // Optionsschalter nur aus der besten Quelle – andere Quellen benennen dieselben Optionen anders
+  const swAll = g.entities.filter((e) => e.domain === "switch" && !used.has(e.eid) && !e.cat
+    && !/kamera|camera|tastenton|signal|einschalter|power/.test(e.k));
+  const bestPlat = (swAll.find((e) => e.avail) || swAll[0])?.platform;
+  swAll.forEach((e) => { if (e.platform === bestPlat) optCand.push(e); else used.add(e.eid); });
   if (childlock) optCand.push(childlock);
   const optSeen = new Set();
   for (const e of optCand) {
@@ -800,8 +807,9 @@ function buildModel(hass, g, cfg, lang) {
   const ef = P("energyF"), wf = P("waterF");
   if (ef?.avail) model.forecast = Object.assign(model.forecast || {}, { energy: parseFloat(ef.st.state) });
   if (wf?.avail) model.forecast = Object.assign(model.forecast || {}, { water: parseFloat(wf.st.state) });
-  g.entities.filter((e) => e.domain === "sensor" && /anzahl|counter/.test(e.k) && e.avail).slice(0, 4)
-    .forEach((e) => { used.add(e.eid); model.counters.push({ label: e.name, value: e.st.state }); });
+  const cSeen = new Set();
+  g.entities.filter((e) => e.domain === "sensor" && /anzahl|counter|startanzahl/.test(e.k) && !/image|frame|snapshot|timelapse/.test(e.k) && e.avail)
+    .forEach((e) => { used.add(e.eid); const k = canon(norm(e.name)); if (cSeen.has(k) || cSeen.size >= 4) return; cSeen.add(k); model.counters.push({ label: e.name, value: e.st.state }); });
 
   // Aktionen
   const btn = (name) => { const e = P(name); return e && e.st && e.st.state !== "unavailable" ? e.eid : null; };
@@ -1416,7 +1424,8 @@ class HomeConnectCard extends HTMLElement {
     const st = this._hass.states[m.camera];
     const pic = st?.attributes?.entity_picture;
     const live = st && ["streaming", "recording"].includes(st.state);
-    return `<div class="cam" data-act="cam">${pic ? `<img data-src="${esc(pic)}" src="${esc(pic)}" alt="${esc(T.camera)}" loading="lazy">` : `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div>`}
+    if (!st || st.state === "unavailable") return "";
+    return `<div class="cam" data-act="cam">${pic ? `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div><img data-src="${esc(pic)}" src="${esc(pic)}" alt="" loading="lazy" style="position:relative" onerror="this.style.display='none'">` : `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div>`}
       ${live ? `<span class="badge tl" style="background:rgba(255,92,92,.9);color:#fff">● ${T.live}</span>` : ""}
       ${m.temp?.current != null && m.running ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}</div>`;
   }
@@ -1465,7 +1474,7 @@ class HomeConnectCard extends HTMLElement {
     return `<div class="box"><div class="hero"><div class="ring">${ring}${inner}</div><div class="info">${info.join("")}</div></div>${extra}</div>`;
   }
   _m_programs(m, T) {
-    if (!m.programs.length) return "";
+    if (!m.programs.length || m.type === "hob") return "";
     const cats = [...new Set(m.programs.map((p) => p.cat))];
     const order = ["fav", "drink", "world", "dish", "heat", "micro", "steam", "prog", "clean"];
     cats.sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -1530,7 +1539,7 @@ class HomeConnectCard extends HTMLElement {
     for (const k of ["ratio"]) if (c[k]) out.push(this._ratio(k, c[k]));
     for (const k of ["washTemp", "spin", "dry", "level", "size", "waterTemp", "aroma"]) if (c[k] && c[k].options) out.push(this._segment(k, c[k]));
     if (c.multi) out.push(`<button class="tog ${c.multi.value === "on" ? "on" : ""}" data-ctl="multi" data-kind="toggle">${esc(c.multi.label)}<span class="sw"><i></i></span></button>`);
-    if (c.startIn) out.push(this._startIn("startIn", c.startIn, T));
+    if (c.startIn) out.push(c.startIn.options ? this._segment("startIn", c.startIn) : this._startIn("startIn", c.startIn, T));
     if (!out.length) return "";
     return `<div class="box"><span class="lbl">${esc(T.settings)}</span>${out.join("")}</div>`;
   }
