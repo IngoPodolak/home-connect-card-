@@ -58,7 +58,10 @@ demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee
 
 | Option | Beschreibung |
 |---|---|
-| `device` | Gerät (Seriennummer oder Geräte-ID) |
+| `device` | Home-Connect-Gerät (Seriennummer oder Geräte-ID) |
+| `entity` | Hauptentität eines anderen Geräts (`vacuum.*`, `lawn_mower.*`, `climate.*`) |
+| `ha_device` | beliebiges HA-Gerät (Geräte-ID) |
+| `extra_entities` | zusätzliche Entitäten |
 | `demo` | Demo-Gerätetyp statt echtem Gerät |
 | `layout` | `full` (Standard) oder `compact` |
 | `name` | eigener Name |
@@ -83,6 +86,25 @@ cards:
   - type: custom:home-connect-card
     device: "384050532704003972"
 ```
+
+
+## Andere Geräte (nicht Home Connect)
+
+Die Karte funktioniert auch mit Geräten anderer Integrationen. Im Editor:
+
+- **Hauptentität** wählen (Saugroboter `vacuum.*`, Mähroboter `lawn_mower.*`, Klimaanlage `climate.*`) – alle Entitäten desselben Geräts werden automatisch einbezogen, oder
+- **beliebiges HA-Gerät** wählen – die Karte ordnet die Entitäten wie bei Home Connect selbst zu.
+- Unter **„Entitäten selbst zuordnen“** lässt sich jede Rolle (Kamera/Karte, Akku, Fehler, Restzeit, Start-Taste …) gezielt festlegen; **„Zusätzliche Entitäten“** fügt weitere hinzu.
+
+Automatische Profile:
+
+| Profil | Getestet mit | Inhalt |
+|---|---|---|
+| Saugroboter | Dreame, Valetudo (MQTT) | Akku-Ring, Fläche/Dauer/Raum, Karte, Räume (Dreame, Xiaomi Miio, Roborock), Saugstufe, Wischmodus, Verschleißteile, Start/Pause/Station/Orten |
+| Mähroboter | Robonect (Husqvarna) | Akku-Ring, nächster Start, Schnitthöhe, Betriebsarten-Tasten, Zeitpläne/Optionen, Mähen/Pause/Station |
+| Klimaanlage | Tuya | Ist/Soll, Modus, Lüfter, Lamellen, Profile, Optionen, Farbe je Modus (Kühlen blau, Heizen orange …) |
+
+Weitere Marken (Ecovacs, SwitchBot, Roomba, Gardena, Bosch Indego, Worx Landroid, Mammotion, Daikin, Midea, Sensibo …) laufen über dieselben Profile, sofern ihre Integration die üblichen HA-Entitäten anbietet.
 
 ## Bekannte Grenzen (0.1.0)
 
