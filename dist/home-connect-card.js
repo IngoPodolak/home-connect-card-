@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.2.0";
+const HC_VERSION = "1.3.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -58,7 +58,7 @@ const I18N = {
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
     cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
-    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_images: "Vorschaubilder", e_pimg: "Ordner für eigene Programmbilder (optional, z. B. /local/hc-bilder)", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner für eigene Programmbilder (optional, z. B. /local/hc-bilder)", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
@@ -103,7 +103,7 @@ const I18N = {
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
     cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
-    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", e_pimg: "Folder with own program images (optional, e.g. /local/hc-images)", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
+    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with own program images (optional, e.g. /local/hc-images)", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
     ph_wash: "Washing", ph_rinse: "Rinsing", ph_spin: "Spinning", ph_dry: "Drying", ph_done: "Done",
@@ -1740,7 +1740,7 @@ function ovenModeSvg(key) {
   const box = `<rect x="12" y="12" width="56" height="56" rx="8" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.55)" stroke-width="2.4"/>`;
   const topH = `<path d="M20 21h40" stroke="${hot}" stroke-width="3" stroke-linecap="round"/>`;
   const botH = `<path d="M20 59h40" stroke="${hot}" stroke-width="3" stroke-linecap="round"/>`;
-  const grill = (w) => `<path d="M${40 - w} 21 l4 4 4 -4 4 4 4 -4 4 4 4 -4 4 4 4 -4${w > 14 ? " 4 4 4 -4 4 4 4 -4" : ""}" fill="none" stroke="${hot}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const grill = (w) => `<path d="M${w > 14 ? 20 : 28} 21 l4 4 4 -4 4 4 4 -4 4 4 4 -4${w > 14 ? " 4 4 4 -4 4 4 4 -4 4 4 4 -4" : ""}" fill="none" stroke="${hot}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
   const fan = `<circle cx="40" cy="40" r="9" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2"/><path d="M40 33c3 0 4 3 2 5l-2 2-2-2c-2-2-1-5 2-5zM47 40c0 3-3 4-5 2l-2-2 2-2c2-2 5-1 5 2zM40 47c-3 0-4-3-2-5l2-2 2 2c2 2 1 5-2 5zM33 40c0-3 3-4 5-2l2 2-2 2c-2 2-5 1-5-2z" fill="rgba(255,255,255,.85)"/>`;
   const ring = `<circle cx="40" cy="40" r="13" fill="none" stroke="${hot}" stroke-width="2.4" stroke-dasharray="4 3"/>`;
   const waves = `<g fill="none" stroke="#b3a6ff" stroke-width="2.4" stroke-linecap="round"><path d="M26 30c4-4 8 4 12 0s8 4 12 0 8 4 12 0"/><path d="M26 40c4-4 8 4 12 0s8 4 12 0 8 4 12 0"/><path d="M26 50c4-4 8 4 12 0s8 4 12 0 8 4 12 0"/></g>`;
@@ -1756,8 +1756,8 @@ function ovenModeSvg(key) {
   else if (/eco|gentle|hotairgentle/.test(k)) inner = fan + ring + `<path d="M58 54c-6 0-9-4-9-8 6 0 9 3 9 8z" fill="#7cc35a"/>`;
   else if (/hotair|umluft|3d|4d|convection|circulat/.test(k)) inner = fan + ring;
   else if (/intensive|intensiv/.test(k)) inner = topH + botH + fan;
-  else if (/bottom|unterhitze/.test(k)) inner = botH;
   else if (/topbottom|oberunter|conventional|toptbottom/.test(k)) inner = topH + botH;
+  else if (/bottom|unterhitze/.test(k)) inner = botH;
   else if (/keepwarm|warm|plate|cups|tassen|teller/.test(k)) inner = warmP;
   else if (/defrost|auftau/.test(k)) inner = fan + `<path d="M40 30v20M31.3 35l17.4 10M31.3 45l17.4-10" stroke="#9ad7ff" stroke-width="2.2" stroke-linecap="round"/>`;
   else if (/slow|nieder|lowtemp/.test(k)) inner = topH.replace(/stroke-width="3"/, 'stroke-width="2" opacity=".6"') + botH.replace(/stroke-width="3"/, 'stroke-width="2" opacity=".6"') + `<circle cx="40" cy="40" r="9" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"/><path d="M40 35v5l3 2" stroke="rgba(255,255,255,.8)" stroke-width="2" stroke-linecap="round" fill="none"/>`;
@@ -1829,6 +1829,91 @@ function previewSvg(m, p, color) {
   else if (["oven", "microwave", "warmingdrawer", "cookprocessor"].includes(m.type)) body = p.cat === "dish" || p.cat === "world" ? dishSvg(`${p.label} ${key}`) : (p.cat === "clean" ? careSvg(m.type, key, p.label, color) : ovenModeSvg(`${key} ${p.label}`));
   else if (["dishwasher", "washer", "dryer", "washerdryer"].includes(m.type)) body = careSvg(m.type, key, p.label, color);
   return body ? `<svg viewBox="0 0 80 80" aria-hidden="true">${body}</svg>` : null;
+}
+/* ------------------------------------------------------------------ */
+/* Gerätedisplay-Ansicht: Draufsicht-Bilder und Herkunft               */
+/* ------------------------------------------------------------------ */
+const FLAGS = {
+  ITA: '<rect width="6" height="18" fill="#009246"/><rect x="6" width="6" height="18" fill="#fff"/><rect x="12" width="6" height="18" fill="#ce2b37"/>',
+  FRA: '<rect width="6" height="18" fill="#0055a4"/><rect x="6" width="6" height="18" fill="#fff"/><rect x="12" width="6" height="18" fill="#ef4135"/>',
+  AUT: '<rect width="18" height="6" fill="#ed2939"/><rect y="6" width="18" height="6" fill="#fff"/><rect y="12" width="18" height="6" fill="#ed2939"/>',
+  NED: '<rect width="18" height="6" fill="#ae1c28"/><rect y="6" width="18" height="6" fill="#fff"/><rect y="12" width="18" height="6" fill="#21468b"/>',
+  IND: '<rect width="18" height="6" fill="#ff9933"/><rect y="6" width="18" height="6" fill="#fff"/><rect y="12" width="18" height="6" fill="#138808"/><circle cx="9" cy="9" r="1.8" fill="none" stroke="#000080" stroke-width=".7"/>',
+  ESP: '<rect width="18" height="18" fill="#aa151b"/><rect y="4.5" width="18" height="9" fill="#f1bf00"/>',
+  POR: '<rect width="18" height="18" fill="#da291c"/><rect width="7" height="18" fill="#046a38"/><circle cx="7" cy="9" r="2.4" fill="#ffe900"/>',
+  BRA: '<rect width="18" height="18" fill="#009c3b"/><path d="M9 3 16 9 9 15 2 9z" fill="#ffdf00"/><circle cx="9" cy="9" r="2.8" fill="#002776"/>',
+  USA: '<rect width="18" height="18" fill="#fff"/><g fill="#b22234"><rect width="18" height="2"/><rect y="4" width="18" height="2"/><rect y="8" width="18" height="2"/><rect y="12" width="18" height="2"/><rect y="16" width="18" height="2"/></g><rect width="9" height="10" fill="#3c3b6e"/>',
+  AUS: '<rect width="18" height="18" fill="#012169"/><g fill="#fff"><circle cx="13" cy="5" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="12" cy="14" r="1"/><circle cx="5" cy="13" r="1.6"/></g>',
+};
+const ORIGIN = [[/kaapi/, "IND"], [/galao/, "POR"], [/garoto/, "BRA"], [/cafecortado|cortado|cafeconleche/, "ESP"], [/cafeaulait/, "FRA"], [/koffieverkeerd/, "NED"],
+  [/wienermelange|kleinerbrauner|grosserbrauner|verlaengerter/, "AUT"], [/americano|redeye|blackeye|deadeye|coldbrew/, "USA"], [/flatwhite/, "AUS"], [/ristretto|espressomacchiato/, "ITA"]];
+function flagSvg(code) { return FLAGS[code] ? `<svg class="flag" viewBox="0 0 18 18" aria-hidden="true"><defs><clipPath id="fc${code}"><circle cx="9" cy="9" r="9"/></clipPath></defs><g clip-path="url(#fc${code})">${FLAGS[code]}</g></svg>` : ""; }
+function drinkOrigin(key) { const k = canon(key); return (ORIGIN.find(([re]) => re.test(k)) || [])[1] || null; }
+// Draufsicht auf das Getränk wie im Gerätedisplay
+function drinkTopSvg(key, id) {
+  const k = canon(key);
+  const g = (gid, stops) => `<radialGradient id="${id}${gid}" cx="50%" cy="50%" r="50%">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</radialGradient>`;
+  const kind = /coldbrew|iced|eis/.test(k) ? "cold" : /hotwater|heisswasser|heisseswasser|water/.test(k) ? "water" : /milkfroth|milchschaum|froth/.test(k) ? "froth"
+    : /warmmilk|warmemilch/.test(k) ? "milk" : /lattemacchiato|galao/.test(k) ? "latte" : /cappuccino|cappu/.test(k) ? "cappu" : /flatwhite/.test(k) ? "flat"
+    : /espressomacchiato|garoto|kleinerbrauner|cortado/.test(k) ? "macchiato" : /ristretto/.test(k) ? "ristretto" : /espressodoppio|doppio/.test(k) ? "doppio" : /espresso/.test(k) ? "espresso"
+    : /caffelatte|cafeaulait|milchkaffee|milkcoffee|koffieverkeerd|cafeconleche|grosserbrauner|wienermelange|kaapi/.test(k) ? "milkcoffee"
+    : /caffegrande|xlcoffee|grande|americano|redeye|blackeye|deadeye|verlaengerter|xl/.test(k) ? "xl" : /chocolate|kakao/.test(k) ? "choc" : "crema";
+  const R = { ristretto: 25, espresso: 26, macchiato: 27, doppio: 30, crema: 32, flat: 32, cappu: 33, latte: 32, milk: 32, froth: 32, water: 32, cold: 34, milkcoffee: 36, xl: 36, choc: 34 }[kind];
+  const glass = ["latte", "milk", "froth", "water", "cold"].includes(kind);
+  const cx = 52, cy = 48, r = R - 4;
+  // Henkel unten links wie am Display
+  const hx = cx - (R + 6) * 0.7, hy = cy + (R + 6) * 0.7;
+  const handle = `<g transform="rotate(45 ${hx} ${hy})"><rect x="${hx - 5}" y="${hy - 11}" width="10" height="22" rx="4" fill="${glass ? "rgba(220,230,235,.55)" : "#2c2c30"}" stroke="${glass ? "rgba(255,255,255,.8)" : "#6c6c72"}" stroke-width="1.4"/></g>`;
+  const cup = `<circle cx="${cx + 2}" cy="${cy + 3}" r="${R + 1}" fill="rgba(0,0,0,.45)"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="${glass ? "rgba(200,215,220,.18)" : "#26262a"}" stroke="${glass ? "rgba(255,255,255,.85)" : "#9a9aa0"}" stroke-width="${glass ? 2.2 : 2.6}"/>`;
+  let defs = "", surf = "";
+  const crema = (a, b, c) => { defs += g("c", [["0", a], ["0.62", b], ["1", c]]); return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}c)"/>`; };
+  const crescent = `<path d="M${cx - r * .75} ${cy - r * .35} A${r} ${r} 0 0 1 ${cx + r * .55} ${cy - r * .8} A${r * 1.05} ${r * .9} 0 0 0 ${cx - r * .75} ${cy - r * .35}z" fill="#3a1606" opacity=".55"/>`;
+  const bubbles = (n, rr, col, op) => Array.from({ length: n }, (_, i) => { const a = i * 2.39996, d = rr * Math.sqrt((i + .5) / n); return `<circle cx="${(cx + Math.cos(a) * d).toFixed(1)}" cy="${(cy + Math.sin(a) * d).toFixed(1)}" r="${(0.6 + (i % 3) * 0.35).toFixed(2)}" fill="${col}" opacity="${op}"/>`; }).join("");
+  switch (kind) {
+    case "ristretto": case "espresso": case "doppio":
+      surf = crema("#ffb04a", "#d27322", "#5a240a") + crescent + `<ellipse cx="${cx + r * .25}" cy="${cy - r * .55}" rx="${r * .35}" ry="${r * .08}" fill="#fff" opacity=".35"/>`; break;
+    case "macchiato":
+      surf = crema("#f3a34c", "#c2671f", "#4e1f08") + `<circle cx="${cx}" cy="${cy}" r="${r * .42}" fill="#f6efe4"/><circle cx="${cx}" cy="${cy}" r="${r * .42}" fill="none" stroke="#d9a36b" stroke-width="1.5" opacity=".6"/>`; break;
+    case "crema":
+      surf = crema("#e2a35e", "#b46a2a", "#4a220c") + bubbles(26, r * .8, "#7a3a12", .55); break;
+    case "xl":
+      defs += g("c", [["0", "#4a2a18"], ["1", "#24130a"]]);
+      surf = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}c)"/><g fill="none" stroke="#d6b48a" stroke-linecap="round" opacity=".55"><path d="M${cx - r * .6} ${cy} c${r * .3} ${-r * .6} ${r * .9} ${-r * .5} ${r * .9} 0 s${-r * .6} ${r * .5} ${-r * .3} ${r * .1}" stroke-width="2.2"/><path d="M${cx - r * .2} ${cy + r * .5} c${r * .4} ${r * .1} ${r * .7} ${-r * .3} ${r * .6} ${-r * .7}" stroke-width="1.6"/><path d="M${cx - r * .8} ${cy - r * .2} c${r * .2} ${-r * .3} ${r * .4} ${-r * .5} ${r * .7} ${-r * .55}" stroke-width="1.4"/></g>${bubbles(18, r * .95, "#e8c69a", .4)}`; break;
+    case "cappu":
+      surf = crema("#f6d7a6", "#d7953f", "#8a4a16") + `<circle cx="${cx}" cy="${cy}" r="${r * .78}" fill="#f7f1e8"/><path d="M${cx} ${cy + r * .45} C${cx - r * .75} ${cy - r * .05} ${cx - r * .45} ${cy - r * .65} ${cx} ${cy - r * .25} C${cx + r * .45} ${cy - r * .65} ${cx + r * .75} ${cy - r * .05} ${cx} ${cy + r * .45}z" fill="#d9a35f" opacity=".75"/><path d="M${cx} ${cy + r * .32} C${cx - r * .55} ${cy} ${cx - r * .32} ${cy - r * .45} ${cx} ${cy - r * .14} C${cx + r * .32} ${cy - r * .45} ${cx + r * .55} ${cy} ${cx} ${cy + r * .32}z" fill="#fbf7f0"/>`; break;
+    case "flat":
+      surf = crema("#e9b878", "#c27c35", "#6e3a12") + [0.38, 0.12, -0.14].map((o, i) => `<ellipse cx="${cx}" cy="${cy + r * o}" rx="${r * (0.42 - i * 0.08)}" ry="${r * (0.2 - i * 0.03)}" fill="#f8f1e6"/>`).join(""); break;
+    case "milkcoffee":
+      surf = crema("#f4e2c4", "#c98b48", "#7a4216") + `<circle cx="${cx}" cy="${cy}" r="${r * .55}" fill="none" stroke="#e7c08a" stroke-width="${r * .18}" opacity=".7"/><circle cx="${cx - r * .05}" cy="${cy - r * .05}" r="${r * .3}" fill="#fbf6ee"/>`; break;
+    case "latte":
+      defs += g("c", [["0", "#fffaf2"], ["1", "#ece2d2"]]);
+      surf = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}c)"/><circle cx="${cx + 2}" cy="${cy - 2}" r="${r * .32}" fill="#c98a45"/><circle cx="${cx + 2}" cy="${cy - 2}" r="${r * .18}" fill="#8a4a1c"/><circle cx="${cx + 2}" cy="${cy - 2}" r="${r * .45}" fill="none" stroke="#e2b78a" stroke-width="2" opacity=".6"/>`; break;
+    case "milk":
+      defs += g("c", [["0", "#fffdf7"], ["1", "#efe8d6"]]);
+      surf = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}c)"/><circle cx="${cx - r * .35}" cy="${cy - r * .15}" r="1.6" fill="#e8c890"/><circle cx="${cx - r * .28}" cy="${cy - r * .22}" r="1" fill="#e8c890"/>${bubbles(10, r * .4, "#d9cfb8", .5).replace(/cx="/g, `transform="translate(${r * .35} ${r * .3})" cx="`)}`; break;
+    case "froth":
+      defs += g("c", [["0", "#ffffff"], ["1", "#e9e4da"]]);
+      surf = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}c)"/>${bubbles(30, r * .9, "#cfc6b6", .7)}`; break;
+    case "water":
+      defs += g("c", [["0", "#1b2328"], ["1", "#2c3a42"]]);
+      surf = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id}c)"/>${[0.85, 0.65].map((f) => `<circle cx="${cx}" cy="${cy}" r="${r * f}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/>`).join("")}${bubbles(40, r * .6, "#e6f2f7", .6)}`; break;
+    case "cold":
+      surf = crema("#d58a3e", "#9b4e18", "#3a1606") + [[-.3, -.3, 20], [.25, -.1, -15], [-.05, .35, 10]].map(([dx, dy, rot]) => `<rect x="${cx + dx * r - 7}" y="${cy + dy * r - 7}" width="14" height="14" rx="3.5" fill="rgba(255,255,255,.82)" stroke="rgba(255,255,255,.95)" transform="rotate(${rot} ${cx + dx * r} ${cy + dy * r})"/>`).join("") + bubbles(14, r * .9, "#2a0e04", .6); break;
+    case "choc":
+      surf = crema("#7a4a2a", "#4a2614", "#24110a") + `<circle cx="${cx}" cy="${cy}" r="${r * .45}" fill="#f2e6d6" opacity=".9"/>`; break;
+  }
+  const beans = ["ristretto", "espresso", "doppio", "macchiato", "crema"].includes(kind)
+    ? `<g fill="#9a5a2e">${[[cx + R + 6, cy - R + 4, 30], [cx + R + 14, cy - R + 14, -20]].slice(0, kind === "ristretto" || kind === "doppio" ? 2 : 1).map(([x, y, a]) => `<g transform="translate(${x} ${y}) rotate(${a})"><ellipse rx="4.2" ry="6"/><path d="M-.6 -5c1.6 3 -1.6 7 .6 10" stroke="#4a2410" stroke-width="1" fill="none"/></g>`).join("")}</g>` : "";
+  return `<defs>${defs}</defs>${handle}${cup}${surf}${glass ? `<circle cx="${cx}" cy="${cy}" r="${R - 1.5}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/>` : `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>`}${beans}`;
+}
+function displayArt(m, p, color) {
+  const id = `da${++_uid}`;
+  const key = `${p.tail || p.canon} ${p.label}`;
+  let body;
+  if (m.type === "coffee" && p.cat !== "clean") body = drinkTopSvg(key, id);
+  else if (["oven", "microwave", "warmingdrawer", "cookprocessor"].includes(m.type)) body = p.cat === "dish" || p.cat === "world" ? dishSvg(key).replace(/^/, '<g transform="translate(2 4) scale(1.2) translate(-8 -10)">') + "</g>" : ovenModeSvg(key);
+  else body = careSvg(m.type, p.tail || p.canon, p.label, color);
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">${body}</svg>`;
 }
 function animSvg(kind, color, m) {
   const id = `hc${++_uid}`;
@@ -2001,6 +2086,25 @@ button{font:inherit;color:inherit}
 .tiles.scroll{max-height:290px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:var(--hc-line2) transparent}
 .tiles.scroll::-webkit-scrollbar{width:6px}.tiles.scroll::-webkit-scrollbar-thumb{background:var(--hc-line2);border-radius:3px}
 .tile{min-height:90px;border-radius:20px;border:0;background:var(--hc-s2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:8px;text-align:center;line-height:1.2}
+.disp{position:relative}
+.dview{position:relative;height:210px;border-radius:20px;overflow:hidden;background:radial-gradient(120% 100% at 30% 50%,#2a2c33,#17181c);color:#f2f3f5;touch-action:pan-y;user-select:none;outline:none}
+.dcat{position:absolute;left:16px;top:12px;font-size:12px;font-weight:700;color:var(--hc-accent);letter-spacing:.2px}
+.dring{position:absolute;left:46%;top:50%;width:180px;height:180px;margin:-90px 0 0 -46px;border-radius:50%;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.03)}
+.dart{position:absolute;left:48px;top:22px;width:160px;height:160px;border:0;padding:0;background:none;cursor:pointer;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.dart svg,.dart img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.dinfo{position:absolute;left:50%;right:44px;top:50%;transform:translateY(-55%);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.dname{font-size:26px;font-weight:700;line-height:1.08;letter-spacing:-.2px;text-shadow:0 2px 8px rgba(0,0,0,.5);overflow-wrap:break-word;hyphens:manual}
+.dmeta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;font-weight:600;color:#dfe2e6}
+.dmeta span{display:inline-flex;align-items:center;gap:5px}.dmeta svg{color:#dfe2e6}
+.flag{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
+.dpick{border:0;border-radius:16px;height:32px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.12);color:#f2f3f5}
+.dpick.on{background:var(--hc-accent);color:#141414}
+.dnav{position:absolute;left:8px;top:50%;margin-top:-17px;width:44px;height:34px;border-radius:17px;border:0;background:#eceef0;color:#333;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.dnav svg{transform:rotate(90deg)}.dnav.next{left:auto;right:8px}.dnav.next svg{transform:rotate(-90deg)}
+.ddots{position:absolute;left:46%;bottom:10px;display:flex;gap:6px;transform:translateX(-10%)}
+.ddots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.55);cursor:pointer}
+.ddots button.on{background:#e3212b}.ddots button.edge{width:4px;height:4px;margin-top:1.5px}
+@container (max-width: 420px){.dview{height:190px}.dart{left:40px;top:30px;width:128px;height:128px}.dring{width:150px;height:150px;margin:-75px 0 0 -40px}.dname{font-size:20px}.dinfo{left:47%;right:40px}.dmeta{font-size:12px}}
 .tiles.pvmode .tile{padding:0 0 8px;justify-content:flex-start;overflow:hidden;min-height:122px;gap:6px}
 .tiles.pvmode.scroll{max-height:400px}
 .tile .pv{position:relative;width:100%;height:78px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--hc-accent) 18%,transparent),transparent 68%),rgba(0,0,0,.22);flex:none}
@@ -2489,6 +2593,7 @@ class HomeConnectCard extends HTMLElement {
     const q = this._ui.search || "";
     const search = count > 12 ? `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label>` : "";
     const pvMode = this._config.program_view === "images";
+    if (this._config.program_view === "display") return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${search}<div class="disp" data-cat="${tab}"></div></div>`;
     const body = `${search}<div class="tiles ${pvMode ? "pvmode" : ""} ${count > (pvMode ? 6 : 9) ? "scroll" : ""}" data-cat="${tab}"></div>`;
     return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${body}</div>`;
   }
@@ -2546,6 +2651,58 @@ class HomeConnectCard extends HTMLElement {
       return `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(parts[0])}</span>${parts[1] ? `<small>${esc(parts[1])}</small>` : ""}</button>`;
     }).join("") : `<div class="empty" style="grid-column:1/-1">${esc(T.no_results)}</div>`;
     box.scrollTop = 0;
+  }
+  // Karussell wie am Gerätedisplay
+  _fillDisp() {
+    const box = this.shadowRoot.querySelector(".disp[data-cat]");
+    const m = this._m;
+    if (!box || !m) return;
+    const T = I18N[this.lang];
+    const cat = box.dataset.cat;
+    const q = norm(this._ui.search || "").trim();
+    let list = m.programs.filter((p) => p.cat === cat);
+    if (q) list = list.filter((p) => norm(p.label).includes(q) || p.canon.includes(canon(q)));
+    const qc = this.shadowRoot.querySelector(".qc"); if (qc) qc.textContent = `${list.length} ${T.results}`;
+    if (!list.length) { box.innerHTML = `<div class="empty">${esc(T.no_results)}</div>`; return; }
+    this._ui.dispIdx = this._ui.dispIdx || {};
+    let i = this._ui.dispIdx[cat];
+    if (i == null) { i = Math.max(0, list.findIndex((p) => p.canon === m.selectedCanon)); }
+    i = (i + list.length) % list.length;
+    this._ui.dispIdx[cat] = i;
+    const p = list[i];
+    const sel = p.canon === m.selectedCanon;
+    const name = p.label.split(" · ")[0].replace(/\//g, "/\u200b");
+    const sub = p.label.split(" · ")[1];
+    const meta = [];
+    if (m.type === "coffee") {
+      const o = drinkOrigin(`${p.tail || p.canon} ${p.label}`);
+      if (o) meta.push(`<span>${flagSvg(o)}${o}</span>`);
+      if (sel && m.controls.beans?.value) { const bc = m.controls.beans; const bi = bc.options.indexOf(bc.value); meta.push(`<span>${beanSym(bc.value, bi, bc.options.length, 16)}${esc(beanLabel(bc.value, bc.optionLabels?.[bi], this.lang))}</span>`); }
+      if (sel && m.controls.fill?.value && !isNaN(parseFloat(m.controls.fill.value))) meta.push(`<span>${ic("drop", 14, 2)}${Math.round(parseFloat(m.controls.fill.value))} ml</span>`);
+    } else if (sub) meta.push(`<span>${esc(sub)}</span>`);
+    const url = this._progImage(p);
+    const art = `${displayArt(m, p, this._accent || "var(--hc-accent)")}${url ? `<img src="${esc(url)}" alt="" onerror="this.remove()">` : ""}`;
+    const n = list.length, W = 9;
+    const start = Math.max(0, Math.min(n - W, i - Math.floor(W / 2)));
+    const dots = n > 1 ? `<div class="ddots">${Array.from({ length: Math.min(W, n) }, (_, j) => { const k = start + j; return `<button class="${k === i ? "on" : ""} ${(j === 0 && start > 0) || (j === W - 1 && start + W < n) ? "edge" : ""}" data-di="${k}" aria-label="${k + 1}"></button>`; }).join("")}</div>` : "";
+    box.innerHTML = `<div class="dview" tabindex="0">
+      <span class="dcat">${esc(T[`tab_${cat}`] || cat)}</span>
+      ${n > 1 ? `<button class="dnav" data-dstep="-1" aria-label="‹">${ic("chev", 18, 2.2)}</button>` : ""}
+      <div class="dring"></div>
+      <button class="dart" data-dsel aria-label="${esc(name)}">${art}</button>
+      <div class="dinfo"><div class="dname">${esc(name)}</div>${meta.length ? `<div class="dmeta">${meta.join("")}</div>` : ""}
+        <button class="dpick ${sel ? "on" : ""}" data-dsel>${sel ? `${ic("check", 14, 2.6)}${esc(T.selected)}` : esc(T.choose)}</button></div>
+      ${n > 1 ? `<button class="dnav next" data-dstep="1" aria-label="›">${ic("chev", 18, 2.2)}</button>` : ""}
+      ${dots}</div>`;
+    const go = (d) => { this._ui.dispIdx[cat] = i + d; this._fillDisp(); };
+    box.querySelectorAll("[data-dstep]").forEach((b) => b.addEventListener("click", (ev) => { ev.stopPropagation(); go(+b.dataset.dstep); }));
+    box.querySelectorAll("[data-di]").forEach((b) => b.addEventListener("click", (ev) => { ev.stopPropagation(); this._ui.dispIdx[cat] = +b.dataset.di; this._fillDisp(); }));
+    box.querySelectorAll("[data-dsel]").forEach((b) => b.addEventListener("click", () => { if (!sel) this._selectProgram(p.canon, b); }));
+    const v = box.querySelector(".dview");
+    let x0 = null;
+    v.addEventListener("pointerdown", (ev) => { x0 = ev.clientX; });
+    v.addEventListener("pointerup", (ev) => { if (x0 != null && Math.abs(ev.clientX - x0) > 40) go(ev.clientX < x0 ? 1 : -1); x0 = null; });
+    v.addEventListener("keydown", (ev) => { if (ev.key === "ArrowRight") go(1); else if (ev.key === "ArrowLeft") go(-1); });
   }
   _m_controls(m, T) {
     const c = m.controls;
@@ -2759,8 +2916,9 @@ class HomeConnectCard extends HTMLElement {
     }));
     R.querySelectorAll("[data-tab]").forEach((el) => el.addEventListener("click", () => { this._ui.tab = el.dataset.tab; this._ui.search = ""; this._sig = ""; this._update(true); }));
     const q = R.querySelector("input.q");
-    if (q) q.addEventListener("input", () => { this._ui.search = q.value; this._fillList(); this._bindList(); });
+    if (q) q.addEventListener("input", () => { this._ui.search = q.value; if (R.querySelector(".disp[data-cat]")) { this._ui.dispIdx = {}; this._fillDisp(); } else { this._fillList(); this._bindList(); } });
     if (R.querySelector(".tiles[data-cat]")) { this._fillList(); this._bindList(); }
+    if (R.querySelector(".disp[data-cat]")) this._fillDisp();
     R.querySelectorAll("[data-ctl]").forEach((el) => {
       if (el.classList.contains("bslider")) {
         const ctl = m.controls[el.dataset.ctl];
@@ -3059,7 +3217,7 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "color", selector: { color_rgb: {} } },
       { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
       { name: "price_entity", selector: { entity: { domain: "sensor" } } },
-      { name: "program_view", selector: { select: { mode: "dropdown", options: [{ value: "icons", label: T.pv_icons }, { value: "images", label: T.pv_images }] } } },
+      { name: "program_view", selector: { select: { mode: "dropdown", options: [{ value: "icons", label: T.pv_icons }, { value: "images", label: T.pv_images }, { value: "display", label: T.pv_display }] } } },
       { name: "program_image_path", selector: { text: {} } },
       { name: "sub_buttons", selector: { boolean: {} } },
       { name: "cheapest_default", selector: { boolean: {} } },
