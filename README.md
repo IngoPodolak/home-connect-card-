@@ -66,16 +66,15 @@ demo: washer   # oven, dishwasher, washer, dryer, washerdryer, coffee, fridge, f
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
 | `entities` | einzelne Zuordnungen überschreiben, z. B. `camera: camera.mein_ofen` |
 
-### In einem Bubble-Card-Popup
+### In einem Bubble-Card-Popup (eigenständiges Format ab Bubble Card 3.2)
 
 ```yaml
-type: vertical-stack
+type: custom:bubble-card
+card_type: pop-up
+hash: "#backofen"
+name: Backofen
+icon: mdi:stove
 cards:
-  - type: custom:bubble-card
-    card_type: pop-up
-    hash: "#backofen"
-    name: Backofen
-    icon: mdi:stove
   - type: custom:home-connect-card
     device: "384050532704003972"
 ```
