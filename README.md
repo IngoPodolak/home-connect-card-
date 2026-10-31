@@ -21,7 +21,7 @@ Eine Home-Assistant-Dashboard-Karte für **Home-Connect-Geräte** (Bosch, Siemen
 - **i-DOS** bei Waschmaschinen: Füllstände als Tanks plus Auto-Dosierung.
 - **Einstellungen kompakt statt als Liste**: Temperatur, Dauer, Startzeit, Bohnenmenge, Kaffee/Milch, Füllmenge, Waschtemperatur, Schleudern, Optionen als Schalter, Verbrauchsmaterial (Salz, Klarspüler, Wassertank, Auffangschale, i-DOS …).
 - Alles Übrige steht unter **„Weitere Einstellungen“**, ohne doppelte Einträge aus mehreren Quellen.
-- **Günstigster Start** für Spülmaschine, Waschmaschine und Trockner: berechnet aus der Strompreis-Prognose und der Programmdauer und setzt die Startverzögerung.
+- **Günstigster Start** für Spülmaschine, Waschmaschine und Trockner: berechnet aus der Strompreis-Prognose und der Programmdauer. Die günstigste Startzeit ist **vorausgewählt** und wird beim Drücken auf „Starten“ gesetzt (abschaltbar mit `cheapest_default: false`, „Sofort“ hebt die Vorauswahl auf).
 - **Kompakt-Ansicht** als Bubble-Button für die Übersicht.
 - **Demo-Modus** für alle Gerätetypen (zum Ausprobieren ohne echtes Gerät).
 - Deutsch und Englisch, richtet sich nach der HA-Sprache.
@@ -71,6 +71,8 @@ demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee
 | `price_entity` | Strompreis-Sensor mit Prognose für „Günstigster Start“ (Tibber, EPEX Spot, Nordpool …) – wird sonst automatisch gesucht, `none` schaltet ab |
 | `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `idos`, `options`, `consumables`, `actions`, `more` |
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
+| `cheapest_default` | günstigste Startzeit vorauswählen (Standard `true`) |
+| `valetudo_topic` | MQTT-Basis-Topic des Valetudo-Roboters, falls abweichend (Standard `valetudo/<Kennung>`) |
 | `camera_max_age` | maximales Alter des Kamerabilds in Minuten (Standard 5) |
 | `entities` | einzelne Zuordnungen überschreiben, z. B. `camera: camera.mein_ofen` |
 
@@ -100,9 +102,11 @@ Automatische Profile:
 
 | Profil | Getestet mit | Inhalt |
 |---|---|---|
-| Saugroboter | Dreame, Valetudo (MQTT) | Akku-Ring, Fläche/Dauer/Raum, Karte, Räume (Dreame, Xiaomi Miio, Roborock), Saugstufe, Wischmodus, Verschleißteile, Start/Pause/Station/Orten |
+| Saugroboter | Dreame, Valetudo (MQTT) | Akku-Ring, Fläche/Dauer/Raum, Karte mit **antippbaren Räumen** (Mehrfachauswahl, sofern die Karte Raumkoordinaten liefert – z. B. Dreame, Xiaomi Cloud Map Extractor), Räume als Chips (Dreame, Xiaomi Miio, Roborock, Valetudo), Saugstufe, Wischmodus, Verschleißteile, Start/Pause/Station/Orten |
 | Mähroboter | Robonect (Husqvarna) | Akku-Ring, nächster Start, Schnitthöhe, Betriebsarten-Tasten, Zeitpläne/Optionen, Mähen/Pause/Station |
-| Klimaanlage | Tuya | Ist/Soll, Modus, Lüfter, Lamellen, Profile, Optionen, Farbe je Modus (Kühlen blau, Heizen orange …) |
+| Klimaanlage | Tuya | Ist/Soll, Modus, Lüfter, Lamellen, Profile, Optionen, Farbe je Modus (Kühlen blau, Heizen orange …), Animation mit schwenkenden Lamellen (vertikal/horizontal) |
+
+Valetudo-Räume kommen aus dem Sensor „Map segments“ und werden per `mqtt.publish` an `valetudo/<Kennung>/MapSegmentationCapability/clean/set` gestartet.
 
 Weitere Marken (Ecovacs, SwitchBot, Roomba, Gardena, Bosch Indego, Worx Landroid, Mammotion, Daikin, Midea, Sensibo …) laufen über dieselben Profile, sofern ihre Integration die üblichen HA-Entitäten anbietet.
 

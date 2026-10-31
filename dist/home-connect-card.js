@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.4.0";
+const HC_VERSION = "0.5.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -57,8 +57,8 @@ const I18N = {
     t_washerdryer: "Waschtrockner", t_coffee: "Kaffeevollautomat", t_fridge: "Kühlschrank", t_freezer: "Gefrierschrank",
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
-    cheapest: "Günstigster Start", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
-    e_price: "Strompreis-Prognose (für günstigsten Start)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    cheapest: "Günstigster Start", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
@@ -102,8 +102,8 @@ const I18N = {
     t_washerdryer: "Washer dryer", t_coffee: "Coffee machine", t_fridge: "Fridge", t_freezer: "Freezer",
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
-    cheapest: "Cheapest start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
-    e_price: "Electricity price forecast (for cheapest start)", auto: "automatic", no_price: "no price forecast found",
+    cheapest: "Cheapest start", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
+    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
     ph_wash: "Washing", ph_rinse: "Rinsing", ph_spin: "Spinning", ph_dry: "Drying", ph_done: "Done",
@@ -1005,7 +1005,7 @@ const PROFILE_I18N = {
     battery: "Akku", area: "Fläche", time: "Dauer", room: "Raum", next_start: "Nächster Start", humidity: "Luftfeuchte",
     current_t: "Ist", target_t: "Soll", mode: "Modus", fan_mode: "Lüfter", swing: "Lamellen", swing_h: "Lamellen horizontal", preset: "Profil",
     start_clean: "Starten", resume_clean: "Fortsetzen", go_home: "Zur Station", locate: "Orten", start_mow: "Mähen starten",
-    rooms: "Räume", clean_rooms: "{n} Räume reinigen", hours_left: "noch {n} h", error_t: "Fehler", modes: "Betriebsart",
+    rooms: "Räume", clean_rooms: "{n} Räume reinigen", clean_room1: "1 Raum reinigen", map_hint: "Räume auf der Karte antippen", sel_clear: "Auswahl löschen", hours_left: "noch {n} h", error_t: "Fehler", modes: "Betriebsart",
     t_lawnmower: "Mähroboter", t_aircon: "Klimaanlage", e_entity: "Andere Integration: Hauptentität (Sauger, Mäher, Klima …)",
     e_hadevice: "Andere Integration: beliebiges Gerät", e_extra: "Zusätzliche Entitäten", e_roles: "Entitäten selbst zuordnen",
   },
@@ -1017,7 +1017,7 @@ const PROFILE_I18N = {
     battery: "Battery", area: "Area", time: "Time", room: "Room", next_start: "Next start", humidity: "Humidity",
     current_t: "Current", target_t: "Target", mode: "Mode", fan_mode: "Fan", swing: "Swing", swing_h: "Horizontal swing", preset: "Preset",
     start_clean: "Start", resume_clean: "Resume", go_home: "Return to dock", locate: "Locate", start_mow: "Start mowing",
-    rooms: "Rooms", clean_rooms: "Clean {n} rooms", hours_left: "{n} h left", error_t: "Error", modes: "Mode",
+    rooms: "Rooms", clean_rooms: "Clean {n} rooms", clean_room1: "Clean 1 room", map_hint: "Tap rooms on the map", sel_clear: "Clear selection", hours_left: "{n} h left", error_t: "Error", modes: "Mode",
     t_lawnmower: "Robot mower", t_aircon: "Air conditioner", e_entity: "Other integration: main entity (vacuum, mower, climate …)",
     e_hadevice: "Other integration: any device", e_extra: "Additional entities", e_roles: "Assign entities manually",
   },
@@ -1055,6 +1055,34 @@ function attrLabel(hass, st, attr, v, lang) {
   if (lang === "de" && de[k]) return de[k];
   return cap(String(v).replace(/_/g, " "));
 }
+// Lamellen: swing_mode / swing_horizontal_mode -> {v, h}
+function swingInfo(sw, swh) {
+  const s = String(sw ?? "").toLowerCase().replace(/[\s-]/g, "_");
+  const h2 = String(swh ?? "").toLowerCase();
+  const off = (x) => !x || /^(off|stop|stopped|fixed|none|aus|false|0)$/.test(x) || /^(position|pos)_?\d|^(top|middle|bottom|left|right|center|centre)$/.test(x);
+  let v = false, h = false;
+  if (!off(s)) {
+    if (/both|3d|all|swing_all|full/.test(s)) { v = true; h = true; }
+    else if (/horiz|left_?right|leftright/.test(s)) h = true;
+    else v = true; // on, swing, vertical, up_down, auto …
+  }
+  if (h2 && !off(h2)) h = true;
+  return { v, h };
+}
+// Affine Abbildung Roboter-Koordinaten -> Bildpixel aus 3 Kalibrierpunkten
+function affineFromCalibration(cp) {
+  if (!Array.isArray(cp) || cp.length < 3) return null;
+  const P = cp.slice(0, 3).map((p) => [+p.vacuum?.x, +p.vacuum?.y, +p.map?.x, +p.map?.y]);
+  if (P.some((p) => p.some((v) => isNaN(v)))) return null;
+  const [[x0, y0, u0, v0], [x1, y1, u1, v1], [x2, y2, u2, v2]] = P;
+  const det = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+  if (!det) return null;
+  const a = ((u1 - u0) * (y2 - y0) - (u2 - u0) * (y1 - y0)) / det;
+  const b = ((u2 - u0) * (x1 - x0) - (u1 - u0) * (x2 - x0)) / det;
+  const d = ((v1 - v0) * (y2 - y0) - (v2 - v0) * (y1 - y0)) / det;
+  const e = ((v2 - v0) * (x1 - x0) - (v1 - v0) * (x2 - x0)) / det;
+  return (x, y) => [u0 + a * (x - x0) + b * (y - y0), v0 + d * (x - x0) + e * (y - y0)];
+}
 const OK_ERR = /^(none|no_?error|no error|ok|0|fehler 0|kein fehler|normal|unknown|unavailable|)$/i;
 
 function buildProfileModel(hass, g, cfg, lang, main) {
@@ -1086,7 +1114,7 @@ function buildProfileModel(hass, g, cfg, lang, main) {
 
   // Kamera / Karte
   const camOv = ovSt("camera");
-  const cams = camOv ? [camOv] : findAll((e) => e.domain === "camera");
+  const cams = camOv ? [camOv] : findAll((e) => e.domain === "camera" && !(e.platform === "mqtt" && /map_?data/.test(e.k)));
   cams.forEach((e) => used.add(e.eid));
   const cam = cams.find((e) => /map|karte/.test(e.k) && !/_\d+$/.test(e.eid)) || cams[0];
   if (cam) model.camera = cam.eid;
@@ -1168,12 +1196,46 @@ function buildProfileModel(hass, g, cfg, lang, main) {
       const cur = a.selected_map && a.rooms[a.selected_map] ? [a.rooms[a.selected_map]] : lists;
       for (const l of cur) if (Array.isArray(l)) for (const r of l) if (r && r.id != null) rooms.push({ id: r.id, name: r.name || `#${r.id}`, icon: r.icon });
     }
+    // Räume mit Koordinaten aus der Karten-Kamera (Dreame, Xiaomi Cloud Map Extractor …)
+    const camA = cam ? hass.states[cam.eid]?.attributes || {} : {};
+    const aff = affineFromCalibration(camA.calibration_points);
+    if (aff && camA.rooms && typeof camA.rooms === "object") {
+      const mr = [];
+      for (const [k, r] of Object.entries(camA.rooms)) {
+        if (!r || r.x0 == null || r.y0 == null || r.x1 == null || r.y1 == null) continue;
+        if (r.visibility && !/visible/i.test(r.visibility)) continue;
+        const id = r.room_id ?? r.id ?? (isNaN(+k) ? k : +k);
+        const pts = [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0, r.y1]].map(([x, y]) => aff(x, y));
+        const c = r.x != null && r.y != null ? aff(r.x, r.y) : aff((r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2);
+        mr.push({ id, name: r.name || `#${id}`, pts, c, area: Math.abs((r.x1 - r.x0) * (r.y1 - r.y0)) });
+        if (!rooms.some((x) => String(x.id) === String(id))) rooms.push({ id, name: r.name || `#${id}`, icon: r.icon });
+      }
+      if (mr.length) model.mapRooms = mr.sort((x, y) => y.area - x.area);
+    }
+    // Valetudo (MQTT): Sensor "Map segments" mit {id: Name}
+    const dev0 = g.devices?.[0]?.dev;
+    const segSens = find((e) => e.domain === "sensor" && /map_segments|mapsegments/.test(e.k));
+    if (segSens) used.add(segSens.eid);
+    const isValetudo = /valetudo/i.test(`${dev0?.manufacturer || ""} ${main.eid}`);
+    if (segSens && !rooms.length) {
+      for (const [k, v] of Object.entries(segSens.st.attributes || {})) {
+        if (["friendly_name", "icon", "unit_of_measurement", "device_class", "state_class"].includes(k) || typeof v !== "string") continue;
+        rooms.push({ id: isNaN(+k) ? k : +k, name: v });
+      }
+    }
     if (rooms.length) {
       model.rooms = rooms;
       const pf = main.platform;
+      let vTopic = null;
+      if (isValetudo || (pf === "mqtt" && segSens)) {
+        const ident = (dev0?.identifiers || []).find((x) => Array.isArray(x) && x[0] === "mqtt")?.[1];
+        if (cfg.valetudo_topic) vTopic = cfg.valetudo_topic.replace(/\/+$/, "");
+        else if (ident) vTopic = `valetudo/${ident}`;
+      }
       model.roomSvc = pf === "dreame_vacuum" ? ["dreame_vacuum", "vacuum_clean_segment", "segments"]
         : pf === "xiaomi_miio" ? ["xiaomi_miio", "vacuum_clean_segment", "segments"]
-        : pf === "roborock" ? ["vacuum", "send_command", "app_segment_clean"] : null;
+        : pf === "roborock" ? ["vacuum", "send_command", "app_segment_clean"]
+        : vTopic ? ["mqtt", "publish", `${vTopic}/MapSegmentationCapability/clean/set`] : null;
     }
     // Aktionen
     const A = (id, label, icon, svc, primary) => ({ id, label, icon, svc, primary });
@@ -1241,6 +1303,7 @@ function buildProfileModel(hass, g, cfg, lang, main) {
     segA("swing", "swing_modes", "swing_mode", T.swing, "set_swing_mode");
     segA("swingh", "swing_horizontal_modes", "swing_horizontal_mode", T.swing_h, "set_swing_horizontal_mode");
     segA("preset", "preset_modes", "preset_mode", T.preset, "set_preset_mode");
+    model.swing = swingInfo(a.swing_mode, a.swing_horizontal_mode);
   }
   // Übrige Entitäten -> "Weitere Einstellungen"
   const moreSeen = new Set();
@@ -1419,6 +1482,12 @@ function demoModel(type, lang, cfg, state) {
     m.info = [{ label: T.area, value: `${Math.round(pct / 3)} m²` }, { label: T.room, value: lang === "de" ? "Wohnzimmer" : "Living room" }];
     m.rooms = (lang === "de" ? ["Wohnzimmer", "Küche", "Esszimmer", "Büro", "Flur", "Bad"] : ["Living room", "Kitchen", "Dining", "Office", "Hall", "Bath"]).map((n, i) => ({ id: i + 1, name: n }));
     m.roomSvc = ["demo", "demo", "segments"];
+    // Demo-Karte: Grundriss als SVG, Räume in Bildpixeln
+    const R6 = [[10, 10, 190, 150], [200, 10, 330, 110], [200, 120, 330, 200], [340, 10, 470, 120], [10, 160, 190, 230], [340, 130, 470, 230]];
+    const cols = ["#3c6e8f", "#8f6a3c", "#5d8f3c", "#6d4f8f", "#8f3c5a", "#3c8f86"];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="240" viewBox="0 0 480 240"><rect width="480" height="240" fill="#16181c"/>${R6.map(([x0, y0, x1, y1], i) => `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="4" fill="${cols[i]}" fill-opacity=".55" stroke="#c9d1d9" stroke-opacity=".5" stroke-width="2"/>`).join("")}<circle cx="60" cy="200" r="6" fill="#4caf50"/><circle cx="120" cy="80" r="7" fill="#fff"/></svg>`;
+    m.camera = "demo"; m.mapPic = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    m.mapRooms = R6.map(([x0, y0, x1, y1], i) => ({ id: i + 1, name: m.rooms[i].name, pts: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], c: [(x0 + x1) / 2, (y0 + y1) / 2], area: (x1 - x0) * (y1 - y0) })).sort((a, b) => b.area - a.area);
     m.svcActions = [{ id: "pause", label: T.pause_btn, icon: "pause", svc: ["vacuum", "pause"], primary: true }, { id: "home", label: T.go_home, icon: "home2", svc: ["vacuum", "return_to_base"] }];
     m.controls.level = seg(lang === "de" ? "Saugstufe" : "Suction", ["silent", "standard", "power"], lang === "de" ? ["Leise", "Standard", "Power"] : ["Silent", "Standard", "Power"], pickSel("level", "standard"));
     m.consumables = [{ label: T.battery, level: "ok", text: `${Math.round(100 - pct * 0.6)} %`, pct: 100 - pct * 0.6 }, { label: lang === "de" ? "Staubbehälter" : "Dust bin", level: "warn", text: T.low, pct: 75 },
@@ -1450,8 +1519,9 @@ function demoModel(type, lang, cfg, state) {
     const sg = (k, label, opts, labels, v) => { m.controls[k] = { entity: "demo", kind: "segment", label, avail: true, value: pickSel(k, v), options: opts, optionLabels: labels }; };
     sg("hvac", T.mode, ["off", "cool", "heat", "dry", "fan_only", "heat_cool"], ["off", "cool", "heat", "dry", "fan_only", "heat_cool"].map((x) => T[`hv_${x}`]), "cool");
     sg("fanm", T.fan_mode, ["auto", "low", "medium", "high"], lang === "de" ? ["Auto", "Niedrig", "Mittel", "Hoch"] : ["Auto", "Low", "Medium", "High"], "auto");
-    sg("swing", T.swing, ["off", "on"], lang === "de" ? ["Aus", "An"] : ["Off", "On"], "on");
+    sg("swing", T.swing, ["off", "vertical", "horizontal", "both"], lang === "de" ? ["Aus", "Vertikal", "Horizontal", "Beide"] : ["Off", "Vertical", "Horizontal", "Both"], "vertical");
     sg("preset", T.preset, ["none", "eco", "comfort", "boost"], lang === "de" ? ["Keins", "Eco", "Komfort", "Boost"] : ["None", "Eco", "Comfort", "Boost"], "comfort");
+    m.swing = swingInfo(m.controls.swing.value);
     m.options = [lang === "de" ? "Schlafen" : "Sleep", lang === "de" ? "Display" : "Display", lang === "de" ? "Selbstreinigung" : "Self clean", "UV"].map((l, i) => ({ entity: "demo", label: l, on: i === 1, avail: true }));
     m.consumables = [{ label: "Filter", pct: 70, text: "70 %", level: "ok" }];
   }
@@ -1617,11 +1687,16 @@ function animSvg(kind, color, m) {
     case "acCool": case "acHeat": case "acDry": case "acFan": case "acIdle": {
       const flow = kind === "acCool" ? "#9ad7ff" : kind === "acHeat" ? "#ffb98a" : kind === "acDry" ? "#6fe3da" : "#c3c8cf";
       const unit = `<rect x="16" y="22" width="88" height="30" rx="8" fill="var(--hc-deep)" stroke="var(--hc-line)" stroke-width="3"/><path d="M26 44 h68" stroke="var(--hc-line2)" stroke-width="3" stroke-linecap="round"/><circle cx="92" cy="31" r="2.5" fill="${color}"/>`;
-      if (kind === "acIdle") return unit;
-      const lines = [34, 52, 70, 88].map((x, i) => `<path class="a-flow d${i % 4 + 1}" d="M${x} 58 c-4 8 4 14 0 22 c-4 8 4 14 0 22" fill="none" stroke="${flow}" stroke-width="2.5" stroke-linecap="round"/>`).join("");
-      const extra = kind === "acCool" ? `<g class="fb a-spinslow"><path d="M60 72 v24 M49.6 78 l20.8 12 M49.6 90 l20.8 -12" stroke="${flow}" stroke-width="2.5" stroke-linecap="round"/></g>`
-        : kind === "acDry" ? `<path class="a-fall" d="M60 70c-4 5-6 8-6 11a6 6 0 0 0 12 0c0-3-2-6-6-11z" fill="${flow}"/>` : "";
-      return unit + lines + extra;
+      const sw = m.swing || {};
+      // Lamelle (Klappe, schwenkt auf/ab) und senkrechte Lamellen (schwenken links/rechts)
+      const flap = `<g class="sw-o ${sw.v && kind !== "acIdle" ? "a-flapv" : ""}"><rect x="22" y="52" width="76" height="5" rx="2.5" fill="var(--hc-s2)" stroke="var(--hc-line2)" stroke-width="1.5"/></g>`;
+      const slats = `<g class="sw-o ${sw.h && kind !== "acIdle" ? "a-slath" : ""}">${[32, 41, 50, 59, 68, 77, 86].map((x) => `<path d="M${x} 46 v5" stroke="var(--hc-line2)" stroke-width="2" stroke-linecap="round"/>`).join("")}</g>`;
+      if (kind === "acIdle") return unit + slats + flap;
+      const lines = [34, 52, 70, 88].map((x, i) => `<path class="a-flow d${i % 4 + 1}" d="M${x} 60 c-4 8 4 14 0 22 c-4 8 4 14 0 22" fill="none" stroke="${flow}" stroke-width="2.5" stroke-linecap="round"/>`).join("");
+      const flowG = `<g class="sw-o ${sw.v ? "a-swv" : ""}"><g class="sw-o ${sw.h ? "a-swh" : ""}">${lines}</g></g>`;
+      const extra = kind === "acCool" ? `<g class="fb a-spinslow"><path d="M60 74 v24 M49.6 80 l20.8 12 M49.6 92 l20.8 -12" stroke="${flow}" stroke-width="2.5" stroke-linecap="round"/></g>`
+        : kind === "acDry" ? `<path class="a-fall" d="M60 72c-4 5-6 8-6 11a6 6 0 0 0 12 0c0-3-2-6-6-11z" fill="${flow}"/>` : "";
+      return unit + slats + flowG + flap + extra;
     }
     case "robot": return `<rect x="12" y="12" width="96" height="96" rx="14" fill="var(--hc-deep)"/><path d="M20 40 H100 M20 70 H100 M50 12 V108" stroke="var(--hc-line)" stroke-width="1.5"/><g class="a-patrol"><circle cx="0" cy="0" r="13" fill="var(--hc-s2)" stroke="${color}" stroke-width="3"/><circle cx="0" cy="0" r="4" fill="${color}"/><path d="M-6 -9 h12" stroke="${color}" stroke-width="2" stroke-linecap="round"/></g>`;
     case "done": return `<circle cx="60" cy="60" r="42" fill="color-mix(in srgb, ${color} 20%, transparent)"/><path d="M40 61 l13 13 l27 -28" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -1668,6 +1743,17 @@ button{font:inherit;color:inherit}
 .cam .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#a0a6af;font-size:13px}
 .cam .tl{position:absolute;left:12px;top:12px}.cam .tr{position:absolute;right:12px;top:12px}
 .cam .bl{position:absolute;left:12px;bottom:12px}.cam .camrf{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.55);color:#fff}
+.cam.map{aspect-ratio:auto;background:var(--hc-deep);cursor:default}
+.mapw{position:relative;width:100%;line-height:0}
+.mapw img{width:100%;height:auto;object-fit:contain;display:block;max-height:420px}
+.mapsvg{position:absolute;inset:0;width:100%;height:100%}
+.mapsvg polygon{fill:transparent;stroke:transparent;stroke-width:6;cursor:pointer;transition:fill .2s}
+.mapsvg polygon.on{fill:color-mix(in srgb,var(--hc-accent) 30%,transparent);stroke:var(--hc-accent)}
+.mlabels{position:absolute;inset:0;pointer-events:none}
+.mlabel{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;line-height:1;white-space:nowrap;border:1px solid rgba(255,255,255,.25);background:rgba(20,20,20,.62);color:#fff;border-radius:12px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(4px)}
+.mlabel:not([style]){visibility:hidden}
+.mlabel.on{background:var(--hc-accent);color:#141414;border-color:transparent}
+.cam.map .camrf{right:10px;bottom:10px}
 .cam.stale{cursor:default;background:var(--hc-card)}.cam.stale .ph{color:var(--hc-muted);text-align:center;padding:12px}
 .banner{background:color-mix(in srgb,var(--hc-accent) 12%,var(--hc-card));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--hc-accent) 55%,transparent)}
 .btitle{font-size:12px;color:var(--hc-accent);font-weight:600}.btext{font-size:16px;font-weight:700}
@@ -1787,6 +1873,13 @@ select.dd{height:40px;border-radius:14px;border:0;background:var(--hc-s2);color:
 .a-fanspin{animation:spin 1.1s linear infinite}.a-arm{animation:spin 1.6s linear infinite}
 .a-fillA{animation:fillA 7s ease-in-out infinite}.a-fillB{animation:fillB 7s ease-in-out infinite}.a-fillC{animation:fillC 7s ease-in-out infinite}
 .a-strA{animation:strA 7s linear infinite}.a-strB{animation:strB 7s linear infinite}.a-strC{animation:strC 7s linear infinite}
+.sw-o{transform-box:view-box;transform-origin:60px 52px}
+@keyframes flapv{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1.9)}}
+@keyframes slath{0%,100%{transform:skewX(-32deg)}50%{transform:skewX(32deg)}}
+@keyframes swv{0%,100%{transform:scaleY(.72)}50%{transform:scaleY(1.12)}}
+@keyframes swh{0%,100%{transform:skewX(-24deg)}50%{transform:skewX(24deg)}}
+.a-flapv{animation:flapv 4s ease-in-out infinite}.a-slath{animation:slath 5s ease-in-out infinite}
+.a-swv{animation:swv 4s ease-in-out infinite}.a-swh{animation:swh 5s ease-in-out infinite}
 .d1{animation-delay:-.7s}.d2{animation-delay:-1.4s}.d3{animation-delay:-.35s}.d4{animation-delay:-1.05s}
 .static .a-fillA,.static .a-fillB,.static .a-fillC{animation:none;transform:none}
 .static .a-strA,.static .a-strB,.static .a-strC{animation:none;opacity:0}
@@ -1991,8 +2084,29 @@ class HomeConnectCard extends HTMLElement {
       <div class="txt"><span class="name">${esc(m.name)}</span><span class="state hc-state">${esc(this._statusText(m, T))}</span></div>
       ${this._badge(m, T)}${light}${power}</div>`;
   }
+  _mapView(m, pic, T) {
+    const sel = (this._ui.rooms || []).map(String);
+    const shapes = m.mapRooms.map((r) => `<polygon data-maproom="${esc(r.id)}" class="${sel.includes(String(r.id)) ? "on" : ""}" points="${r.pts.map((p) => p.map((v) => v.toFixed(1)).join(",")).join(" ")}"/>`).join("");
+    const labels = m.mapRooms.map((r) => `<button class="mlabel ${sel.includes(String(r.id)) ? "on" : ""}" data-maproom="${esc(r.id)}" data-cx="${r.c[0].toFixed(1)}" data-cy="${r.c[1].toFixed(1)}">${sel.includes(String(r.id)) ? ic("check", 12, 3) : ""}${esc(r.name)}</button>`).join("");
+    const hint = sel.length ? "" : `<span class="badge tl" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px">${ic("room", 13, 2)}${esc(T.map_hint)}</span>`;
+    return `<div class="cam map"><div class="mapw"><img src="${esc(pic)}" alt="" onerror="this.style.visibility='hidden'"><svg class="mapsvg" preserveAspectRatio="none">${shapes}</svg><div class="mlabels">${labels}</div></div>${hint}<button class="sub camrf" data-act="cam" aria-label="${esc(T.camera)}">${ic("expand", 18, 2)}</button></div>`;
+  }
+  _layoutMap() {
+    const w = this.shadowRoot?.querySelector(".mapw"); if (!w) return;
+    const img = w.querySelector("img"), svg = w.querySelector("svg");
+    const apply = () => {
+      const W = img.naturalWidth, H = img.naturalHeight; if (!W || !H) return;
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      w.querySelectorAll(".mlabel").forEach((b) => { b.style.left = `${(b.dataset.cx / W) * 100}%`; b.style.top = `${(b.dataset.cy / H) * 100}%`; b.style.display = ""; });
+    };
+    if (img.complete) apply(); else img.addEventListener("load", apply, { once: true });
+  }
   _m_camera(m, T) {
     if (!m.camera) return "";
+    if (m.mapRooms?.length && (m.demo || !m.camStale)) {
+      const pic = m.demo ? m.mapPic : this._hass.states[m.camera]?.attributes?.entity_picture;
+      if (pic) return this._mapView(m, pic, T);
+    }
     if (m.demo) return `<div class="cam" data-act="cam"><div class="ph" style="background:linear-gradient(160deg,#2a1d14,#120c08)">${ic("camera", 34, 1.5)}<span>${esc(T.camera)} (Demo)</span></div><span class="badge tl" style="background:rgba(255,92,92,.9);color:#fff">● ${T.live}</span>${m.temp?.current != null ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}${m.camTime ? `<span class="badge bl" style="background:rgba(0,0,0,.6);color:#fff;height:26px;font-size:12px">${ic("clock", 13, 2)}<span class="hc-camage">${esc(this._ago(m.camTime))}</span></span>` : ""}<button class="sub camrf" data-act="camrefresh" aria-label="${esc(T.refresh)}">${ic("refresh", 18, 2)}</button></div>`;
     const st = this._hass.states[m.camera];
     const pic = st?.attributes?.entity_picture;
@@ -2073,7 +2187,7 @@ class HomeConnectCard extends HTMLElement {
     if (m.rooms?.length) {
       const sel = this._ui.rooms || [];
       const chips = m.rooms.map((r) => `<button class="chip ${sel.includes(r.id) ? "on" : ""}" data-room="${esc(r.id)}">${ic("room", 16, 2)}${esc(r.name)}</button>`).join("");
-      const go = sel.length && m.roomSvc ? `<button class="abtn pri" data-act="rooms" style="margin-top:4px">${ic("play", 18)}${esc(T.clean_rooms.replace("{n}", sel.length))}</button>` : "";
+      const go = sel.length && m.roomSvc ? `<div class="row" style="gap:8px;margin-top:4px"><button class="abtn pri" data-act="rooms" style="flex:1">${ic("play", 18)}${esc(sel.length === 1 ? T.clean_room1 : T.clean_rooms.replace("{n}", sel.length))}</button><button class="sub" data-act="roomsclear" aria-label="${esc(T.sel_clear)}" title="${esc(T.sel_clear)}">${ic("stop", 16, 2)}</button></div>` : "";
       return `<div class="box"><span class="lbl">${esc(T.rooms)}</span><div class="chips ${m.rooms.length > 9 ? "scroll" : ""}">${chips}</div>${go}</div>`;
     }
     if (!m.programs.length || m.type === "hob" || m.profile) return "";
@@ -2203,10 +2317,11 @@ class HomeConnectCard extends HTMLElement {
     const presets = [0, 1, 3, 6, 9].filter((h) => toUnit(h) <= max);
     const cur = parseFloat(ctl.value) || 0;
     const ch = ctl.cheap;
-    const chOn = ch && Math.abs(ch.value - cur) < 1e-6 && ch.h > 0;
+    const pre = this._cheapPre(this._m);
+    const chOn = (ch && Math.abs(ch.value - cur) < 1e-6 && ch.h > 0) || !!pre;
     const chBtn = ch ? `<button class="${chOn ? "on" : ""}" data-ctl="${k}" data-num="${ch.value}" ${ctl.avail ? "" : "disabled"} style="display:inline-flex;align-items:center;gap:4px">${ic("euro", 15, 2)}${ch.h > 0 ? `+${String(Math.round(ch.h * 100) / 100).replace(".", ",")} h` : esc(T.now)}</button>` : "";
     const save = ch && ch.now ? Math.round((1 - ch.avg / ch.now) * 100) : 0;
-    const info = ch ? `<div class="row lbl" style="gap:6px">${ic("euro", 14, 2)}<span>${esc(T.cheapest)}: ${ch.h > 0 ? `+${String(Math.round(ch.h * 100) / 100).replace(".", ",")} h` : esc(T.now)} · Ø ${esc(fmtPrice(ch.avg, ch.unit))}${save > 0 ? ` · ${esc(T.save.replace("{p}", save))}` : ""}</span></div>` : "";
+    const info = ch ? `<div class="row lbl" style="gap:6px">${ic("euro", 14, 2)}<span>${esc(T.cheapest)}: ${ch.h > 0 ? `+${String(Math.round(ch.h * 100) / 100).replace(".", ",")} h` : esc(T.now)} · Ø ${esc(fmtPrice(ch.avg, ch.unit))}${save > 0 ? ` · ${esc(T.save.replace("{p}", save))}` : ""}${pre ? ` · ${esc(T.preselected)}` : ""}</span></div>` : "";
     return `<div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">${esc(ctl.label)}</span><div class="seg">${chBtn}${presets.map((h) => `<button class="${!chOn && Math.abs(toUnit(h) - cur) < 1e-6 ? "on" : ""}" data-ctl="${k}" data-num="${toUnit(h)}" ${ctl.avail ? "" : "disabled"}>${h === 0 ? esc(T.now) : `+${h} h`}</button>`).join("")}</div>${info}</div>`;
   }
   _optIcon(label) {
@@ -2255,7 +2370,7 @@ class HomeConnectCard extends HTMLElement {
     } else if (m.status === "delayedstart") {
       if (a.stop) btns.push(`<button class="abtn" data-act="stop">${ic("stop", 16)}${esc(T.stop)}</button>`);
     } else if (m.status !== "offline") {
-      if ((a.start || m.activeSelect || a.startPause) && m.program && !m.banner) btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}</button>`);
+      if ((a.start || m.activeSelect || a.startPause) && m.program && !m.banner) { const pre = this._cheapPre(m); btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}${pre ? ` · ${ic("euro", 14, 2)}+${String(Math.round(pre.h * 100) / 100).replace(".", ",")} h` : ""}</button>`); }
     }
     if (!btns.length) return "";
     return `<div class="actions ${btns.length === 1 ? "one" : ""}">${btns.join("")}</div>`;
@@ -2314,11 +2429,15 @@ class HomeConnectCard extends HTMLElement {
     R.querySelectorAll("[data-modebtn]").forEach((el) => el.addEventListener("click", () => {
       const b = m.modeButtons[+el.dataset.modebtn]; this._call("button", "press", { entity_id: b.entity });
     }));
-    R.querySelectorAll("[data-room]").forEach((el) => el.addEventListener("click", () => {
-      const id = isNaN(+el.dataset.room) ? el.dataset.room : +el.dataset.room;
+    const toggleRoom = (raw) => {
+      const id = isNaN(+raw) ? raw : +raw;
       const cur = new Set(this._ui.rooms || []); cur.has(id) ? cur.delete(id) : cur.add(id);
       this._ui.rooms = [...cur]; this._sig = ""; this._update(true);
-    }));
+    };
+    R.querySelectorAll("[data-room]").forEach((el) => el.addEventListener("click", () => toggleRoom(el.dataset.room)));
+    R.querySelectorAll("[data-maproom]").forEach((el) => el.addEventListener("click", (ev) => { ev.stopPropagation(); toggleRoom(el.dataset.maproom); }));
+    R.querySelectorAll('[data-act="roomsclear"]').forEach((el) => el.addEventListener("click", () => { this._ui.rooms = []; this._sig = ""; this._update(true); }));
+    this._layoutMap();
     R.querySelectorAll("[data-idos-i]").forEach((el) => el.addEventListener("click", () => {
       const o = m.idos.switches[+el.dataset.idosI];
       if (m.demo) { o.on = !o.on; el.classList.toggle("on"); return; }
@@ -2382,7 +2501,8 @@ class HomeConnectCard extends HTMLElement {
         if (!m.roomSvc || !this._ui.rooms?.length) break;
         const ent = this._config.entity || this._group()?.entities.find((e) => e.eid.startsWith("vacuum."))?.eid;
         const [d, sv, key] = m.roomSvc;
-        if (d === "vacuum" && sv === "send_command") this._call("vacuum", "send_command", { entity_id: ent, command: "app_segment_clean", params: this._ui.rooms });
+        if (d === "mqtt") this._call("mqtt", "publish", { topic: key, payload: JSON.stringify({ segment_ids: this._ui.rooms.map(String), iterations: 1, customOrder: true }) });
+        else if (d === "vacuum" && sv === "send_command") this._call("vacuum", "send_command", { entity_id: ent, command: "app_segment_clean", params: this._ui.rooms });
         else this._call(d, sv, { entity_id: ent, [key]: this._ui.rooms });
         this._ui.rooms = []; this._sig = ""; this._update(true); break;
       }
@@ -2392,6 +2512,16 @@ class HomeConnectCard extends HTMLElement {
   _start() {
     const m = this._m;
     if (m.demo) { this._toast(I18N[this.lang].demo_note); return; }
+    const pre = this._cheapPre(m);
+    if (pre) {
+      const c = m.controls.startIn;
+      return Promise.resolve(this._call("number", "set_value", { entity_id: c.entity, value: pre.value }))
+        .then(() => new Promise((r) => setTimeout(r, 800))).then(() => { this._ui.startPicked = false; return this._startNow(); });
+    }
+    return this._startNow();
+  }
+  _startNow() {
+    const m = this._m;
     if (m.actions.start) return this._call("button", "press", { entity_id: m.actions.start });
     if (m.actions.startPause) return this._call("button", "press", { entity_id: m.actions.startPause });
     if (m.activeSelect && m.program) {
@@ -2410,9 +2540,16 @@ class HomeConnectCard extends HTMLElement {
     }
     this._toast(I18N[this.lang].unavailable);
   }
+  _cheapPre(m) {
+    const c = m?.controls?.startIn; const ch = c?.cheap;
+    if (!ch || !(ch.h > 0) || m.running || this._ui.startPicked || this._config.cheapest_default === false) return null;
+    if ((parseFloat(c.value) || 0) !== 0) return null;
+    return ch;
+  }
   _control(el) {
     const m = this._m;
     const k = el.dataset.ctl;
+    if (k === "startIn" && !this._ui.startPicked) { this._ui.startPicked = true; this._sig = ""; setTimeout(() => this._update(true), 0); }
     const ctl = m.controls[k];
     if (!ctl) return;
     let value;
@@ -2492,6 +2629,8 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "color", selector: { color_rgb: {} } },
       { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
       { name: "price_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "cheapest_default", selector: { boolean: {} } },
+      { name: "valetudo_topic", selector: { text: {} } },
       { name: "camera_max_age", selector: { number: { min: 1, max: 1440, mode: "box", unit_of_measurement: "min" } } },
       { name: "hide", selector: { select: { multiple: true, mode: "list", options: MODULES.map((m) => ({ value: m, label: T[`m_${m}`] || m })) } } },
       { name: "extra_entities", selector: { entity: { multiple: true } } },
@@ -2504,7 +2643,7 @@ class HomeConnectCardEditor extends HTMLElement {
     const roleL = this.lang === "de"
       ? { camera: "Kamera / Karte", battery: "Akku", error: "Fehler", op: "Betriebszustand", remaining: "Restzeit", progress: "Fortschritt", selectedProg: "Programmauswahl", power: "Ein/Aus", light: "Licht", cavity: "Ist-Temperatur", setpoint: "Soll-Temperatur", duration: "Dauer", startIn: "Startverzögerung", start: "Start-Taste", pause: "Pause-Taste", stop: "Stopp-Taste", waterTank: "Wassertank" }
       : { camera: "Camera / map", battery: "Battery", error: "Error", op: "Operation state", remaining: "Remaining time", progress: "Progress", selectedProg: "Program select", power: "Power", light: "Light", cavity: "Current temperature", setpoint: "Target temperature", duration: "Duration", startIn: "Start delay", start: "Start button", pause: "Pause button", stop: "Stop button", waterTank: "Water tank" };
-    const labels = { ...roleL, entity: T.e_entity, ha_device: T.e_hadevice, extra_entities: T.e_extra, entities: T.e_roles, device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, camera_max_age: T.e_camage };
+    const labels = { ...roleL, entity: T.e_entity, ha_device: T.e_hadevice, extra_entities: T.e_extra, entities: T.e_roles, device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, cheapest_default: T.e_cheapdef, valetudo_topic: T.e_valtopic, camera_max_age: T.e_camage };
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => labels[s.name] || s.name;
@@ -2523,7 +2662,7 @@ class HomeConnectCardEditor extends HTMLElement {
     }
     this._form.hass = this._hass;
     this._form.schema = schema;
-    this._form.data = { layout: "full", ...this._config };
+    this._form.data = { layout: "full", cheapest_default: true, ...this._config };
   }
 }
 
