@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.5.1";
+const HC_VERSION = "1.0.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */

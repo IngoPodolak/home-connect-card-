@@ -2,7 +2,7 @@
 
 Eine Home-Assistant-Dashboard-Karte für **Home-Connect-Geräte** (Bosch, Siemens, Neff, Gaggenau …) im Stil der [Bubble Card](https://github.com/Clooos/Bubble-Card) – gemacht, um in **Bubble-Card-Popups** zu stecken.
 
-> Status: **erste Testversion (0.1.0)**. Funktioniert, ist aber noch nicht mit allen Gerätetypen an echter Hardware getestet.
+> Status: **1.0.0 – erster Release.** An echten Geräten getestet: Backofen, Geschirrspüler, Kaffeevollautomat (Home Connect), Dreame- und Valetudo-Saugroboter, Robonect-Mähroboter, Tuya-Klimaanlagen. Alle übrigen Gerätetypen laufen über dieselbe Logik und sind mit Demo-Daten getestet.
 
 ## Was die Karte kann
 
@@ -110,11 +110,13 @@ Valetudo-Räume kommen aus dem Sensor „Map segments“ und werden per `mqtt.pu
 
 Weitere Marken (Ecovacs, SwitchBot, Roomba, Gardena, Bosch Indego, Worx Landroid, Mammotion, Daikin, Midea, Sensibo …) laufen über dieselben Profile, sofern ihre Integration die üblichen HA-Entitäten anbietet.
 
-## Bekannte Grenzen (0.1.0)
+## Bekannte Grenzen
 
 - Gerichtenamen werden aus den englischen Programmschlüsseln übersetzt – nicht jeder Name ist perfekt.
 - Favoriten haben in den Integrationen keine Namen. Die Karte merkt sich Namen, sobald Home Connect Alt sie meldet, oder sie werden über `favorites` vergeben.
 - Waschmaschine, Trockner, Kühlschrank und Dunstabzug sind bisher nur mit Demo-Daten getestet.
+- Raumauswahl auf der Karte braucht eine Karten-Kamera mit Raumkoordinaten (z. B. Dreame). Valetudo-Räume erscheinen als Chips, sobald der Roboter Segmente meldet.
+- Ecovacs, SwitchBot, Roomba, Gardena, Indego, Worx usw. laufen über die allgemeinen Profile und sind nicht an echten Geräten getestet.
 
 ---
 
