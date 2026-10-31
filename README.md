@@ -22,7 +22,7 @@ Eine Home-Assistant-Dashboard-Karte für **Home-Connect-Geräte** (Bosch, Siemen
 - **Einstellungen kompakt statt als Liste**: Temperatur, Dauer, Startzeit, Bohnenmenge, Kaffee/Milch, Bohnenmenge (eigenes Symbol je Stufe plus Schieberegler), Füllmenge, Waschtemperatur, Schleudern, Optionen als Schalter, Verbrauchsmaterial (Salz, Klarspüler, Wassertank, Auffangschale, i-DOS …).
 - Alles Übrige steht unter **„Weitere Einstellungen“**, ohne doppelte Einträge aus mehreren Quellen.
 - **Günstigster Start** für Spülmaschine, Waschmaschine und Trockner: berechnet aus der Strompreis-Prognose und der Programmdauer. Die günstigste Startzeit ist **vorausgewählt** und wird beim Drücken auf „Starten“ gesetzt (abschaltbar mit `cheapest_default: false`, „Sofort“ hebt die Vorauswahl auf).
-- **Kompakt-Ansicht** als Bubble-Button für die Übersicht.
+- **Kompakt-Ansicht** als Bubble-Button für die Übersicht – mit **Schnellwahl-Knöpfen** je Gerät: Klima (Temperatur −/+, Modus, Lüfter, Display), Sauger/Mäher (Start/Pause, Station), Spülmaschine/Waschmaschine/Trockner/Backofen/Kaffee (Start/Pause, Ein/Aus), Backofen/Dunstabzug/Kühlschrank (Licht, Lüfterstufe, Super-Kühlen/-Gefrieren). Abschaltbar mit `sub_buttons: false`.
 - **Demo-Modus** für alle Gerätetypen (zum Ausprobieren ohne echtes Gerät).
 - Deutsch und Englisch, richtet sich nach der HA-Sprache.
 
@@ -71,6 +71,7 @@ demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee
 | `price_entity` | Strompreis-Sensor mit Prognose für „Günstigster Start“ (Tibber, EPEX Spot, Nordpool …) – wird sonst automatisch gesucht, `none` schaltet ab |
 | `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `idos`, `options`, `consumables`, `actions`, `more` |
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
+| `sub_buttons` | Schnellwahl-Knöpfe in der Kompakt-Ansicht (Standard `true`) |
 | `cheapest_default` | günstigste Startzeit vorauswählen (Standard `true`) |
 | `valetudo_topic` | MQTT-Basis-Topic des Valetudo-Roboters, falls abweichend (Standard `valetudo/<Kennung>`) |
 | `camera_max_age` | maximales Alter des Kamerabilds in Minuten (Standard 5) |
