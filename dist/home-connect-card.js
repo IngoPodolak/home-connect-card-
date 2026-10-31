@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.3";
+const HC_VERSION = "1.1.4";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -57,7 +57,7 @@ const I18N = {
     t_washerdryer: "Waschtrockner", t_coffee: "Kaffeevollautomat", t_fridge: "Kühlschrank", t_freezer: "Gefrierschrank",
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
-    cheapest: "Günstigster Start", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
+    cheapest: "Günstigster Start", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
     e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
@@ -102,7 +102,7 @@ const I18N = {
     t_washerdryer: "Washer dryer", t_coffee: "Coffee machine", t_fridge: "Fridge", t_freezer: "Freezer",
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
-    cheapest: "Cheapest start", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
+    cheapest: "Cheapest start", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
     e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
@@ -707,6 +707,8 @@ function buildModel(hass, g, cfg, lang) {
     unit: cav?.st?.attributes?.unit_of_measurement || "°C",
   };
   const mp = P("meatprobe");
+  const maxT = { warmingdrawer: 100, fridge: 30, freezer: 30, winecooler: 30, coffee: 120 }[model.type] ?? 350;
+  if (model.temp.current != null && (model.temp.current > maxT || model.temp.current < -40)) model.temp.current = null;
   if (mp?.avail && parseFloat(mp.st.state) > 0) model.temp.probe = Math.round(parseFloat(mp.st.state));
 
   // Tür, Licht, Kamera
@@ -813,6 +815,8 @@ function buildModel(hass, g, cfg, lang) {
   const optCand = [];
   if (fast) optCand.push(fast);
   // Optionsschalter nur aus der besten Quelle – andere Quellen benennen dieselben Optionen anders
+  const progSw = (e) => e.domain === "switch" && (/_program_[a-z0-9]+$/.test(e.eid) || /^program\s/i.test(e.name || ""));
+  g.entities.filter(progSw).forEach((e) => used.add(e.eid));
   const swAll = g.entities.filter((e) => e.domain === "switch" && !used.has(e.eid) && !e.cat
     && !/kamera|camera|tastenton|signal|einschalter|power/.test(e.k));
   const bestPlat = (swAll.find((e) => e.avail) || swAll[0])?.platform;
@@ -870,9 +874,15 @@ function buildModel(hass, g, cfg, lang) {
   cons("cleanIn", T.clean, "count");
   cons("calcInfo", T.calcnclean, "count");
   cons("filterIn", T.water_filter, "count");
-  const ef = P("energyF"), wf = P("waterF");
-  if (ef?.avail) model.forecast = Object.assign(model.forecast || {}, { energy: parseFloat(ef.st.state) });
-  if (wf?.avail) model.forecast = Object.assign(model.forecast || {}, { water: parseFloat(wf.st.state) });
+  const fc = (name) => {
+    const vals = pick(g, name, { all: true }).filter((e) => e.avail).map((e) => { used.add(e.eid); return parseFloat(e.st.state); }).filter((v) => !isNaN(v) && v >= 0);
+    if (!vals.length) return null;
+    const ok = vals.find((v) => v <= 100);
+    return ok != null ? ok : 100;
+  };
+  const efv = fc("energyF"), wfv = fc("waterF");
+  if (efv != null) model.forecast = Object.assign(model.forecast || {}, { energy: efv });
+  if (wfv != null) model.forecast = Object.assign(model.forecast || {}, { water: wfv });
   const cSeen = new Set();
   g.entities.filter((e) => e.domain === "sensor" && /anzahl|counter|startanzahl/.test(e.k) && !/image|frame|snapshot|timelapse/.test(e.k) && e.avail)
     .forEach((e) => { used.add(e.eid); const k = canon(norm(e.name)); if (cSeen.has(k) || cSeen.size >= 4) return; cSeen.add(k); model.counters.push({ label: e.name, value: e.st.state }); });
@@ -880,6 +890,7 @@ function buildModel(hass, g, cfg, lang) {
   // Aktionen
   const btn = (name) => { const e = P(name); return e && e.st && e.st.state !== "unavailable" ? e.eid : null; };
   model.actions = { start: btn("start"), startPause: btn("startPause"), pause: btn("pause"), resume: btn("resume"), stop: btn("stop") };
+  if (!model.actions.start && !model.actions.startPause) model.actions.startOff = P("start")?.eid || P("startPause")?.eid || null;
   // offizielle Integration: Start über "Aktives Programm"
   const activeSelect = actives.find((e) => e.domain === "select") || pick(g, "activeProg", { all: true }).find((e) => e.domain === "select");
   model.activeSelect = activeSelect ? activeSelect.eid : null;
@@ -1807,6 +1818,7 @@ button{font:inherit;color:inherit}
 .mlabels{position:absolute;inset:0;pointer-events:none}
 .mlabel{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;line-height:1;white-space:nowrap;border:1px solid rgba(255,255,255,.25);background:rgba(20,20,20,.62);color:#fff;border-radius:12px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(4px)}
 .mlabel:not([style]){visibility:hidden}
+.mlabel:not(.on) svg{opacity:0}
 .mlabel.on{background:var(--hc-accent);color:#141414;border-color:transparent}
 .cam.map .camrf{right:10px;bottom:10px}
 .cam.stale{cursor:default;background:var(--hc-card)}.cam.stale .ph{color:var(--hc-muted);text-align:center;padding:12px}
@@ -2170,7 +2182,7 @@ class HomeConnectCard extends HTMLElement {
       const a = m.actions || {};
       if (m.status === "run" && (a.pause || a.startPause)) items.push(btn('data-act="pause"', "pause", true, T.pause_btn, 2.4));
       else if (m.status === "pause" && (a.resume || a.startPause)) items.push(btn('data-act="resume"', "play", false, T.resume));
-      else if (!["run", "pause", "delayedstart", "off", "inactive"].includes(m.status) && (a.start || a.startPause || m.activeSelect) && m.program && !m.banner && ["dishwasher", "washer", "dryer", "washerdryer", "oven", "microwave", "coffee", "cookprocessor"].includes(m.type)) items.push(btn('data-act="start"', "play", false, T.start));
+      else if (!["run", "pause", "delayedstart", "off", "inactive"].includes(m.status) && (a.start || a.startPause || m.activeSelect) && m.program && !m.banner && ["dishwasher", "washer", "dryer", "washerdryer", "oven", "microwave", "coffee", "cookprocessor", "warmingdrawer"].includes(m.type)) items.push(btn('data-act="start"', "play", false, T.start));
       const sup = (m.options || []).map((o, i) => [o, i]).filter(([o]) => /super|schnell.?k|schnell.?gefrier|fast.?(cool|freez)/i.test(o.label)).slice(0, 2);
       if (["fridge", "freezer", "winecooler"].includes(m.type)) sup.forEach(([o, i]) => items.push(btn(`data-opt-i="${i}"`, /gefrier|freez/i.test(o.label) ? "snow" : "bolt", o.on, o.label)));
       if (m.light?.control && ["oven", "hood", "fridge", "winecooler", "warmingdrawer"].includes(m.type)) items.push(btn('data-act="light"', "bulb", m.light.on, T.light));
@@ -2193,7 +2205,7 @@ class HomeConnectCard extends HTMLElement {
   _mapView(m, pic, T) {
     const sel = (this._ui.rooms || []).map(String);
     const shapes = m.mapRooms.map((r) => `<polygon data-maproom="${esc(r.id)}" class="${sel.includes(String(r.id)) ? "on" : ""}" points="${r.pts.map((p) => p.map((v) => v.toFixed(1)).join(",")).join(" ")}"/>`).join("");
-    const labels = m.mapRooms.map((r) => `<button class="mlabel ${sel.includes(String(r.id)) ? "on" : ""}" data-maproom="${esc(r.id)}" data-cx="${r.c[0].toFixed(1)}" data-cy="${r.c[1].toFixed(1)}">${sel.includes(String(r.id)) ? ic("check", 12, 3) : ""}${esc(r.name)}</button>`).join("");
+    const labels = m.mapRooms.map((r) => `<button class="mlabel ${sel.includes(String(r.id)) ? "on" : ""}" data-maproom="${esc(r.id)}" data-cx="${r.c[0].toFixed(1)}" data-cy="${r.c[1].toFixed(1)}">${ic("check", 12, 3)}${esc(r.name)}</button>`).join("");
     const hint = sel.length ? "" : `<span class="badge tl" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px">${ic("room", 13, 2)}${esc(T.map_hint)}</span>`;
     return `<div class="cam map"><div class="mapw"><img src="${esc(pic)}" alt="" onerror="this.style.visibility='hidden'"><svg class="mapsvg" preserveAspectRatio="none">${shapes}</svg><div class="mlabels">${labels}</div></div>${hint}<button class="sub camrf" data-act="cam" aria-label="${esc(T.camera)}">${ic("expand", 18, 2)}</button></div>`;
   }
@@ -2479,7 +2491,7 @@ class HomeConnectCard extends HTMLElement {
     } else if (m.status === "delayedstart") {
       if (a.stop) btns.push(`<button class="abtn" data-act="stop">${ic("stop", 16)}${esc(T.stop)}</button>`);
     } else if (m.status !== "offline") {
-      if ((a.start || m.activeSelect || a.startPause) && m.program && !m.banner) { const pre = this._cheapPre(m); btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}${pre ? ` · ${ic("euro", 14, 2)}+${String(Math.round(pre.h * 100) / 100).replace(".", ",")} h` : ""}</button>`); }
+      if ((a.start || m.activeSelect || a.startPause || (a.startOff && m.power)) && m.program && !m.banner) { const pre = this._cheapPre(m); btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}${pre ? ` · ${ic("euro", 14, 2)}+${String(Math.round(pre.h * 100) / 100).replace(".", ",")} h` : ""}</button>`); }
     }
     if (!btns.length) return "";
     return `<div class="actions ${btns.length === 1 ? "one" : ""}">${btns.join("")}</div>`;
@@ -2694,9 +2706,26 @@ class HomeConnectCard extends HTMLElement {
       default: break;
     }
   }
-  _start() {
+  // Gerät einschalten und warten, bis es bereit ist (Home Connect lehnt sonst Programmwahl/Start ab)
+  async _ensureOn() {
     const m = this._m;
-    if (m.demo) { this._toast(I18N[this.lang].demo_note); return; }
+    const offish = (x) => ["off", "inactive", "standby"].includes(x?.status) || (x?.power && !x.power.on);
+    if (!m || m.demo || !m.power || !offish(m)) return true;
+    const T = I18N[this.lang];
+    this._toast(T.switching_on);
+    await this._call(m.power.svcDomain || "switch", "turn_on", { entity_id: m.power.entity });
+    for (let i = 0; i < 50; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      let nm = null; try { nm = this._model(); } catch (e) { /* */ }
+      if (nm && !offish(nm) && nm.status !== "offline") { this._m = nm; await new Promise((r) => setTimeout(r, 1200)); this._m = this._model() || nm; return true; }
+    }
+    this._toast(T.not_ready);
+    return false;
+  }
+  async _start() {
+    if (this._m?.demo) { this._toast(I18N[this.lang].demo_note); return; }
+    if (!(await this._ensureOn())) return;
+    const m = this._m;
     const pre = this._cheapPre(m);
     if (pre) {
       const c = m.controls.startIn;
@@ -2707,6 +2736,7 @@ class HomeConnectCard extends HTMLElement {
   }
   _startNow() {
     const m = this._m;
+    if (!m.actions.start && !m.actions.startPause && m.actions.startOff && this._hass.states[m.actions.startOff]?.state !== "unavailable") return this._call("button", "press", { entity_id: m.actions.startOff });
     if (m.actions.start) return this._call("button", "press", { entity_id: m.actions.start });
     if (m.actions.startPause) return this._call("button", "press", { entity_id: m.actions.startPause });
     if (m.activeSelect && m.program) {
@@ -2716,9 +2746,10 @@ class HomeConnectCard extends HTMLElement {
     }
     return null;
   }
-  _selectProgram(c) {
+  async _selectProgram(c) {
+    if (this._m.demo) { this._ui.demoSel = { ...this._ui.demoSel, prog: c }; this._sig = ""; this._update(true); return; }
+    if (!(await this._ensureOn())) return;
     const m = this._m;
-    if (m.demo) { this._ui.demoSel = { ...this._ui.demoSel, prog: c }; this._sig = ""; this._update(true); return; }
     for (const s of m.programSelects) {
       const opt = s.options.find((o) => canon(o) === c);
       if (opt) { this._call("select", "select_option", { entity_id: s.entity, option: opt }); this._toast("✓"); return; }
