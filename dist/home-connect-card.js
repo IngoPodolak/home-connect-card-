@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.6.0";
+const HC_VERSION = "1.6.1";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2116,7 +2116,7 @@ button{font:inherit;color:inherit}
 .b-local{background:rgba(54,207,196,.18);color:#36cfc4}.b-cloud{background:var(--hc-s2);color:var(--hc-muted)}
 .b-both{background:color-mix(in srgb,var(--hc-accent) 20%,transparent);color:var(--hc-accent)}.b-offline{background:rgba(255,107,107,.18);color:var(--hc-bad)}
 .b-demo{background:rgba(157,140,255,.2);color:#b3a6ff}
-.cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;cursor:pointer}
+.cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;max-height:70vh;margin:0 auto;cursor:pointer}
 .cam img{width:100%;height:100%;object-fit:cover;display:block}
 .cam .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#a0a6af;font-size:13px}
 .cam .tl{position:absolute;left:12px;top:12px}.cam .tr{position:absolute;right:12px;top:12px}
@@ -2576,7 +2576,10 @@ class HomeConnectCard extends HTMLElement {
       return `<div class="cam stale"><div class="ph">${ic("camera", 30, 1.5)}<span>${esc(T.cam_old.replace("{m}", Math.round(m.camMax / 60)))}</span>
         <button class="sub on" data-act="camrefresh" style="margin-top:6px">${ic("refresh", 18, 2)}${esc(T.refresh)}</button></div>${age}</div>`;
     }
-    return `<div class="cam" data-act="cam">${pic ? `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div><img data-src="${esc(pic)}" src="${esc(pic)}" alt="" loading="lazy" style="position:relative" onerror="this.style.display='none'">` : `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div>`}
+    // Seitenverhältnis wie das echte Kamerabild (Backofen-Kameras liefern z. B. 4:3 statt 16:9)
+    const ar = (window.__hcCamAR || {})[m.camera];
+    const arJs = `var r=this.naturalWidth+'/'+this.naturalHeight;if(this.naturalWidth){this.parentNode.style.aspectRatio=r;(window.__hcCamAR=window.__hcCamAR||{})['${esc(m.camera)}']=r;}`;
+    return `<div class="cam" data-act="cam"${ar ? ` style="aspect-ratio:${ar}"` : ""}>${pic ? `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div><img data-src="${esc(pic)}" src="${esc(pic)}" alt="" loading="lazy" style="position:relative" onload="${arJs}" onerror="this.style.display='none'">` : `<div class="ph">${ic("camera", 34, 1.5)}<span>${esc(T.camera)}</span></div>`}
       ${live ? `<span class="badge tl" style="background:rgba(255,92,92,.9);color:#fff">● ${T.live}</span>` : ""}
       ${m.temp?.current != null && m.running ? `<span class="badge tr" style="background:rgba(0,0,0,.55);color:#fff;height:26px;font-size:12px"><span class="hc-temp">${m.temp.current}</span> °C</span>` : ""}
       ${age}<button class="sub camrf" data-act="camrefresh" aria-label="${esc(T.refresh)}">${ic("refresh", 18, 2)}</button></div>`;
