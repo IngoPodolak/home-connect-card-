@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.5.0";
+const HC_VERSION = "0.5.1";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -1411,8 +1411,8 @@ function demoModel(type, lang, cfg, state) {
     if (m.program.canon === "favorite001") m.program = { ...m.program, tail: "cappuccino" };
     m.selectedCanon = cur;
     m.remaining = 60 * (1 - pct / 100); m.end = new Date(Date.now() + m.remaining * 1000);
-    m.controls.beans = { entity: "demo", kind: "beans", label: T.beans, avail: true, value: pickSel("beans", "strong"), options: ["mild", "normal", "strong", "verystrong", "doubleshot"],
-      optionLabels: lang === "de" ? ["Mild", "Normal", "Stark", "Sehr stark", "Doppio"] : ["Mild", "Normal", "Strong", "Very strong", "Double shot"] };
+    m.controls.beans = { entity: "demo", kind: "beans", label: T.beans, avail: true, value: pickSel("beans", "strong"), options: ["verymild", "mild", "normal", "strong", "verystrong", "doubleshot", "tripleshot", "coffeeground"],
+      optionLabels: lang === "de" ? ["Sehr mild", "Mild", "Normal", "Stark", "Sehr stark", "Doppio", "Triple Shot", "Pulver"] : ["Very mild", "Mild", "Normal", "Strong", "Very strong", "Double shot", "Triple shot", "Ground"] };
     m.controls.fill = { entity: "demo", kind: "stepper", label: T.fill, avail: true, value: String(pickSel("fill", 180)), min: 60, max: 260, step: 20, unit: "ml" };
     m.controls.ratio = { entity: "demo", kind: "ratio", label: T.ratio, avail: true, value: pickSel("ratio", "40percent"),
       options: ["30percent", "40percent", "50percent", "60percent", "70percent", "80percent", "90percent"] };
@@ -1628,6 +1628,35 @@ function animKind(m) {
     default: return "generic";
   }
 }
+// Bohnenstufe -> eigenes Symbol (Größe = Stärke, Plus = kleines +, Doppio/Triple = mehrere Bohnen, Pulver = Löffel)
+function beanLabel(o, label, lang) {
+  if (label && !/enum_?type|consumer|bean_?amount|beanamount/i.test(label) && label.length < 26) return label;
+  const k = canon(o).replace(/^.*(beanamount|bohnenmenge)/, "");
+  const plus = (k.match(/plus/g) || []).length;
+  const de = { verymild: "Sehr mild", mild: "Mild", normal: "Normal", strong: "Stark", verystrong: "Sehr stark", extrastrong: "Extra stark", doubleshot: "Doppio", tripleshot: "Triple Shot", coffeeground: "Pulver" };
+  const en = { verymild: "Very mild", mild: "Mild", normal: "Normal", strong: "Strong", verystrong: "Very strong", extrastrong: "Extra strong", doubleshot: "Double shot", tripleshot: "Triple shot", coffeeground: "Ground coffee" };
+  const base = (lang === "de" ? de : en)[k.replace(/plus/g, "")];
+  return base ? base + (plus ? " " + "+".repeat(plus) : "") : (label || o);
+}
+function beanSym(o, i, n, size = 22) {
+  const k = canon(o).replace(/^.*(beanamount|bohnenmenge)/, "");
+  const plus = (k.match(/plus/g) || []).length;
+  const B = (cx, cy, sc) => `<g transform="translate(${cx} ${cy}) scale(${sc}) rotate(30)"><ellipse rx="4.3" ry="6.4"/><path d="M-0.9 5.4 C1.8 1.8 -1.8 -1.8 0.9 -5.4" stroke="var(--hc-bean-line,rgba(0,0,0,.4))" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>`;
+  let body;
+  if (/ground|pulver|powder/.test(k)) body = `<path d="M3 12.5h12a6 6 0 0 1-12 0z"/><path d="M14.5 13l6.5-6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="6.5" cy="10" r="1.3"/><circle cx="9.5" cy="8.6" r="1.3"/><circle cx="12" cy="10.2" r="1.2"/>`;
+  else if (/triple|double|doppio/.test(k)) {
+    const x = /triple/.test(k) ? "3" : "2";
+    body = `<path d="M3.5 9h12v5.5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M15.5 10.5h1.5a2.2 2.2 0 0 1 0 4.4h-1.8" stroke="currentColor" stroke-width="1.8" fill="none"/><text x="9.5" y="17.2" text-anchor="middle" font-size="7.5" font-weight="800" font-family="system-ui,sans-serif" fill="var(--hc-bean-line,rgba(0,0,0,.55))">${x}×</text><path d="M7 6.5c-.8-1 .8-1.8 0-3M11.5 6.5c-.8-1 .8-1.8 0-3" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+  } else {
+    const lv = { verymild: 1, mild: 1, normal: 2, strong: 3, verystrong: 4, extrastrong: 5 }[k.replace(/plus/g, "")] ?? Math.max(1, Math.min(5, Math.round(1 + 4 * (n > 1 ? i / (n - 1) : 1))));
+    const small = k.startsWith("verymild");
+    const pos = { 1: [[11, 12.5]], 2: [[7.5, 12.5], [15.5, 12.5]], 3: [[7, 15.5], [16, 15.5], [11.5, 7.5]], 4: [[7, 7.5], [16, 7.5], [7, 16.5], [16, 16.5]], 5: [[6, 7], [17, 7], [11.5, 12], [6, 17], [17, 17]] }[lv];
+    const sc = small ? 0.7 : { 1: 1.15, 2: 0.95, 3: 0.75, 4: 0.68, 5: 0.58 }[lv];
+    body = pos.map(([x, y]) => B(x, y, sc)).join("");
+  }
+  const pl = plus ? `<g stroke="currentColor" stroke-width="2" stroke-linecap="round">${Array.from({ length: plus }, (_, j) => `<path d="M${20.5 - j * 5.5} 1.8v5M${18 - j * 5.5} 4.3h5"/>`).join("")}</g>` : "";
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${body}${pl}</svg>`;
+}
 function animSvg(kind, color, m) {
   const id = `hc${++_uid}`;
   const glass = (inner) => `<circle cx="60" cy="60" r="54" fill="var(--hc-s2)" stroke="var(--hc-line)" stroke-width="4"/><circle cx="60" cy="60" r="42" fill="var(--hc-deep)"/><g clip-path="url(#${id})">${inner}</g><path d="M36 40 a30 30 0 0 1 20 -12" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round"/>`;
@@ -1824,6 +1853,14 @@ button{font:inherit;color:inherit}
 .bean{width:44px;height:44px;border-radius:50%;border:0;background:var(--hc-s2);color:var(--hc-line2);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .bean.f{background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
 .bean.sel{box-shadow:inset 0 0 0 2px var(--hc-accent)}
+.beans.small{gap:3px}.beans.small{flex-wrap:wrap}.beans.small .bean{width:auto;flex:1 0 calc(12.5% - 3px);min-width:30px;height:38px;border-radius:12px}
+.bean{--hc-bean-line:var(--hc-card)}
+.bcur{display:inline-flex;align-items:center;gap:6px;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--hc-accent);font-weight:600;font-size:13px}
+.btrack{position:relative;height:28px;margin:0 12px}
+.btrack::before{content:"";position:absolute;left:0;right:0;top:12px;height:4px;border-radius:2px;background:var(--hc-s2)}
+.bfill{position:absolute;left:0;top:12px;height:4px;border-radius:2px;background:var(--hc-accent);transition:width .2s}
+.bthumb{position:absolute;top:-2px;width:32px;height:32px;margin-left:-16px;border-radius:50%;background:var(--hc-accent);color:#141414;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:left .2s;--hc-bean-line:var(--hc-accent)}
+.bslider{position:absolute;left:-12px;right:-12px;top:0;width:calc(100% + 24px);height:100%;margin:0;opacity:0;cursor:ew-resize;touch-action:none}
 .ratio{position:relative;display:flex;height:44px;border-radius:22px;overflow:hidden;cursor:pointer}
 .rslider{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;touch-action:none}
 .ratio .c{background:#7a4a26;display:flex;align-items:center;padding-left:14px;font-size:12px;font-weight:600;color:#f6dcbc;transition:width .3s}
@@ -2291,13 +2328,16 @@ class HomeConnectCard extends HTMLElement {
   }
   _beans(k, ctl) {
     const opts = ctl.options || [];
+    const n = opts.length;
     const idx = opts.indexOf(ctl.value);
-    const labels = ctl.optionLabels || opts;
-    return `<div style="display:flex;flex-direction:column;gap:8px"><div class="row"><span class="lbl sp">${esc(ctl.label)}</span><span class="lbl" style="color:var(--hc-accent);font-weight:600">${esc(idx >= 0 ? labels[idx] : "–")}</span></div>
-      <div class="beans">${opts.map((o, i) => {
-        const dbl = /double|doppio/i.test(o);
-        return `<button class="bean ${i <= idx ? "f" : ""} ${i === idx ? "sel" : ""}" data-ctl="${k}" data-opt="${esc(o)}" aria-label="${esc(labels[i])}" ${ctl.avail ? "" : "disabled"}>${dbl ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="9" cy="12" rx="4" ry="6.5" transform="rotate(30 9 12)"/><ellipse cx="16" cy="12" rx="4" ry="6.5" transform="rotate(30 16 12)"/></svg>` : ic("bean", 20)}</button>`;
-      }).join("")}</div></div>`;
+    const labels = opts.map((o, i) => beanLabel(o, (ctl.optionLabels || [])[i], this.lang));
+    ctl.beanLabels = labels;
+    const pct = n > 1 ? (Math.max(0, idx) / (n - 1)) * 100 : 100;
+    const small = n > 7;
+    return `<div class="beanctl" style="display:flex;flex-direction:column;gap:8px"><div class="row"><span class="lbl sp">${esc(ctl.label)}</span><span class="bcur">${idx >= 0 ? beanSym(opts[idx], idx, n, 24) : ""}<span class="bname">${esc(idx >= 0 ? labels[idx] : "–")}</span></span></div>
+      <div class="beans ${small ? "small" : ""}">${opts.map((o, i) => `<button class="bean ${i <= idx ? "f" : ""} ${i === idx ? "sel" : ""}" data-ctl="${k}" data-opt="${esc(o)}" data-bi="${i}" aria-label="${esc(labels[i])}" title="${esc(labels[i])}" ${ctl.avail ? "" : "disabled"}>${beanSym(o, i, n, small ? 22 : 30)}</button>`).join("")}</div>
+      <div class="btrack"><div class="bfill" style="width:${pct}%"></div><div class="bthumb" style="left:${pct}%">${idx >= 0 ? beanSym(opts[idx], idx, n, 22) : ""}</div>
+        <input type="range" class="bslider" data-ctl="${k}" min="0" max="${Math.max(0, n - 1)}" step="1" value="${Math.max(0, idx)}" aria-label="${esc(ctl.label)}" ${ctl.avail ? "" : "disabled"}></div></div>`;
   }
   _ratio(k, ctl) {
     const opts = ctl.options || [];
@@ -2402,6 +2442,21 @@ class HomeConnectCard extends HTMLElement {
     if (q) q.addEventListener("input", () => { this._ui.search = q.value; this._fillList(); this._bindList(); });
     if (R.querySelector(".tiles[data-cat]")) { this._fillList(); this._bindList(); }
     R.querySelectorAll("[data-ctl]").forEach((el) => {
+      if (el.classList.contains("bslider")) {
+        const ctl = m.controls[el.dataset.ctl];
+        const box = el.closest(".beanctl");
+        const upd = () => {
+          const i = +el.value, n = ctl.options.length, pct = n > 1 ? (i / (n - 1)) * 100 : 100;
+          const sym = beanSym(ctl.options[i], i, n, 22);
+          box.querySelector(".bfill").style.width = `${pct}%`;
+          const th = box.querySelector(".bthumb"); th.style.left = `${pct}%`; th.innerHTML = sym;
+          box.querySelector(".bcur").innerHTML = `${beanSym(ctl.options[i], i, n, 24)}<span class="bname">${esc((ctl.beanLabels || ctl.optionLabels || ctl.options)[i])}</span>`;
+          box.querySelectorAll(".bean").forEach((b) => { const bi = +b.dataset.bi; b.classList.toggle("f", bi <= i); b.classList.toggle("sel", bi === i); });
+        };
+        el.addEventListener("input", upd);
+        el.addEventListener("change", () => this._control(el));
+        return;
+      }
       if (el.classList.contains("rslider")) {
         const ctl = m.controls[el.dataset.ctl];
         const upd = () => {
@@ -2558,7 +2613,7 @@ class HomeConnectCard extends HTMLElement {
       return this._call("homeassistant", ctl.value === "on" ? "turn_off" : "turn_on", { entity_id: ctl.entity });
     }
     if (el.tagName === "SELECT") value = el.value;
-    else if (el.classList.contains("rslider")) value = ctl.options[+el.value];
+    else if (el.classList.contains("rslider") || el.classList.contains("bslider")) value = ctl.options[+el.value];
     else if (el.dataset.opt != null) value = el.dataset.opt;
     else if (el.dataset.cycle != null) {
       const i = ctl.options.indexOf(ctl.value);

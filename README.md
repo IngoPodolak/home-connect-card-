@@ -19,7 +19,7 @@ Eine Home-Assistant-Dashboard-Karte für **Home-Connect-Geräte** (Bosch, Siemen
 - **Erkanntes bzw. vorgeschlagenes Gericht** beim Backofen, sofern das Gerät eins meldet, sowie der Hinweis „Jetzt wenden“ (Oven Private).
 - **Kamera** (Backofen, Kühlschrank), wenn eine `camera`-Entität vorhanden ist – mit Bildalter. Ist das Bild älter als 5 Minuten (einstellbar), erscheint statt des Bildes ein Aktualisieren-Knopf.
 - **i-DOS** bei Waschmaschinen: Füllstände als Tanks plus Auto-Dosierung.
-- **Einstellungen kompakt statt als Liste**: Temperatur, Dauer, Startzeit, Bohnenmenge, Kaffee/Milch, Füllmenge, Waschtemperatur, Schleudern, Optionen als Schalter, Verbrauchsmaterial (Salz, Klarspüler, Wassertank, Auffangschale, i-DOS …).
+- **Einstellungen kompakt statt als Liste**: Temperatur, Dauer, Startzeit, Bohnenmenge, Kaffee/Milch, Bohnenmenge (eigenes Symbol je Stufe plus Schieberegler), Füllmenge, Waschtemperatur, Schleudern, Optionen als Schalter, Verbrauchsmaterial (Salz, Klarspüler, Wassertank, Auffangschale, i-DOS …).
 - Alles Übrige steht unter **„Weitere Einstellungen“**, ohne doppelte Einträge aus mehreren Quellen.
 - **Günstigster Start** für Spülmaschine, Waschmaschine und Trockner: berechnet aus der Strompreis-Prognose und der Programmdauer. Die günstigste Startzeit ist **vorausgewählt** und wird beim Drücken auf „Starten“ gesetzt (abschaltbar mit `cheapest_default: false`, „Sofort“ hebt die Vorauswahl auf).
 - **Kompakt-Ansicht** als Bubble-Button für die Übersicht.
