@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.6.3";
+const HC_VERSION = "1.6.4";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -42,7 +42,7 @@ const I18N = {
     tab_clean: "Pflege", tab_drink: "Getränke", tab_world: "Kaffeewelt", tab_prog: "Programme",
     options: "Optionen", settings: "Einstellungen", consumables: "Status & Pflege", more: "Weitere Einstellungen",
     start: "Starten", pause_btn: "Pausieren", resume: "Fortsetzen", stop: "Stopp", power: "Ein/Aus", light: "Licht",
-    browning: "Bräunung", level: "Stufe", camera: "Kamera", live: "LIVE", recognized: "Gericht erkannt / vorgeschlagen", apply_start: "Starten",
+    browning: "Bräunung", level: "Stufe", pick_prog: "Programm wählen", camera: "Kamera", live: "LIVE", recognized: "Gericht erkannt / vorgeschlagen", apply_start: "Starten",
     other_dish: "Anderes Gericht", target: "Ziel", temperature: "Temperatur", duration: "Dauer", start_in: "Startzeit",
     now: "Sofort", local: "LOKAL", cloud: "CLOUD", both: "LOKAL + CLOUD", door_open: "Tür offen", door_closed: "Tür zu",
     beans: "Bohnenmenge", fill: "Füllmenge", ratio: "Kaffee / Milch", coffee: "Kaffee", milk: "Milch",
@@ -87,7 +87,7 @@ const I18N = {
     tab_clean: "Care", tab_drink: "Drinks", tab_world: "Coffee world", tab_prog: "Programs",
     options: "Options", settings: "Settings", consumables: "Status & care", more: "More settings",
     start: "Start", pause_btn: "Pause", resume: "Resume", stop: "Stop", power: "Power", light: "Light",
-    browning: "Browning", level: "Level", camera: "Camera", live: "LIVE", recognized: "Dish detected / suggested", apply_start: "Start",
+    browning: "Browning", level: "Level", pick_prog: "choose a program", camera: "Camera", live: "LIVE", recognized: "Dish detected / suggested", apply_start: "Start",
     other_dish: "Other dish", target: "Target", temperature: "Temperature", duration: "Duration", start_in: "Start time",
     now: "Now", local: "LOCAL", cloud: "CLOUD", both: "LOCAL + CLOUD", door_open: "Door open", door_closed: "Door closed",
     beans: "Bean amount", fill: "Fill quantity", ratio: "Coffee / milk", coffee: "Coffee", milk: "Milk",
@@ -2121,7 +2121,7 @@ button{font:inherit;color:inherit}
 .b-both{background:color-mix(in srgb,var(--hc-accent) 20%,transparent);color:var(--hc-accent)}.b-offline{background:rgba(255,107,107,.18);color:var(--hc-bad)}
 .b-demo{background:rgba(157,140,255,.2);color:#b3a6ff}
 .brw{display:inline-flex;gap:3px;margin-left:4px}.brw i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}.brw i.on{background:linear-gradient(135deg,#f3c27a,#9a5a1c)}
-.cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;max-height:70vh;margin:0 auto;cursor:pointer}
+.cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;max-height:70vh;width:100%;cursor:pointer}
 .cam img{width:100%;height:100%;object-fit:cover;display:block}
 .cam .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#a0a6af;font-size:13px}
 .cam .tl{position:absolute;left:12px;top:12px}.cam .tr{position:absolute;right:12px;top:12px}
@@ -2934,6 +2934,8 @@ class HomeConnectCard extends HTMLElement {
     } else if (m.status === "delayedstart") {
       if (a.stop) btns.push(`<button class="abtn" data-act="stop">${ic("stop", 16)}${esc(T.stop)}</button>`);
     } else if (m.status !== "offline") {
+      // Kein Programm gewählt: Start-Taste trotzdem zeigen (deaktiviert), damit klar ist, wo gestartet wird
+      if ((a.start || m.activeSelect || a.startPause || (a.startOff && m.power)) && !m.program && !m.banner && !m.profile) btns.push(`<button class="abtn pri" disabled style="opacity:.45;cursor:default">${ic("play", 18)}${esc(T.start)} · ${esc(T.pick_prog)}</button>`);
       if ((a.start || m.activeSelect || a.startPause || (a.startOff && m.power)) && m.program && !m.banner) { const pre = this._cheapPre(m); btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}${pre ? ` · ${ic("euro", 14, 2)}+${String(Math.round(pre.h * 100) / 100).replace(".", ",")} h` : ""}</button>`); }
     }
     if (!btns.length) return "";
