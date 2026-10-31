@@ -1,5 +1,7 @@
 # Eigene Programmbilder mit einem KI-Bildgenerator
 
+> Die Karte bringt bereits ein fertiges Foto-Bildpaket mit (`image_source: photo`, Ordner `dist/images/`). Es wurde mit Google Gemini aus genau diesen Prompts erzeugt. Diese Anleitung brauchst du nur, wenn du eigene Bilder möchtest.
+
 Die Karte kann statt der eingebauten Zeichnungen eigene Bilder zeigen.
 
 **Einrichtung:**

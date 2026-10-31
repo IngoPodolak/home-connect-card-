@@ -72,7 +72,7 @@ demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee
 | `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `idos`, `options`, `consumables`, `actions`, `more` |
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
 | `program_view` | Startansicht der Programme; in der Karte lässt sie sich je Unterkategorie (Reiter) über die drei Symbole oben rechts umschalten und wird im Browser gemerkt. Werte:  `icons` (Standard), `display` (Karussell wie am Gerätedisplay: großes Bild in Draufsicht, Name, Herkunft, Stärke, Menge, Wischen/Pfeile/Punkte) oder `images`: Programme als Vorschaubilder – Getränke im Glas mit Schichten, Backofen-Heizarten wie im Gerätedisplay, Gerichte, Spül-/Waschprogramme mit Temperatur |
-| `image_source` | `drawn` (eingebaute Zeichnungen, Standard) oder `custom` (eigene Bilder aus `program_image_path`) |
+| `image_source` | `drawn` (eingebaute Zeichnungen, Standard), `photo` (eingebautes Foto-Bildpaket für Kaffeegetränke und Backofen-Gerichte, KI-generiert mit Google Gemini, wird über den Marketplace mitinstalliert) oder `custom` (eigene Bilder aus `program_image_path`) |
 | `program_image_path` | Ordner mit eigenen Bildern – eine Datei pro Motivgruppe (z. B. `/local/hc-bilder/cappuccino.png`, `meat.png`); fehlende Bilder fallen auf die Zeichnung zurück. Dateinamen und fertige KI-Prompts: [docs/bilder-prompts.md](docs/bilder-prompts.md) |
 | `program_images` | einzelne eigene Bilder, z. B. `cappuccino: /local/cappu.jpg` |
 | `sub_buttons` | Schnellwahl-Knöpfe in der Kompakt-Ansicht (Standard `true`) |

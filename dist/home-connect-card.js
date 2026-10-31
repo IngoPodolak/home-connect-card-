@@ -4,7 +4,18 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.5.0";
+const HC_VERSION = "1.6.0";
+
+// Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
+const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
+let _photoBase = null;
+function photoBase() {
+  if (_photoBase) return _photoBase;
+  const sc = [...document.querySelectorAll("script[src]")].map((e) => e.src).find((u) => /home-connect-card\.js/.test(u));
+  _photoBase = sc ? sc.replace(/[?#].*$/, "").replace(/\/[^/]*$/, "") + "/images"
+    : `https://cdn.jsdelivr.net/gh/IngoPodolak/home-connect-card-@main/dist/images`;
+  return _photoBase;
+}
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -58,7 +69,7 @@ const I18N = {
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
     cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
-    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner der eigenen Bilder (z. B. /local/hc-bilder)", e_isrc: "Bildquelle", src_drawn: "Gezeichnet (eingebaut)", src_custom: "Eigene Bilder aus Ordner", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner der eigenen Bilder (z. B. /local/hc-bilder)", e_isrc: "Bildquelle", src_drawn: "Gezeichnet (eingebaut)", src_photo: "Fotos (eingebautes Bildpaket)", src_custom: "Eigene Bilder aus Ordner", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
@@ -103,7 +114,7 @@ const I18N = {
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
     cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
-    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with your own images (e.g. /local/hc-images)", e_isrc: "Image source", src_drawn: "Drawn (built-in)", src_custom: "Own images from folder", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
+    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with your own images (e.g. /local/hc-images)", e_isrc: "Image source", src_drawn: "Drawn (built-in)", src_photo: "Photos (built-in image pack)", src_custom: "Own images from folder", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
     ph_wash: "Washing", ph_rinse: "Rinsing", ph_spin: "Spinning", ph_dry: "Drying", ph_done: "Done",
@@ -2679,7 +2690,12 @@ class HomeConnectCard extends HTMLElement {
       for (const [k, v] of Object.entries(c.program_images)) if (keys.includes(canon(k))) return v;
     }
     const src = c.image_source || (c.program_image_path ? "custom" : "drawn");
-    if (src !== "custom" || !c.program_image_path || !this._m) return null;
+    if (!this._m) return null;
+    if (src === "photo") {
+      const mk = motifKey(this._m, p);
+      return mk && PHOTO_KEYS.has(mk) ? `${photoBase()}/${mk}.jpg` : null;
+    }
+    if (src !== "custom" || !c.program_image_path) return null;
     const mk = motifKey(this._m, p);
     return mk ? `${String(c.program_image_path).replace(/\/+$/, "")}/${mk}.${c.program_image_ext || "png"}` : null;
   }
@@ -3295,7 +3311,7 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
       { name: "price_entity", selector: { entity: { domain: "sensor" } } },
       { name: "program_view", selector: { select: { mode: "dropdown", options: [{ value: "icons", label: T.pv_icons }, { value: "images", label: T.pv_images }, { value: "display", label: T.pv_display }] } } },
-      { name: "image_source", selector: { select: { mode: "dropdown", options: [{ value: "drawn", label: T.src_drawn }, { value: "custom", label: T.src_custom }] } } },
+      { name: "image_source", selector: { select: { mode: "dropdown", options: [{ value: "drawn", label: T.src_drawn }, { value: "photo", label: T.src_photo }, { value: "custom", label: T.src_custom }] } } },
       { name: "program_image_path", selector: { text: {} } },
       { name: "sub_buttons", selector: { boolean: {} } },
       { name: "cheapest_default", selector: { boolean: {} } },
