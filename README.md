@@ -20,6 +20,7 @@ Eine Home-Assistant-Dashboard-Karte für **Home-Connect-Geräte** (Bosch, Siemen
 - **Kamera** (Backofen, Kühlschrank), wenn eine `camera`-Entität vorhanden ist.
 - **Einstellungen kompakt statt als Liste**: Temperatur, Dauer, Startzeit, Bohnenmenge, Kaffee/Milch, Füllmenge, Waschtemperatur, Schleudern, Optionen als Schalter, Verbrauchsmaterial (Salz, Klarspüler, Wassertank, Auffangschale, i-DOS …).
 - Alles Übrige steht unter **„Weitere Einstellungen“**, ohne doppelte Einträge aus mehreren Quellen.
+- **Günstigster Start** für Spülmaschine, Waschmaschine und Trockner: berechnet aus der Strompreis-Prognose und der Programmdauer und setzt die Startverzögerung.
 - **Kompakt-Ansicht** als Bubble-Button für die Übersicht.
 - **Demo-Modus** für alle Gerätetypen (zum Ausprobieren ohne echtes Gerät).
 - Deutsch und Englisch, richtet sich nach der HA-Sprache.
@@ -51,7 +52,7 @@ navigation_path: "#backofen"
 
 # Demo ohne echtes Gerät
 type: custom:home-connect-card
-demo: washer   # oven, dishwasher, washer, dryer, washerdryer, coffee, fridge, freezer, hob, hood, warmingdrawer
+demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee, fridge, freezer, winecooler, hob, hood, warmingdrawer, cookprocessor, cleaningrobot
 ```
 
 | Option | Beschreibung |
@@ -61,7 +62,9 @@ demo: washer   # oven, dishwasher, washer, dryer, washerdryer, coffee, fridge, f
 | `layout` | `full` (Standard) oder `compact` |
 | `name` | eigener Name |
 | `navigation_path` | Ziel beim Antippen der Kompakt-Ansicht, z. B. `#backofen` für ein Bubble-Popup |
-| `color` | Akzentfarbe, z. B. `"#ff8a3d"` |
+| `color` | Akzentfarbe (Farbwähler im Editor oder `"#ff8a3d"`), Standard: eigene Farbe je Gerätetyp |
+| `device_type` | Gerätetyp erzwingen, falls falsch erkannt |
+| `price_entity` | Strompreis-Sensor mit Prognose für „Günstigster Start“ (Tibber, EPEX Spot, Nordpool …) – wird sonst automatisch gesucht, `none` schaltet ab |
 | `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `options`, `consumables`, `actions`, `more` |
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
 | `entities` | einzelne Zuordnungen überschreiben, z. B. `camera: camera.mein_ofen` |

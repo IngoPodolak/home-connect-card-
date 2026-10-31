@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "0.1.1";
+const HC_VERSION = "0.2.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -46,13 +46,17 @@ const I18N = {
     water_filter: "Wasserfilter", idos1: "i-DOS 1", idos2: "i-DOS 2", counters: "Zähler",
     unavailable: "nicht verfügbar", min: "min", h: "h",
     e_device: "Gerät", e_demo: "Demo-Gerät (ohne echtes Gerät)", e_layout: "Darstellung", e_name: "Name (optional)",
-    e_nav: "Navigation beim Antippen (z. B. #backofen für Bubble-Popup)", e_hide: "Module ausblenden", e_color: "Akzentfarbe (optional, z. B. #ff8a3d)",
+    e_nav: "Navigation beim Antippen (z. B. #backofen für Bubble-Popup)", e_hide: "Module ausblenden", e_color: "Akzentfarbe (leer = Standardfarbe des Gerätetyps)",
     l_full: "Vollständig (für Popup)", l_compact: "Kompakt (Bubble-Button)", none: "– keins –",
     m_camera: "Kamera", m_banner: "Hinweise", m_hero: "Status", m_programs: "Programme", m_controls: "Einstellungen",
     m_options: "Optionen", m_consumables: "Status & Pflege", m_actions: "Aktionen", m_more: "Weitere Einstellungen",
     t_oven: "Backofen", t_dishwasher: "Geschirrspüler", t_washer: "Waschmaschine", t_dryer: "Trockner",
     t_washerdryer: "Waschtrockner", t_coffee: "Kaffeevollautomat", t_fridge: "Kühlschrank", t_freezer: "Gefrierschrank",
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
+    t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
+    cheapest: "Günstigster Start", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
     ph_grinding: "Mahlen", ph_coffeebrewing: "Brühen", ph_milkfroth: "Milchschaum", ph_hotwaterdispensing: "Heißwasser",
@@ -84,13 +88,17 @@ const I18N = {
     water_filter: "Water filter", idos1: "i-DOS 1", idos2: "i-DOS 2", counters: "Counters",
     unavailable: "unavailable", min: "min", h: "h",
     e_device: "Device", e_demo: "Demo device (no real appliance)", e_layout: "Layout", e_name: "Name (optional)",
-    e_nav: "Navigation on tap (e.g. #oven for a Bubble pop-up)", e_hide: "Hide modules", e_color: "Accent color (optional, e.g. #ff8a3d)",
+    e_nav: "Navigation on tap (e.g. #oven for a Bubble pop-up)", e_hide: "Hide modules", e_color: "Accent color (empty = default color of the appliance type)",
     l_full: "Full (for pop-up)", l_compact: "Compact (bubble button)", none: "– none –",
     m_camera: "Camera", m_banner: "Hints", m_hero: "Status", m_programs: "Programs", m_controls: "Settings",
     m_options: "Options", m_consumables: "Status & care", m_actions: "Actions", m_more: "More settings",
     t_oven: "Oven", t_dishwasher: "Dishwasher", t_washer: "Washing machine", t_dryer: "Dryer",
     t_washerdryer: "Washer dryer", t_coffee: "Coffee machine", t_fridge: "Fridge", t_freezer: "Freezer",
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
+    t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
+    cheapest: "Cheapest start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
+    e_price: "Electricity price forecast (for cheapest start)", auto: "automatic", no_price: "no price forecast found",
+    battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
     ph_wash: "Washing", ph_rinse: "Rinsing", ph_spin: "Spinning", ph_dry: "Drying", ph_done: "Done",
     ph_grinding: "Grinding", ph_coffeebrewing: "Brewing", ph_milkfroth: "Milk froth", ph_hotwaterdispensing: "Hot water",
@@ -334,8 +342,12 @@ const TYPE_RULES = [
   ["washer", /laundrycarewasher|(^|[^a-z])washer|waschmaschine/],
   ["dryer", /dryer|trockner/],
   ["coffee", /coffee|kaffee/],
+  ["winecooler", /winecooler|weinkuhl|weinklima|wine/],
+  ["cleaningrobot", /cleaningrobot|roxxter|saugrobot|robotvacuum/],
+  ["cookprocessor", /cookprocessor|cookit|kuchenmaschine|kochmaschine/],
   ["warmingdrawer", /warmingdrawer|warmeschublade|warming/],
   ["oven", /oven|backofen|herd|cookingoven|dampfgarer|steamer/],
+  ["microwave", /^microwave$|mikrowelle/],
   ["fridge", /fridgefreezer|refrigerator|fridge|kuhlschrank|kuhl-gefrier|refrigeration/],
   ["freezer", /freezer|gefrier/],
   ["hob", /(^|[^a-z])hob|kochfeld|cookinghob/],
@@ -346,6 +358,8 @@ const TYPE_META = {
   washer: { color: "#36cfc4", icon: "washer" }, dryer: { color: "#f2a65a", icon: "dryer" }, washerdryer: { color: "#36cfc4", icon: "washer" },
   coffee: { color: "#e0a96d", icon: "coffee" }, fridge: { color: "#8fb8ff", icon: "fridge" }, freezer: { color: "#9ad7ff", icon: "fridge" },
   hob: { color: "#ff6a4d", icon: "hob" }, hood: { color: "#a0b4c8", icon: "hood" }, warmingdrawer: { color: "#ffb26b", icon: "drawer" },
+  winecooler: { color: "#d46a8c", icon: "fridge" }, cleaningrobot: { color: "#5fd08a", icon: "robot" },
+  cookprocessor: { color: "#f2c14e", icon: "cookit" }, microwave: { color: "#b3a6ff", icon: "micro" },
   generic: { color: "#9d8cff", icon: "generic" },
 };
 function detectType(text) {
@@ -580,7 +594,7 @@ function buildModel(hass, g, cfg, lang) {
   const src = (e) => { if (e && e.avail && e.platform !== "override") srcUsed.add(e.platform); return e; };
 
   const model = {
-    type: cfg.type || g.type, name: cfg.name || g.name, key: g.key, demo: false,
+    type: cfg.device_type || g.type, name: cfg.name || g.name, key: g.key, demo: false,
     programs: [], options: [], consumables: [], controls: {}, actions: {}, more: [], counters: [],
   };
 
@@ -611,6 +625,7 @@ function buildModel(hass, g, cfg, lang) {
     src(endt);
   }
   model.remaining = model.running ? remaining : null;
+  model.estDuration = !model.running && remaining ? remaining : null;
   const pv = prog && prog.avail ? parseFloat(prog.st.state) : NaN;
   model.progress = model.running && !isNaN(pv) ? Math.max(0, Math.min(100, pv)) : (status === "finished" ? 100 : null);
   model.end = model.remaining != null ? new Date(Date.now() + model.remaining * 1000) : null;
@@ -734,11 +749,24 @@ function buildModel(hass, g, cfg, lang) {
     ctl("washTemp", T.wash_temp, "segment");
     ctl("spin", T.spin, "segment");
   }
-  if (["fridge", "freezer"].includes(model.type)) {
+  if (["fridge", "freezer", "winecooler"].includes(model.type)) {
     ctl("fridgeSet", T.fridge, "stepper");
     ctl("freezerSet", T.freezer, "stepper");
   }
   P("alarm"); // nicht prominent zeigen
+  // Günstigster Start nach Strompreis
+  const sic = model.controls.startIn;
+  if (sic && !sic.options && cfg.price_entity !== "none" && ["dishwasher", "washer", "dryer", "washerdryer"].includes(model.type)) {
+    const pid = cfg.price_entity || findPriceEntity(hass);
+    const prices = pid ? parsePrices(hass.states[pid]) : null;
+    const u = sic.unit || "h";
+    const toH = (v) => (u === "s" ? v / 3600 : u === "min" ? v / 60 : v);
+    const maxH = Math.min(24, toH(parseFloat(sic.max ?? 24)));
+    const stepH = Math.max(0.25, toH(parseFloat(sic.step) || 1));
+    const dur = model.estDuration || { dishwasher: 3 * 3600, washer: 2 * 3600, dryer: 2 * 3600, washerdryer: 3.5 * 3600 }[model.type];
+    const c = cheapestStart(prices, dur, maxH, stepH);
+    if (c) { c.value = u === "s" ? c.h * 3600 : u === "min" ? c.h * 60 : c.h; sic.cheap = c; }
+  }
 
   // Optionen (Schalter)
   const childlock = P("childlock");
@@ -838,6 +866,83 @@ function buildModel(hass, g, cfg, lang) {
   return model;
 }
 
+/* ------------------------------------------------------------------ */
+/* Strompreis-Prognose & günstigster Start                             */
+/* ------------------------------------------------------------------ */
+function parsePrices(st) {
+  if (!st) return null;
+  const a = st.attributes || {};
+  const out = [];
+  const add = (start, end, p) => {
+    const t = new Date(start).getTime(); const e = end ? new Date(end).getTime() : NaN; const v = parseFloat(p);
+    if (!isNaN(t) && !isNaN(v)) out.push({ t, e, p: v });
+  };
+  if (a.outlook_quarters && Array.isArray(a.outlook_quarters.prices)) {
+    const t0 = new Date(a.outlook_quarters.start).getTime(); const mins = a.outlook_quarters.minutes || 15;
+    a.outlook_quarters.prices.forEach((p, i) => add(t0 + i * mins * 60000, t0 + (i + 1) * mins * 60000, p));
+  }
+  if (!out.length && Array.isArray(a.outlook_hours)) a.outlook_hours.forEach((x) => add(x.start, x.end, x.price_mean ?? x.price ?? x.price_median));
+  const lists = [a.data, a.prices, a.forecast, a.raw_today, a.raw_tomorrow, a.today_prices, a.tomorrow_prices, a.rates];
+  if (!out.length) for (const l of lists) {
+    if (!Array.isArray(l)) continue;
+    for (const x of l) {
+      if (!x || typeof x !== "object") continue;
+      const start = x.start_time ?? x.start ?? x.startsAt ?? x.from ?? x.time;
+      const end = x.end_time ?? x.end ?? x.endsAt ?? x.till ?? x.to;
+      const price = x.price_ct_per_kwh ?? x.price_per_kwh ?? x.total ?? x.price ?? x.value ?? x.price_mean;
+      add(start, end, price);
+    }
+  }
+  if (!out.length) return null;
+  out.sort((x, y) => x.t - y.t);
+  out.forEach((x, i) => { if (isNaN(x.e)) x.e = out[i + 1] ? out[i + 1].t : x.t + 3600000; });
+  const unit = a.unit_of_measurement || "";
+  return { slots: out, unit };
+}
+let _priceCache = { t: 0, id: null };
+function findPriceEntity(hass) {
+  if (Date.now() - _priceCache.t < 120000 && _priceCache.states === hass.states) return _priceCache.id;
+  let best = null, score = 0;
+  for (const [id, st] of Object.entries(hass.states)) {
+    if (!id.startsWith("sensor.")) continue;
+    const a = st.attributes || {};
+    let sc = 0;
+    if (a.outlook_quarters?.prices) sc = 5; else if (Array.isArray(a.outlook_hours)) sc = 4;
+    else if (Array.isArray(a.data) && a.data[0] && ("price_per_kwh" in a.data[0] || "price_ct_per_kwh" in a.data[0])) sc = 3;
+    else if (Array.isArray(a.raw_today)) sc = 2;
+    if (sc > score) { score = sc; best = id; }
+  }
+  _priceCache = { t: Date.now(), id: best, states: hass.states };
+  return best;
+}
+function cheapestStart(prices, durSec, maxH, stepH) {
+  if (!prices || !durSec) return null;
+  const now = Date.now();
+  const slots = prices.slots.filter((x) => x.e > now);
+  if (!slots.length) return null;
+  const dataEnd = slots[slots.length - 1].e;
+  const avgAt = (s) => {
+    const e = s + durSec * 1000; if (e > dataEnd) return null;
+    let sum = 0;
+    for (const x of slots) { const o = Math.min(e, x.e) - Math.max(s, x.t); if (o > 0) sum += o * x.p; }
+    return sum / (durSec * 1000);
+  };
+  const nowAvg = avgAt(now);
+  let best = null;
+  for (let h = 0; h <= maxH + 1e-9; h += stepH) {
+    const v = avgAt(now + h * 3600000);
+    if (v == null) break;
+    if (!best || v < best.avg - 1e-9) best = { h, avg: v };
+  }
+  if (!best) return null;
+  return { h: best.h, avg: best.avg, now: nowAvg, unit: prices.unit };
+}
+function fmtPrice(v, unit) {
+  if (v == null) return "–";
+  const ct = /ct|cent/i.test(unit) ? v : v * 100;
+  return `${ct.toFixed(1).replace(".", ",")} ct`;
+}
+
 /* Favoriten-Namen merken (aus "Program Name" von Home Connect Alt) */
 function loadFavNames(key) {
   try { return JSON.parse(localStorage.getItem(`hc-card-fav-${key}`) || "{}"); } catch (e) { return {}; }
@@ -852,7 +957,7 @@ function saveFavName(key, canonKey, name) {
 /* ------------------------------------------------------------------ */
 /* Demo-Modelle                                                        */
 /* ------------------------------------------------------------------ */
-const DEMO_TYPES = ["oven", "dishwasher", "washer", "dryer", "washerdryer", "coffee", "fridge", "freezer", "hob", "hood", "warmingdrawer"];
+const DEMO_TYPES = ["oven", "microwave", "dishwasher", "washer", "dryer", "washerdryer", "coffee", "fridge", "freezer", "winecooler", "hob", "hood", "warmingdrawer", "cookprocessor", "cleaningrobot"];
 function demoModel(type, lang, cfg, state) {
   const T = I18N[lang];
   const cycle = 240; // Sekunden
@@ -904,7 +1009,8 @@ function demoModel(type, lang, cfg, state) {
     m.phase = T[`ph_${m.phaseKey}`];
     m.options = ["VarioSpeed+", lang === "de" ? "Halbe Beladung" : "Half load", "HygienePlus", lang === "de" ? "Intensivzone" : "Intensive zone", lang === "de" ? "Leise auf Knopfdruck" : "Silence on demand", lang === "de" ? "Extra Trocken" : "Extra dry"]
       .map((l, i) => ({ entity: "demo", label: l, on: i === 0, avail: true }));
-    m.controls.startIn = { entity: "demo", kind: "startin", label: T.start_in, avail: true, value: "0", min: 0, max: 24, step: 1, unit: "h" };
+    m.controls.startIn = { entity: "demo", kind: "startin", label: T.start_in, avail: true, value: String(pickSel("startIn", 0)), min: 0, max: 24, step: 1, unit: "h",
+      cheap: { h: 5, value: 5, avg: 43.9, now: 47.6, unit: "ct/kWh" } };
     m.consumables = [{ label: T.salt, level: "ok", text: T.ok, pct: 90 }, { label: T.rinse_aid, level: "warn", text: T.low, pct: 25 }];
     m.forecast = { energy: 51, water: 40 };
     m.door = "closed";
@@ -918,7 +1024,8 @@ function demoModel(type, lang, cfg, state) {
     m.consumables = [{ label: T.idos1, level: "ok", text: "64 %", pct: 64 }, { label: T.idos2, level: "warn", text: "22 %", pct: 22 }];
     m.options = ["Speed Perfect", "Eco Perfect", lang === "de" ? "Vorwäsche" : "Prewash", lang === "de" ? "Wasser Plus" : "Water plus"]
       .map((l, i) => ({ entity: "demo", label: l, on: i === 1, avail: true }));
-    m.controls.startIn = { entity: "demo", kind: "startin", label: lang === "de" ? "Fertig in" : "Finish in", avail: true, value: "0", min: 0, max: 24, step: 1, unit: "h" };
+    m.controls.startIn = { entity: "demo", kind: "startin", label: lang === "de" ? "Fertig in" : "Finish in", avail: true, value: String(pickSel("startIn", 0)), min: 0, max: 24, step: 1, unit: "h",
+      cheap: { h: 4, value: 4, avg: 44.6, now: 47.6, unit: "ct/kWh" } };
     m.door = "closed";
   } else if (type === "dryer") {
     m.programs = progs(["cotton", "synthetic", "mix", "blankets", "businessshirts", "downfeathers", "hygiene", "jeans", "outdoor", "towels", "super40", "refresh", "timewarm"], "prog");
@@ -973,6 +1080,42 @@ function demoModel(type, lang, cfg, state) {
     m.program = m.programs[1]; m.selectedCanon = "keepwarm";
     m.controls.level = seg(T.level, ["1", "2", "3", "4"], null, pickSel("level", "2"));
   }
+  else if (type === "microwave") {
+    m.programs = [...progs(["microwave90watt", "microwave180watt", "microwave360watt", "microwave600watt", "microwave900watt", "microwavemax"], "micro")
+      .map((p) => ({ ...p, label: p.canon === "microwavemax" ? pl("microwavemax") : `${p.canon.match(/\d+/)} W` })),
+      ...["cooking_oven_program_dish_automatic_microwave_defrostmeat", "cooking_oven_program_dish_automatic_microwave_vegetablesfresh",
+        "cooking_oven_program_dish_automatic_microwave_basmatirice", "cooking_oven_program_dish_recommendation_microwave_microwavepopcornsweet",
+        "cooking_oven_program_dish_recommendation_microwave_cup"].map((raw) => ({ raw, canon: canon(raw), cat: "dish", tail: "", label: programLabel({}, raw, lang, { favNames: {} }) })),
+      ...progs(["hotair", "grilllargearea"], "heat")];
+    m.program = m.programs.find((p) => p.canon === pickSel("prog", "microwave600watt")) || m.programs[3]; m.selectedCanon = m.program.canon;
+    const tot = 300; m.remaining = tot * (1 - pct / 100); m.end = new Date(Date.now() + m.remaining * 1000);
+    m.controls.duration = { entity: "demo", kind: "stepper", label: T.duration, avail: true, value: String(pickSel("duration", 300)), min: 10, max: 5400, step: 30, unit: "s", device_class: "duration" };
+    m.light = { entity: "demo", on: true, control: true }; m.door = "closed";
+  } else if (type === "winecooler") {
+    m.running = false; m.progress = null; m.remaining = null; m.end = null; m.statusText = lang === "de" ? "Oben 12 °C · Unten 7 °C" : "Top 12 °C · Bottom 7 °C";
+    m.controls.fridgeSet = { entity: "demo", kind: "stepper", label: lang === "de" ? "Zone oben" : "Upper zone", avail: true, value: String(pickSel("fridgeSet", 12)), min: 5, max: 20, step: 1, unit: "°C" };
+    m.controls.freezerSet = { entity: "demo", kind: "stepper", label: lang === "de" ? "Zone unten" : "Lower zone", avail: true, value: String(pickSel("freezerSet", 7)), min: 5, max: 20, step: 1, unit: "°C" };
+    m.options = [lang === "de" ? "Innenlicht" : "Interior light", lang === "de" ? "Präsentationsmodus" : "Presentation mode", "Eco"].map((l, i) => ({ entity: "demo", label: l, on: i === 2, avail: true }));
+    m.temp = { current: 12, unit: "°C" }; m.door = "closed"; m.actions = {};
+  } else if (type === "cookprocessor") {
+    m.programs = progs(["stir", "knead", "chop", "steam", "slowcook", "fry", "sousvide", "ferment"], "prog")
+      .map((p) => ({ ...p, label: { stir: lang === "de" ? "Rühren" : "Stir", knead: lang === "de" ? "Kneten" : "Knead", chop: lang === "de" ? "Zerkleinern" : "Chop", steam: lang === "de" ? "Dampfgaren" : "Steam", slowcook: lang === "de" ? "Schmoren" : "Slow cook", fry: lang === "de" ? "Anbraten" : "Fry", sousvide: "Sous-vide", ferment: lang === "de" ? "Fermentieren" : "Ferment" }[p.canon] }));
+    m.program = m.programs.find((p) => p.canon === pickSel("prog", "stir")) || m.programs[0]; m.selectedCanon = m.program.canon;
+    m.temp = { current: 92, target: 100, unit: "°C" };
+    m.controls.setpoint = { entity: "demo", kind: "stepper", label: T.temperature, avail: true, value: String(pickSel("setpoint", 100)), min: 30, max: 200, step: 5, unit: "°C" };
+    m.controls.duration = { entity: "demo", kind: "stepper", label: T.duration, avail: true, value: String(pickSel("duration", 1200)), min: 60, max: 7200, step: 60, unit: "s", device_class: "duration" };
+    m.controls.level = seg(T.speed, ["1", "2", "3", "4", "5", "6", "turbo"], ["1", "2", "3", "4", "5", "6", "Turbo"], pickSel("level", "3"));
+    m.options = [lang === "de" ? "Linkslauf" : "Reverse", lang === "de" ? "Deckel verriegelt" : "Lid locked"].map((l, i) => ({ entity: "demo", label: l, on: i === 1, avail: true }));
+  } else if (type === "cleaningrobot") {
+    m.programs = progs(["cleanall", "cleanmap", "gohome"], "prog").map((p) => ({ ...p, label: { cleanall: lang === "de" ? "Alles reinigen" : "Clean all", cleanmap: lang === "de" ? "Räume wählen" : "Select rooms", gohome: lang === "de" ? "Zur Station" : "Go home" }[p.canon] }));
+    m.program = m.programs[0]; m.selectedCanon = "cleanall";
+    m.phase = T.cleaning; m.phaseKey = "cleaning";
+    m.controls.level = seg(lang === "de" ? "Saugstufe" : "Suction", ["silent", "standard", "power"], lang === "de" ? ["Leise", "Standard", "Power"] : ["Silent", "Standard", "Power"], pickSel("level", "standard"));
+    m.controls.rooms = seg(T.rooms, ["kitchen", "living", "hall", "bath"], lang === "de" ? ["Küche", "Wohnen", "Flur", "Bad"] : ["Kitchen", "Living", "Hall", "Bath"], pickSel("rooms", "living"));
+    m.consumables = [{ label: T.battery, level: "ok", text: `${Math.round(100 - pct * 0.6)} %`, pct: 100 - pct * 0.6 }, { label: lang === "de" ? "Staubbehälter" : "Dust bin", level: "warn", text: T.low, pct: 75 },
+      { label: lang === "de" ? "Bürsten" : "Brushes", level: "ok", text: T.ok, pct: 80 }];
+    m.camera = "demo";
+  }
   if (!m.program && m.programs.length) m.program = m.programs[0];
   return m;
 }
@@ -991,6 +1134,10 @@ const ICON = {
   hood: '<path d="M9 3h6v6l5 6H4l5-6z"/><path d="M7 18h10"/>',
   drawer: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M9 10h6"/>',
   generic: '<rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="12" cy="12" r="3"/>',
+  robot: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M9 5.5h6"/>',
+  cookit: '<path d="M5 10h14l-1.5 9a2 2 0 0 1-2 1.7h-7a2 2 0 0 1-2-1.7z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/><path d="M12 13v4"/>',
+  micro: '<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="6" y="8" width="9" height="8" rx="1"/><path d="M18 9v1M18 13v1"/>',
+  euro: '<path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10.5h9M4 13.5h9"/>',
   camera: '<path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/>',
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',
   power: '<path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>',
@@ -1040,6 +1187,10 @@ function animKind(m) {
       return "crema";
     }
     case "fridge": case "freezer": return "cold";
+    case "winecooler": return "wine";
+    case "microwave": return "micro";
+    case "cookprocessor": return "stir";
+    case "cleaningrobot": return "robot";
     case "hob": return "hob";
     case "hood": return "hood";
     default: return "generic";
@@ -1098,6 +1249,9 @@ function animSvg(kind, color, m) {
       }).join("");
     }
     case "hood": return `<path d="M44 20 h32 v22 l22 26 H22 l22 -26z" fill="var(--hc-deep)" stroke="var(--hc-line)" stroke-width="3" stroke-linejoin="round"/><g class="fb a-fanspin"><path d="M60 46 v12 M54 52 h12" stroke="${color}" stroke-width="3" stroke-linecap="round"/></g><path class="a-rise" d="M40 98 c-3 -5 3 -8 0 -13" fill="none" stroke="#c3c8cf" stroke-width="2" stroke-linecap="round"/><path class="a-rise d1" d="M60 100 c-3 -5 3 -8 0 -13" fill="none" stroke="#c3c8cf" stroke-width="2" stroke-linecap="round"/><path class="a-rise d2" d="M80 98 c-3 -5 3 -8 0 -13" fill="none" stroke="#c3c8cf" stroke-width="2" stroke-linecap="round"/>`;
+    case "wine": return `<rect x="30" y="14" width="60" height="92" rx="10" fill="var(--hc-deep)" stroke="var(--hc-line)" stroke-width="3"/>${[34, 56, 78].map((y, r) => [44, 60, 76].map((x) => `<g transform="translate(${x} ${y})"><rect x="-5" y="-3" width="10" height="16" rx="3" fill="#7a2140"/><rect x="-2" y="-9" width="4" height="7" rx="1.5" fill="#5a1830"/></g>`).join("")).join("")}<path class="a-fall" d="M40 98 v4" stroke="${color}" stroke-width="2" stroke-linecap="round"/><path class="a-fall d1" d="M60 98 v4" stroke="${color}" stroke-width="2" stroke-linecap="round"/><path class="a-fall d2" d="M80 98 v4" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`;
+    case "stir": return `<path d="M26 46 h68 l-6 46 a8 8 0 0 1 -8 7 H40 a8 8 0 0 1 -8 -7z" fill="var(--hc-deep)" stroke="var(--hc-line)" stroke-width="3" stroke-linejoin="round"/><defs><clipPath id="${id}"><path d="M28 56 h64 l-5 36 a8 8 0 0 1 -8 7 H41 a8 8 0 0 1 -8 -7z"/></clipPath></defs><g clip-path="url(#${id})">${wave(62, `color-mix(in srgb, ${color} 45%, transparent)`)}</g><g class="vb a-spinfast" style="transform-origin:60px 80px"><path d="M60 80 l14 -4 M60 80 l-14 4 M60 80 l4 14 M60 80 l-4 -14" stroke="${color}" stroke-width="3" stroke-linecap="round"/></g><path class="a-rise" d="M48 40 c-3 -5 3 -8 0 -13" fill="none" stroke="#c3c8cf" stroke-width="2" stroke-linecap="round"/><path class="a-rise d1" d="M72 40 c-3 -5 3 -8 0 -13" fill="none" stroke="#c3c8cf" stroke-width="2" stroke-linecap="round"/>`;
+    case "robot": return `<rect x="12" y="12" width="96" height="96" rx="14" fill="var(--hc-deep)"/><path d="M20 40 H100 M20 70 H100 M50 12 V108" stroke="var(--hc-line)" stroke-width="1.5"/><g class="a-patrol"><circle cx="0" cy="0" r="13" fill="var(--hc-s2)" stroke="${color}" stroke-width="3"/><circle cx="0" cy="0" r="4" fill="${color}"/><path d="M-6 -9 h12" stroke="${color}" stroke-width="2" stroke-linecap="round"/></g>`;
     case "done": return `<circle cx="60" cy="60" r="42" fill="color-mix(in srgb, ${color} 20%, transparent)"/><path d="M40 61 l13 13 l27 -28" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`;
     default: return `<circle cx="60" cy="60" r="42" fill="color-mix(in srgb, ${color} 14%, transparent)"/><g transform="translate(36 36) scale(2)" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[TYPE_META[m.type]?.icon || "generic"]}</g>`;
   }
@@ -1125,7 +1279,7 @@ button{font:inherit;color:inherit}
 .pill.compact{min-height:56px;padding:6px}
 .pill .fill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--hc-accent) 16%,transparent);transition:width 1s linear}
 .ico{position:relative;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
-.ico.off{background:var(--hc-s2);color:var(--hc-muted)}
+.ico.off{background:color-mix(in srgb,var(--hc-accent) 12%,transparent);color:color-mix(in srgb,var(--hc-accent) 65%,var(--hc-muted))}
 .txt{position:relative;flex:1;min-width:0;display:flex;flex-direction:column}
 .name{font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .state{font-size:13px;color:var(--hc-muted);line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1213,6 +1367,8 @@ select.dd{height:40px;border-radius:14px;border:0;background:var(--hc-s2);color:
 .toast.show{opacity:1}
 .vb{transform-box:view-box;transform-origin:60px 60px}.fb{transform-box:fill-box;transform-origin:center}.bot{transform-box:fill-box;transform-origin:50% 100%}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes patrol{0%{transform:translate(30px,26px)}25%{transform:translate(90px,26px)}50%{transform:translate(90px,94px)}75%{transform:translate(30px,94px)}100%{transform:translate(30px,26px)}}
+.a-patrol{animation:patrol 8s linear infinite}
 @keyframes slosh{0%,100%{transform:rotate(-40deg)}50%{transform:rotate(40deg)}}
 @keyframes tumble{0%{transform:rotate(0)}50%{transform:rotate(200deg)}100%{transform:rotate(360deg)}}
 @keyframes wave{from{transform:translateX(0)}to{transform:translateX(60px)}}
@@ -1243,7 +1399,7 @@ select.dd{height:40px;border-radius:14px;border:0;background:var(--hc-s2);color:
 /* ------------------------------------------------------------------ */
 /* Karte                                                               */
 /* ------------------------------------------------------------------ */
-const MODULES = ["camera", "banner", "hero", "programs", "controls", "options", "consumables", "actions", "more"];
+const MODULES = ["banner", "hero", "camera", "programs", "controls", "options", "consumables", "actions", "more"];
 
 class HomeConnectCard extends HTMLElement {
   constructor() {
@@ -1355,7 +1511,8 @@ class HomeConnectCard extends HTMLElement {
       this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="box"><div class="row"><div class="ico off">${ic("generic")}</div><div class="txt"><span class="name">Home Connect Card</span><span class="state">${esc(msg)}</span></div></div><div class="lbl">${esc(T.choose_device)}</div></div>`;
       return;
     }
-    const color = cfg.color || TYPE_META[m.type]?.color || TYPE_META.generic.color;
+    const cc = cfg.color;
+    const color = Array.isArray(cc) ? `rgb(${cc.join(",")})` : (cc || TYPE_META[m.type]?.color || TYPE_META.generic.color);
     const hide = new Set(cfg.hide || []);
     let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}}</style>`;
     if (cfg.layout === "compact") {
@@ -1439,7 +1596,7 @@ class HomeConnectCard extends HTMLElement {
   _m_hero(m, T, color) {
     if (["hob"].includes(m.type) && !m.demo) return "";
     const kind = animKind(m);
-    const always = ["fridge", "freezer", "hood", "hob"].includes(m.type) && !["off", "offline", "inactive"].includes(m.status);
+    const always = ["fridge", "freezer", "winecooler", "hood", "hob"].includes(m.type) && !["off", "offline", "inactive"].includes(m.status);
     const idle = !m.running && m.status !== "finished" && !always;
     const pct = m.status === "finished" ? 100 : m.progress != null ? m.progress : 0;
     const C = 2 * Math.PI * 78;
@@ -1450,9 +1607,9 @@ class HomeConnectCard extends HTMLElement {
     if (m.running && m.remaining != null) info.push(`<div><div class="lbl">${esc(T.remaining)}</div><div class="big hc-rem">${esc(fmtDur(m.remaining, this.lang))}</div></div>`);
     if (m.running && m.end) info.push(`<div><div class="lbl">${esc(T.ends)}</div><div class="mid hc-end">${fmtClock(m.end)}</div></div>`);
     if (m.startsIn) info.push(`<div><div class="lbl">${esc(T.starts_in)}</div><div class="mid">${esc(fmtDur(m.startsIn, this.lang))}</div></div>`);
-    if (m.temp?.current != null && ["oven", "warmingdrawer"].includes(m.type)) info.push(`<div><div class="lbl">${esc(T.temperature)}</div><div class="mid"><span class="hc-temp">${m.temp.current}</span> °C${m.temp.target && m.running ? ` <span class="lbl">/ ${esc(T.target)} ${m.temp.target} °C</span>` : ""}</div></div>`);
+    if (m.temp?.current != null && ["oven", "warmingdrawer", "cookprocessor"].includes(m.type)) info.push(`<div><div class="lbl">${esc(T.temperature)}</div><div class="mid"><span class="hc-temp">${m.temp.current}</span> °C${m.temp.target && m.running ? ` <span class="lbl">/ ${esc(T.target)} ${m.temp.target} °C</span>` : ""}</div></div>`);
     if (m.temp?.probe != null) info.push(`<div><div class="lbl">${esc(T.meat_probe)}</div><div class="mid">${m.temp.probe} °C</div></div>`);
-    if (["fridge", "freezer"].includes(m.type) && m.temp?.current != null) info.push(`<div><div class="lbl">${esc(T.temperature)}</div><div class="big">${m.temp.current} °C</div></div>`);
+    if (["fridge", "freezer", "winecooler"].includes(m.type) && m.temp?.current != null) info.push(`<div><div class="lbl">${esc(T.temperature)}</div><div class="big">${m.temp.current} °C</div></div>`);
     if (m.phase && m.running) info.push(`<div><div class="lbl">${esc(T.phase)}</div><div class="mid">${esc(m.phase)}</div></div>`);
     if (!info.length && m.statusText) info.push(`<div><div class="mid">${esc(m.statusText)}</div></div>`);
     if (!info.length) info.push(`<div><div class="lbl">${esc(T.program)}</div><div class="mid">${esc(m.program?.label || T[m.status] || m.status)}</div></div><div class="lbl">${esc(T[m.status] || m.status)}</div>`);
@@ -1537,7 +1694,7 @@ class HomeConnectCard extends HTMLElement {
     }
     for (const k of ["beans"]) if (c[k]) out.push(this._beans(k, c[k]));
     for (const k of ["ratio"]) if (c[k]) out.push(this._ratio(k, c[k]));
-    for (const k of ["washTemp", "spin", "dry", "level", "size", "waterTemp", "aroma"]) if (c[k] && c[k].options) out.push(this._segment(k, c[k]));
+    for (const k of ["washTemp", "spin", "dry", "level", "rooms", "size", "waterTemp", "aroma"]) if (c[k] && c[k].options) out.push(this._segment(k, c[k]));
     if (c.multi) out.push(`<button class="tog ${c.multi.value === "on" ? "on" : ""}" data-ctl="multi" data-kind="toggle">${esc(c.multi.label)}<span class="sw"><i></i></span></button>`);
     if (c.startIn) out.push(c.startIn.options ? this._segment("startIn", c.startIn) : this._startIn("startIn", c.startIn, T));
     if (!out.length) return "";
@@ -1594,7 +1751,12 @@ class HomeConnectCard extends HTMLElement {
     const toUnit = (h) => (unit === "s" ? h * 3600 : unit === "min" ? h * 60 : h);
     const presets = [0, 1, 3, 6, 9].filter((h) => toUnit(h) <= max);
     const cur = parseFloat(ctl.value) || 0;
-    return `<div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">${esc(ctl.label)}</span><div class="seg">${presets.map((h) => `<button class="${Math.abs(toUnit(h) - cur) < 1e-6 ? "on" : ""}" data-ctl="${k}" data-num="${toUnit(h)}" ${ctl.avail ? "" : "disabled"}>${h === 0 ? esc(T.now) : `+${h} h`}</button>`).join("")}</div></div>`;
+    const ch = ctl.cheap;
+    const chOn = ch && Math.abs(ch.value - cur) < 1e-6 && ch.h > 0;
+    const chBtn = ch ? `<button class="${chOn ? "on" : ""}" data-ctl="${k}" data-num="${ch.value}" ${ctl.avail ? "" : "disabled"} style="display:inline-flex;align-items:center;gap:4px">${ic("euro", 15, 2)}${ch.h > 0 ? `+${String(Math.round(ch.h * 100) / 100).replace(".", ",")} h` : esc(T.now)}</button>` : "";
+    const save = ch && ch.now ? Math.round((1 - ch.avg / ch.now) * 100) : 0;
+    const info = ch ? `<div class="row lbl" style="gap:6px">${ic("euro", 14, 2)}<span>${esc(T.cheapest)}: ${ch.h > 0 ? `+${String(Math.round(ch.h * 100) / 100).replace(".", ",")} h` : esc(T.now)} · Ø ${esc(fmtPrice(ch.avg, ch.unit))}${save > 0 ? ` · ${esc(T.save.replace("{p}", save))}` : ""}</span></div>` : "";
+    return `<div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">${esc(ctl.label)}</span><div class="seg">${chBtn}${presets.map((h) => `<button class="${!chOn && Math.abs(toUnit(h) - cur) < 1e-6 ? "on" : ""}" data-ctl="${k}" data-num="${toUnit(h)}" ${ctl.avail ? "" : "disabled"}>${h === 0 ? esc(T.now) : `+${h} h`}</button>`).join("")}</div>${info}</div>`;
   }
   _m_options(m, T) {
     if (!m.options.length) return "";
@@ -1803,10 +1965,12 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "layout", selector: { select: { mode: "dropdown", options: [{ value: "full", label: T.l_full }, { value: "compact", label: T.l_compact }] } } },
       { name: "name", selector: { text: {} } },
       { name: "navigation_path", selector: { text: {} } },
-      { name: "color", selector: { text: {} } },
+      { name: "color", selector: { color_rgb: {} } },
+      { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
+      { name: "price_entity", selector: { entity: { domain: "sensor" } } },
       { name: "hide", selector: { select: { multiple: true, mode: "list", options: MODULES.map((m) => ({ value: m, label: T[`m_${m}`] })) } } },
     ];
-    const labels = { device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide };
+    const labels = { device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price };
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => labels[s.name] || s.name;
