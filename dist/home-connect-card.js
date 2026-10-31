@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.3.0";
+const HC_VERSION = "1.4.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -58,7 +58,7 @@ const I18N = {
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
     cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
-    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner für eigene Programmbilder (optional, z. B. /local/hc-bilder)", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner für eigene Programmbilder (optional, z. B. /local/hc-bilder)", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
@@ -1589,6 +1589,9 @@ const ICON = {
 };
 const ic = (name, size = 20, sw = 1.8) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ICON.generic}</svg>`;
 Object.assign(ICON, {
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+  image: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-5-8 8"/>',
+  slides: '<rect x="7" y="5" width="10" height="14" rx="2"/><path d="M4 8v8M20 8v8"/>',
   fan: '<circle cx="12" cy="12" r="1.6"/><path d="M12 10.4c0-3 1-6.4 4-6.4 2 0 2.6 2 1 3.6L13.4 11M13.6 12c3 0 6.4 1 6.4 4 0 2-2 2.6-3.6 1L13 13.4M12 13.6c0 3-1 6.4-4 6.4-2 0-2.6-2-1-3.6l3.6-3.4M10.4 12c-3 0-6.4-1-6.4-4 0-2 2-2.6 3.6-1L11 10.6"/>',
   display: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
   auto: '<path d="M4 17l4-10 4 10M5.6 13h4.8"/><path d="M15 7h5M17.5 7v10"/>',
@@ -1766,28 +1769,60 @@ function ovenModeSvg(key) {
   else inner = topH + botH;
   return box + inner;
 }
-// Gerichte nach Stichwort
+// Gerichte nach Stichwort (deutsch + englische Programmschlüssel)
 function dishSvg(key) {
-  const k = norm(key);
+  const k = norm(key).replace(/[_\s]+/g, " ");
+  const K = canon(key);
   const plate = `<ellipse cx="40" cy="52" rx="30" ry="10" fill="#e9e4dc"/><ellipse cx="40" cy="50" rx="22" ry="6.5" fill="#d8d1c6"/>`;
   const tray = `<rect x="10" y="50" width="60" height="9" rx="3" fill="#6d737c"/><rect x="10" y="48" width="60" height="4" rx="2" fill="#8a9099"/>`;
   const dish = `<rect x="14" y="40" width="52" height="20" rx="6" fill="#d97a3a"/><rect x="14" y="40" width="52" height="5" rx="2.5" fill="#e8955a"/>`;
-  if (/pizza|flammkuchen|tarte flamb/.test(k)) return `<circle cx="40" cy="42" r="25" fill="#e2a24f"/><circle cx="40" cy="42" r="21" fill="#d2452f"/><g fill="#f6e2a8"><circle cx="33" cy="35" r="4"/><circle cx="47" cy="38" r="3.5"/><circle cx="38" cy="49" r="4"/><circle cx="50" cy="49" r="3"/></g><g fill="#3d6b2e"><circle cx="42" cy="31" r="1.8"/><circle cx="31" cy="46" r="1.8"/></g>`;
-  if (/brötchen|broetchen|semmel|roll|croissant|baguettebrötchen/.test(k)) return tray + `<g fill="#c98a45"><ellipse cx="24" cy="42" rx="10" ry="8"/><ellipse cx="44" cy="40" rx="10" ry="9"/><ellipse cx="60" cy="43" rx="8" ry="7"/></g><g stroke="#8a5a2a" stroke-width="1.6" stroke-linecap="round"><path d="M20 40l6-3M40 38l8-3"/></g>`;
-  if (/brot|bread|baguette|zopf|loaf/.test(k)) return tray + `<path d="M14 48c0-14 10-20 26-20s26 6 26 20z" fill="#c07a3a"/><g stroke="#e9b77a" stroke-width="2.2" stroke-linecap="round"><path d="M26 36l6 6M38 33l6 7M50 35l5 6"/></g>`;
-  if (/kuchen|torte|cake|gugelhupf|biskuit|käsekuchen|kaesekuchen|cheesecake|strudel/.test(k)) return plate + `<path d="M22 46V32l36-6v20z" fill="#f2d39a"/><path d="M22 32l36-6v5l-36 6z" fill="#fbf3e2"/><path d="M22 40l36-6" stroke="#c46b5a" stroke-width="2.6"/><circle cx="46" cy="26" r="3" fill="#d6334a"/>`;
-  if (/muffin|cupcake/.test(k)) return `<path d="M26 44h28l-4 18H30z" fill="#c98a45"/><path d="M28 44h4l1 18M36 44l.5 18M44 44l-.5 18M50 44l-1 18" stroke="#a86a2e" stroke-width="1.4"/><path d="M24 44c0-12 8-16 16-16s16 4 16 16z" fill="#6b3f22"/><circle cx="34" cy="36" r="1.8" fill="#f6e2a8"/><circle cx="44" cy="34" r="1.8" fill="#f6e2a8"/>`;
-  if (/plätzchen|plaetzchen|keks|cookie|biscuit|gebäck|gebaeck/.test(k)) return tray + `<g fill="#d8a25a"><circle cx="24" cy="42" r="8"/><circle cx="44" cy="40" r="8"/><circle cx="60" cy="43" r="6"/></g><g fill="#5a3418"><circle cx="22" cy="40" r="1.4"/><circle cx="27" cy="44" r="1.4"/><circle cx="42" cy="38" r="1.4"/><circle cx="46" cy="43" r="1.4"/></g>`;
-  if (/hähnchen|haehnchen|huhn|chicken|geflügel|gefluegel|ente|duck|pute|turkey|gans/.test(k)) return plate + `<path d="M24 46c-4-12 6-20 18-18 12 2 16 12 12 20z" fill="#c9762f"/><path d="M50 30l8-8" stroke="#f1e6d2" stroke-width="4" stroke-linecap="round"/><circle cx="59" cy="21" r="3" fill="#f1e6d2"/><path d="M30 38c4-4 10-5 16-3" stroke="#e9a35a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-  if (/fisch|fish|lachs|salmon|forelle/.test(k)) return plate + `<path d="M18 42c8-10 26-10 36 0-10 10-28 10-36 0z" fill="#9cb7c9"/><path d="M54 42l10-7v14z" fill="#9cb7c9"/><circle cx="25" cy="40" r="1.6" fill="#2a3a46"/><path d="M34 37c2 3 2 7 0 10M42 37c2 3 2 7 0 10" stroke="#7b98ab" stroke-width="1.6" fill="none"/>`;
-  if (/auflauf|gratin|lasagne|moussaka|casserole|überbacken|ueberbacken/.test(k)) return dish + `<path d="M18 42c4-4 8 2 12-1s8 2 12-1 8 3 12 0 6 1 8 2v4H18z" fill="#f2c24f"/><g fill="#c0632f"><circle cx="26" cy="44" r="1.8"/><circle cx="40" cy="43" r="1.8"/><circle cx="54" cy="44" r="1.8"/></g>`;
-  if (/quiche|tarte|pie|wähe|waehe/.test(k)) return `<ellipse cx="40" cy="48" rx="28" ry="12" fill="#d39a52"/><ellipse cx="40" cy="45" rx="23" ry="9" fill="#f0c95a"/><g fill="#5b8a3a"><circle cx="32" cy="44" r="2"/><circle cx="46" cy="46" r="2"/></g><circle cx="40" cy="42" r="2" fill="#c0632f"/>`;
-  if (/kartoffel|potato|pommes|fries|wedges|rösti|roesti/.test(k)) return tray + `<g fill="#f0c24f" stroke="#c99a2e" stroke-width="1"><rect x="18" y="32" width="6" height="18" rx="2" transform="rotate(-12 21 41)"/><rect x="28" y="30" width="6" height="20" rx="2" transform="rotate(8 31 40)"/><rect x="38" y="31" width="6" height="19" rx="2" transform="rotate(-6 41 40)"/><rect x="48" y="32" width="6" height="18" rx="2" transform="rotate(10 51 41)"/><rect x="57" y="34" width="6" height="16" rx="2" transform="rotate(-8 60 42)"/></g>`;
-  if (/gemüse|gemuese|vegetable|veggie|paprika|zucchini|ratatouille/.test(k)) return tray + `<path d="M22 46l18-20 4 4-18 20z" fill="#f08a2a"/><path d="M40 26l4-6M42 28l6-4" stroke="#5b9a3a" stroke-width="2.4" stroke-linecap="round"/><circle cx="52" cy="38" r="8" fill="#5b9a3a"/><circle cx="58" cy="34" r="6" fill="#6fb04a"/><path d="M54 46v4" stroke="#3d6b2e" stroke-width="3"/><circle cx="32" cy="46" r="4" fill="#d6334a"/>`;
-  if (/braten|roast|rind|beef|schwein|pork|lamm|lamb|fleisch|meat|steak|filet|haxe|keule/.test(k)) return plate + `<ellipse cx="40" cy="40" rx="20" ry="13" fill="#8a3f2a"/><ellipse cx="40" cy="38" rx="16" ry="9" fill="#a64b33"/><path d="M28 36c6-4 18-4 24 0" stroke="#e7a07a" stroke-width="2" fill="none"/><path d="M58 30l7-6" stroke="#f1e6d2" stroke-width="4" stroke-linecap="round"/>`;
-  if (/reis|rice|risotto|nudel|pasta|spaghetti/.test(k)) return plate + `<ellipse cx="40" cy="42" rx="18" ry="9" fill="#f6eedc"/><g stroke="#e0d3b5" stroke-width="1.4" stroke-linecap="round"><path d="M28 42l4-2M36 40l4 2M44 41l4-2M32 46l4-1M42 46l4-1"/></g><circle cx="44" cy="38" r="3" fill="#d6334a"/>`;
-  if (/ei|egg|omelett|soufflé|souffle/.test(k)) return plate + `<ellipse cx="40" cy="44" rx="15" ry="9" fill="#fbf6ee"/><circle cx="40" cy="43" r="5.5" fill="#f2b632"/>`;
-  if (/dessert|crème|creme|pudding|brûlée|brulee/.test(k)) return `<ellipse cx="40" cy="54" rx="22" ry="6" fill="#e9e4dc"/><path d="M24 40h32l-3 14H27z" fill="#fbf6ee"/><ellipse cx="40" cy="40" rx="16" ry="4" fill="#d9a04f"/>`;
+  const bowl = (fill, top) => `<path d="M16 40h48a24 18 0 0 1-48 0z" fill="#e9e4dc"/><path d="M16 40h48a24 18 0 0 1-48 0z" fill="none" stroke="#cfc8bd" stroke-width="1.2"/><ellipse cx="40" cy="40" rx="24" ry="6" fill="${fill}"/>${top || ""}`;
+  const R = [
+    [/popcorn/, () => bowl("#f6e2a8", `<g fill="#fbf3dc" stroke="#e6c873" stroke-width=".8">${[[28, 34], [36, 30], [44, 32], [52, 35], [32, 39], [40, 37], [48, 39], [40, 28]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5"/>`).join("")}</g>`)],
+    [/(^|[^a-z])cup($|[^a-z])|tasse|reheatsmallamounts|kleine mengen|kleinemengen/, () => `<path d="M24 26h28v20a12 12 0 0 1-12 12h-4a12 12 0 0 1-12-12z" fill="#e9e4dc"/><path d="M52 31h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#e9e4dc" stroke-width="3.4"/><ellipse cx="38" cy="26" rx="14" ry="3.5" fill="#c98a45"/><path d="M32 20c-2-3 2-5 0-8M42 20c-2-3 2-5 0-8" stroke="rgba(255,255,255,.6)" stroke-width="2" fill="none" stroke-linecap="round"/>`],
+    [/odour|geruch|filter/, () => `<rect x="14" y="16" width="52" height="46" rx="8" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.55)" stroke-width="2.4"/><g fill="none" stroke="#9ad7ff" stroke-width="2.6" stroke-linecap="round"><path d="M24 32c6-6 12 6 18 0s12 6 16 0"/><path d="M24 44c6-6 12 6 18 0s12 6 16 0"/></g><path d="M56 22l1.4 3.6 3.6 1.4-3.6 1.4-1.4 3.6-1.4-3.6-3.6-1.4 3.6-1.4z" fill="#ffd36e"/>`],
+    [/reheat|regenerier|aufwärm|aufwaerm|plated|tellergericht|mahlzeit|bake ?savoury|bakesavoury|bake ?sweet|bakesweet|herzhaft|süß|suess/, () => `${plate}<ellipse cx="32" cy="45" rx="9" ry="5" fill="#f6eedc"/><ellipse cx="48" cy="44" rx="10" ry="6" fill="#a64b33"/><circle cx="40" cy="49" r="3" fill="#5b9a3a"/><circle cx="45" cy="50" r="2.4" fill="#f08a2a"/><path d="M34 32c-2-3 2-5 0-8M44 32c-2-3 2-5 0-8" stroke="rgba(255,255,255,.55)" stroke-width="2" fill="none" stroke-linecap="round"/>`],
+    [/pizza|flammkuchen|tarte ?flamb/, () => `<circle cx="40" cy="42" r="25" fill="#e2a24f"/><circle cx="40" cy="42" r="21" fill="#d2452f"/><g fill="#f6e2a8"><circle cx="33" cy="35" r="4"/><circle cx="47" cy="38" r="3.5"/><circle cx="38" cy="49" r="4"/><circle cx="50" cy="49" r="3"/></g><g fill="#3d6b2e"><circle cx="42" cy="31" r="1.8"/><circle cx="31" cy="46" r="1.8"/></g>`],
+    [/brezel|pretzel/, () => `<path d="M40 52c-14 0-22-8-22-17 0-7 5-12 11-12 9 0 11 10 11 18 0-8 2-18 11-18 6 0 11 5 11 12 0 9-8 17-22 17z" fill="none" stroke="#b5642a" stroke-width="7" stroke-linejoin="round"/><path d="M30 50l20-18M50 50L30 32" stroke="#b5642a" stroke-width="6.5" stroke-linecap="round"/><g fill="#fff">${[[24, 32], [34, 24], [50, 24], [58, 34], [40, 52], [28, 45], [53, 46]].map(([x, y]) => `<rect x="${x}" y="${y}" width="2" height="2" rx=".5"/>`).join("")}</g>`],
+    [/croissant|blätterteig|blaetterteig|puff ?pastry|volauvent|vol au vent|pastete|danish|plunder|choux|windbeutel|baklava|teilchen/, () => `<path d="M14 46c4-16 18-24 26-24s22 8 26 24c-6-2-10-1-12 2-3-8-8-11-14-11s-11 3-14 11c-2-3-6-4-12-2z" fill="#d4913e"/><path d="M28 26c3 6 3 14 1 22M40 22v26M52 26c-3 6-3 14-1 22" stroke="#a8652a" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 40c6-10 14-14 20-14" stroke="#f0c27a" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>`],
+    [/stollen|strudel/, () => `${tray}<path d="M14 48c0-12 12-18 26-18s26 6 26 18z" fill="#d79a4c"/><path d="M18 40c6-8 16-10 22-10s16 2 22 10c-6-3-14-4-22-4s-16 1-22 4z" fill="#fbf7f0"/><g fill="#fbf7f0">${[[24, 44], [32, 41], [46, 42], [56, 45]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4"/>`).join("")}</g>`],
+    [/börek|boerek|empanada|pierogi|teigtasche|potatopocket|potato pocket|calzone|maultasche/, () => `${plate}<path d="M18 46a22 18 0 0 1 44 0z" fill="#e0a659"/><path d="M18 46h44" stroke="#b5732e" stroke-width="3" stroke-linecap="round"/><g stroke="#b5732e" stroke-width="2" stroke-linecap="round">${[22, 28, 34, 40, 46, 52, 58].map((x) => `<path d="M${x} 46v3"/>`).join("")}</g>`],
+    [/meringue|baiser|pavlova/, () => `${plate}<path d="M24 46c0-8 6-10 8-16 2 6 8 6 8 12 2-6 8-8 8-14 4 6 8 10 8 18z" fill="#fbf8f2" stroke="#e6ddcf" stroke-width="1.2"/><g fill="#d6334a"><circle cx="36" cy="34" r="3"/><circle cx="46" cy="36" r="2.6"/></g><circle cx="42" cy="30" r="2.4" fill="#5a3a8a"/>`],
+    [/makrone|macaron|macaroon|plätzchen|plaetzchen|keks|cookie|biscuit|spritzgebäck|spritzgebaeck|pipedcookie|piped cookie|gebäck|gebaeck|mooncake|mondkuchen/, () => `${tray}<g fill="#d8a25a"><circle cx="24" cy="42" r="8"/><circle cx="44" cy="40" r="8"/><circle cx="60" cy="43" r="6"/></g><g fill="#5a3418"><circle cx="22" cy="40" r="1.4"/><circle cx="27" cy="44" r="1.4"/><circle cx="42" cy="38" r="1.4"/><circle cx="46" cy="43" r="1.4"/></g>`],
+    [/soufflé|souffle|ramekin|förmchen|foermchen/, () => `<path d="M24 40h32l-2 18H26z" fill="#fbf8f2"/><path d="M26 44h28M26 50h28" stroke="#e1d8c8" stroke-width="1.6"/><path d="M22 40c0-10 8-16 18-16s18 6 18 16z" fill="#e8b65a"/><path d="M28 34c4-4 8-6 12-6" stroke="#f6d28a" stroke-width="2.4" fill="none" stroke-linecap="round"/>`],
+    [/scone|yorkshire/, () => `${tray}<g>${[[24, 40], [44, 38], [60, 42]].map(([x, y], i) => `<path d="M${x - 9} ${y + 8}c0-10 3-14 9-14s9 4 9 14z" fill="${i === 1 ? "#d79a4c" : "#cf8f45"}"/><path d="M${x - 9} ${y + 1}h18" stroke="#f3dcae" stroke-width="2"/>`).join("")}</g>`],
+    [/muffin|cupcake|smallcake|small cake|törtchen|toertchen/, () => `<path d="M26 44h28l-4 18H30z" fill="#c98a45"/><path d="M28 44h4l1 18M36 44l.5 18M44 44l-.5 18M50 44l-1 18" stroke="#a86a2e" stroke-width="1.4"/><path d="M24 44c0-12 8-16 16-16s16 4 16 16z" fill="#6b3f22"/><circle cx="34" cy="36" r="1.8" fill="#f6e2a8"/><circle cx="44" cy="34" r="1.8" fill="#f6e2a8"/>`],
+    [/jam ?tart|fruit ?tart|obst|flan|tortenboden|shortcrust|mürbeteig|muerbeteig|blindbake|blind bake|cheesecake|käsekuchen|kaesekuchen/, () => `<ellipse cx="40" cy="48" rx="28" ry="12" fill="#d39a52"/><ellipse cx="40" cy="45" rx="23" ry="9" fill="#f3d48a"/><g fill="#d6334a">${[[30, 44], [38, 41], [46, 43], [52, 47], [35, 48], [44, 49]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6"/>`).join("")}</g><g fill="#3d4f9a"><circle cx="42" cy="45" r="2.2"/><circle cx="31" cy="49" r="2"/></g>`],
+    [/crumble|streusel/, () => `${dish}<path d="M18 42c4-3 8 1 12-1s8 2 12-1 8 3 12 0 6 1 8 2v4H18z" fill="#c0632f"/><g fill="#e7b46a">${[[22, 42], [28, 40], [35, 43], [41, 40], [48, 42], [55, 40], [60, 43]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.4"/>`).join("")}</g>`],
+    [/fisch|fish|lachs|salmon|forelle|oyster|auster|squid|tintenfisch|calamari|garnel|shrimp|scampi/, () => `${plate}<path d="M18 42c8-10 26-10 36 0-10 10-28 10-36 0z" fill="#e2875a"/><path d="M54 42l10-7v14z" fill="#e2875a"/><circle cx="25" cy="40" r="1.6" fill="#2a3a46"/><path d="M34 37c2 3 2 7 0 10M42 37c2 3 2 7 0 10" stroke="#c46a40" stroke-width="1.6" fill="none"/>`],
+    [/meatball|frikadell|hackbraten|meatloaf|minced|hackfleisch|köttbullar|kofta/, () => `${plate}<g fill="#8a4a2a">${[[30, 44], [42, 42], [52, 45], [36, 37], [47, 36]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7"/>`).join("")}</g><g fill="#b56a42">${[[28, 42], [40, 40], [50, 43], [34, 35], [45, 34]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.4"/>`).join("")}</g>`],
+    [/hähnchen|haehnchen|huhn|chicken|geflügel|gefluegel|poultry|nugget|goujon|ente|duck|gans|goose|pute|turkey|truthahn|poulard|wachtel/, (kk) => /whole|ganz|unstuffed|stuffed|gefüllt|gefuellt|halved|crown|poulard|wholepoultry/.test(kk) && !/breast|brust|leg|keule|thigh|fillet|filet|portion|part|drumstick/.test(kk)
+      ? `${plate}<ellipse cx="40" cy="40" rx="20" ry="13" fill="#c9762f"/><ellipse cx="40" cy="37" rx="15" ry="8" fill="#dc8a3e"/><path d="M22 44l-6 6M58 44l6 6" stroke="#c9762f" stroke-width="6" stroke-linecap="round"/><circle cx="15" cy="51" r="3" fill="#f1e6d2"/><circle cx="65" cy="51" r="3" fill="#f1e6d2"/><path d="M30 34c6-4 14-4 20 0" stroke="#f0b06a" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#5b8a3a"><circle cx="40" cy="27" r="2"/><circle cx="44" cy="28" r="1.6"/></g>`
+      : `${plate}<path d="M24 46c-4-12 6-20 18-18 12 2 16 12 12 20z" fill="#c9762f"/><path d="M50 30l8-8" stroke="#f1e6d2" stroke-width="4" stroke-linecap="round"/><circle cx="59" cy="21" r="3" fill="#f1e6d2"/><path d="M30 38c4-4 10-5 16-3" stroke="#e9a35a" stroke-width="2" fill="none" stroke-linecap="round"/>`],
+    [/schinken|(^|[^a-z])ham($|[^a-z])|christmasham|gammon|kassler|smoked|geräuchert|geraeuchert/, () => `${plate}<path d="M20 44c0-12 10-18 20-18s20 6 20 18z" fill="#d46a5c"/><path d="M24 40c4-8 10-10 16-10" stroke="#f1b2a4" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M58 30l6-6" stroke="#f1e6d2" stroke-width="5" stroke-linecap="round"/><circle cx="65" cy="23" r="3.4" fill="#f1e6d2"/><path d="M30 36l4 6M38 33l4 6M46 34l4 6" stroke="#a84436" stroke-width="1.4"/>`],
+    [/skewer|spieß|spiess|schaschlik/, () => `${plate}<path d="M14 54L66 28" stroke="#c9b38a" stroke-width="2.4" stroke-linecap="round"/>${[[24, 49, "#8a3f2a"], [32, 45, "#5b9a3a"], [40, 41, "#a64b33"], [48, 37, "#e05a3a"], [56, 33, "#8a3f2a"]].map(([x, y, c]) => `<rect x="${x - 4}" y="${y - 4}" width="8" height="8" rx="2" fill="${c}" transform="rotate(-27 ${x} ${y})"/>`).join("")}`],
+    [/gulasch|goulash|stew|eintopf|ragout|ossobuco|schmor|pot ?roast|potroast|in sauce|insauce|sauce|roulade|roulade/, () => `<path d="M14 36h52v14a12 12 0 0 1-12 12H26a12 12 0 0 1-12-12z" fill="#4a4f57"/><path d="M10 38h6M64 38h6" stroke="#4a4f57" stroke-width="4" stroke-linecap="round"/><ellipse cx="40" cy="36" rx="26" ry="6" fill="#9a3a22"/><g fill="#6a2412">${[[30, 35], [42, 34], [50, 37]].map(([x, y]) => `<rect x="${x - 3}" y="${y - 3}" width="7" height="6" rx="2"/>`).join("")}</g><circle cx="36" cy="38" r="2" fill="#f08a2a"/><path d="M30 28c-2-3 2-5 0-8M40 28c-2-3 2-5 0-8M50 28c-2-3 2-5 0-8" stroke="rgba(255,255,255,.5)" stroke-width="2" fill="none" stroke-linecap="round"/>`],
+    [/brötchen|broetchen|semmel|bread ?rolls|rolls|baguette|bakeditems|baked items|backwaren|sweet ?bread ?roll/, () => `${tray}<g fill="#c98a45"><ellipse cx="24" cy="42" rx="10" ry="8"/><ellipse cx="44" cy="40" rx="10" ry="9"/><ellipse cx="60" cy="43" rx="8" ry="7"/></g><g stroke="#8a5a2a" stroke-width="1.6" stroke-linecap="round"><path d="M20 40l6-3M40 38l8-3"/></g>`],
+    [/brot|bread(?!ed)|zopf|plaited|flatbread|fladen|ciabatta|(?<!meat)loaf|toast/, () => `${tray}<path d="M14 48c0-14 10-20 26-20s26 6 26 20z" fill="#c07a3a"/><g stroke="#e9b77a" stroke-width="2.2" stroke-linecap="round"><path d="M26 36l6 6M38 33l6 7M50 35l5 6"/></g>`],
+    [/quiche|savoury ?cake|herzhaft.*kuchen|wähe|waehe|(^| )tart($| )|^tart|tarte|pie/, () => `<ellipse cx="40" cy="48" rx="28" ry="12" fill="#d39a52"/><ellipse cx="40" cy="45" rx="23" ry="9" fill="#f0c95a"/><g fill="#5b8a3a"><circle cx="32" cy="44" r="2"/><circle cx="46" cy="46" r="2"/></g><circle cx="40" cy="42" r="2" fill="#c0632f"/>`],
+    [/kuchen|torte|cake|gugelhupf|bundt|biskuit|sponge|swiss ?roll|biskuitrolle|victoria|savarin|rührkuchen|ruehrkuchen|marmor|leavened|yeast|hefe|fruit ?cake/, () => `${plate}<path d="M22 46V32l36-6v20z" fill="#f2d39a"/><path d="M22 32l36-6v5l-36 6z" fill="#fbf3e2"/><path d="M22 40l36-6" stroke="#c46b5a" stroke-width="2.6"/><circle cx="46" cy="26" r="3" fill="#d6334a"/>`],
+    [/auflauf|gratin|lasagne|cannelloni|moussaka|überbacken|ueberbacken|casserole/, () => `${dish}<path d="M18 42c4-4 8 2 12-1s8 2 12-1 8 3 12 0 6 1 8 2v4H18z" fill="#f2c24f"/><g fill="#c0632f"><circle cx="26" cy="44" r="1.8"/><circle cx="40" cy="43" r="1.8"/><circle cx="54" cy="44" r="1.8"/></g>`],
+    [/pommes|fries|chips|wedges|rösti|roesti|hash ?brown|kroket|croquette/, (kk) => /rösti|roesti|hash ?brown/.test(kk)
+      ? `${plate}<g fill="#e6a943">${[[30, 44], [48, 44], [39, 38]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="10" ry="6"/>`).join("")}</g><g stroke="#b5762a" stroke-width="1.2">${[[26, 43], [44, 43], [36, 37]].map(([x, y]) => `<path d="M${x} ${y}h8M${x + 1} ${y + 2}h6"/>`).join("")}</g>`
+      : `${tray}<g fill="#f0c24f" stroke="#c99a2e" stroke-width="1"><rect x="18" y="32" width="6" height="18" rx="2" transform="rotate(-12 21 41)"/><rect x="28" y="30" width="6" height="20" rx="2" transform="rotate(8 31 40)"/><rect x="38" y="31" width="6" height="19" rx="2" transform="rotate(-6 41 40)"/><rect x="48" y="32" width="6" height="18" rx="2" transform="rotate(10 51 41)"/><rect x="57" y="34" width="6" height="16" rx="2" transform="rotate(-8 60 42)"/></g>`],
+    [/kartoffel|potato|süßkartoffel|suesskartoffel/, (kk) => `${plate}<g>${[[30, 43], [48, 42], [39, 36]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="11" ry="8" fill="${/sweet|süß|suess/.test(kk) ? "#d9733a" : "#c9a06a"}"/><path d="M${x - 5} ${y - 2}h0M${x + 3} ${y + 2}h0" stroke="#8a6a3a" stroke-width="2" stroke-linecap="round"/>`).join("")}</g>`],
+    [/lamm|lamb|kalb|veal|rehrücken|rehruecken|rehkeule|hirsch|venison|wild|boar|kaninchen|rabbit|hase|rind|beef|schwein|pork|fleisch|meat|steak|filet|fillet|sirloin|tenderloin|roast|braten|joint|loin|shoulder|schulter|haxe|knuckle|belly|bauch|ribs|rippe|rump|topside|schnitzel|escalope|chop|karree|bacon|neck|nacken|lende|keule|leg/, () => `${plate}<ellipse cx="40" cy="40" rx="20" ry="13" fill="#8a3f2a"/><ellipse cx="40" cy="38" rx="16" ry="9" fill="#a64b33"/><path d="M28 36c6-4 18-4 24 0" stroke="#e7a07a" stroke-width="2" fill="none"/><path d="M58 30l7-6" stroke="#f1e6d2" stroke-width="4" stroke-linecap="round"/><g fill="#5b8a3a"><path d="M32 30l6 3-6 1z"/></g>`],
+    [/reis|rice|risotto|pasta|nudel|spaghetti|knödel|knoedel|dumpling|couscous|hirse|millet|polenta|graupen|barley|dinkel|spelt|weizen|wheat|bulgur|quinoa|getreide|grain/, (kk) => bowl(/polenta/.test(kk) ? "#f2c94f" : /couscous|hirse|millet|bulgur/.test(kk) ? "#e9cf8a" : /spelt|dinkel|barley|graupen|wheat|weizen|grain/.test(kk) ? "#d8c08a" : "#f6eedc", `<g stroke="${/polenta/.test(kk) ? "#d9a92c" : "#d7c7a3"}" stroke-width="1.4" stroke-linecap="round"><path d="M28 39l4-1.5M36 37.5l4 1.5M44 38.5l4-1.5M32 42l4-1M42 42l4-1"/></g>`)],
+    [/gemüse|gemuese|vegetable|veggie|paprika|pepper|zucchini|aubergine|eggplant|pumpkin|kürbis|kuerbis|ratatouille|spinach|spinat|mushroom|pilz|brokkoli|broccoli/, () => `${tray}<path d="M22 46l18-20 4 4-18 20z" fill="#f08a2a"/><path d="M40 26l4-6M42 28l6-4" stroke="#5b9a3a" stroke-width="2.4" stroke-linecap="round"/><circle cx="52" cy="38" r="8" fill="#5b9a3a"/><circle cx="58" cy="34" r="6" fill="#6fb04a"/><path d="M54 46v4" stroke="#3d6b2e" stroke-width="3"/><circle cx="32" cy="46" r="4" fill="#d6334a"/>`],
+    [/käse|kaese|cheese|camembert|raclette/, () => `${plate}<path d="M18 46V36l40-10v20z" fill="#f2c94f"/><path d="M18 36l40-10 4 2-40 10z" fill="#f8dc7a"/><g fill="#d9a92c"><circle cx="28" cy="41" r="2.4"/><circle cx="40" cy="38" r="3"/><circle cx="50" cy="40" r="2"/></g>`],
+    [/(^|[^a-z])ei($|[^a-z])|egg|omelett/, () => `${plate}<ellipse cx="40" cy="44" rx="15" ry="9" fill="#fbf6ee"/><circle cx="40" cy="43" r="5.5" fill="#f2b632"/>`],
+    [/dessert|crème|creme|pudding|brûlée|brulee/, () => `<ellipse cx="40" cy="54" rx="22" ry="6" fill="#e9e4dc"/><path d="M24 40h32l-3 14H27z" fill="#fbf6ee"/><ellipse cx="40" cy="40" rx="16" ry="4" fill="#d9a04f"/>`],
+    [/defrost|auftau/, () => `${plate}<path d="M40 22v28M27.9 29l24.2 14M27.9 43l24.2-14" stroke="#9ad7ff" stroke-width="3" stroke-linecap="round"/>`],
+  ];
+  for (const [re, fn] of R) {
+    if (!fn) continue;
+    if (re.test(k) || re.test(K)) return fn(`${k} ${K}`);
+  }
   return plate + `<path d="M20 48a20 20 0 0 1 40 0z" fill="#c9ced6"/><circle cx="40" cy="26" r="3" fill="#c9ced6"/><path d="M26 42a14 14 0 0 1 8-8" stroke="#eef1f4" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
 }
 // Spül-/Wasch-/Trocknerprogramme: Symbol + Temperatur
@@ -1911,7 +1946,7 @@ function displayArt(m, p, color) {
   const key = `${p.tail || p.canon} ${p.label}`;
   let body;
   if (m.type === "coffee" && p.cat !== "clean") body = drinkTopSvg(key, id);
-  else if (["oven", "microwave", "warmingdrawer", "cookprocessor"].includes(m.type)) body = p.cat === "dish" || p.cat === "world" ? dishSvg(key).replace(/^/, '<g transform="translate(2 4) scale(1.2) translate(-8 -10)">') + "</g>" : ovenModeSvg(key);
+  else if (["oven", "microwave", "warmingdrawer", "cookprocessor"].includes(m.type)) body = p.cat === "dish" || p.cat === "world" ? `<g transform="translate(52 50) scale(1.15) translate(-40 -42)">${dishSvg(key)}</g>` : ovenModeSvg(key);
   else body = careSvg(m.type, p.tail || p.canon, p.label, color);
   return `<svg viewBox="0 0 100 100" aria-hidden="true">${body}</svg>`;
 }
@@ -2087,6 +2122,9 @@ button{font:inherit;color:inherit}
 .tiles.scroll::-webkit-scrollbar{width:6px}.tiles.scroll::-webkit-scrollbar-thumb{background:var(--hc-line2);border-radius:3px}
 .tile{min-height:90px;border-radius:20px;border:0;background:var(--hc-s2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:8px;text-align:center;line-height:1.2}
 .disp{position:relative}
+.vsw{display:flex;gap:2px;padding:2px;border-radius:14px;background:var(--hc-s1)}
+.vsw button{width:32px;height:26px;border:0;border-radius:12px;background:transparent;color:var(--hc-muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.vsw button.on{background:var(--hc-s2);color:var(--hc-text)}
 .dview{position:relative;height:210px;border-radius:20px;overflow:hidden;background:radial-gradient(120% 100% at 30% 50%,#2a2c33,#17181c);color:#f2f3f5;touch-action:pan-y;user-select:none;outline:none}
 .dcat{position:absolute;left:16px;top:12px;font-size:12px;font-weight:700;color:var(--hc-accent);letter-spacing:.2px}
 .dring{position:absolute;left:46%;top:50%;width:180px;height:180px;margin:-90px 0 0 -46px;border-radius:50%;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.03)}
@@ -2592,10 +2630,25 @@ class HomeConnectCard extends HTMLElement {
     const count = m.programs.filter((p) => p.cat === tab).length;
     const q = this._ui.search || "";
     const search = count > 12 ? `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label>` : "";
-    const pvMode = this._config.program_view === "images";
-    if (this._config.program_view === "display") return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${search}<div class="disp" data-cat="${tab}"></div></div>`;
+    const view = this._progView(tab);
+    const pvMode = view === "images";
+    const vsw = `<div class="vsw" role="group" aria-label="${esc(T.e_pview)}">${[["icons", "grid"], ["images", "image"], ["display", "slides"]].map(([v, i]) => `<button class="${v === view ? "on" : ""}" data-pview="${v}" title="${esc(T[`pv_${v}`])}" aria-label="${esc(T[`pv_${v}`])}" aria-pressed="${v === view}">${ic(i, 16, 2)}</button>`).join("")}</div>`;
+    const head = `<div class="row"><span class="lbl sp">${esc(T.program)}</span>${vsw}</div>`;
+    if (view === "display") return `<div class="box" data-mod="programs">${head}${tabs}${search}<div class="disp" data-cat="${tab}"></div></div>`;
     const body = `${search}<div class="tiles ${pvMode ? "pvmode" : ""} ${count > (pvMode ? 6 : 9) ? "scroll" : ""}" data-cat="${tab}"></div>`;
-    return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${body}</div>`;
+    return `<div class="box" data-mod="programs">${head}${tabs}${body}</div>`;
+  }
+  // Ansicht je Unterkategorie (in der Karte umschaltbar, im Browser gemerkt)
+  _progView(cat) {
+    const key = `hc-card-view-${this._m?.key || "x"}`;
+    if (!this._views) { try { this._views = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { this._views = {}; } }
+    const v = this._views[cat] || this._config.program_view || "icons";
+    return ["icons", "images", "display"].includes(v) ? v : "icons";
+  }
+  _setProgView(cat, v) {
+    this._views = { ...(this._views || {}), [cat]: v };
+    try { localStorage.setItem(`hc-card-view-${this._m?.key || "x"}`, JSON.stringify(this._views)); } catch (e) { /* */ }
+    this._sig = ""; this._update(true);
   }
   // Eigene Fotos: program_images {Schlüssel/Name: URL} oder program_image_path (Datei = Programmschlüssel.png)
   _progImage(p) {
@@ -2639,7 +2692,7 @@ class HomeConnectCard extends HTMLElement {
     list = list.slice(0, 150);
     const qc = this.shadowRoot.querySelector(".qc");
     if (qc) qc.textContent = `${total} ${T.results}`;
-    const pvMode = this._config.program_view === "images";
+    const pvMode = this._progView(cat) === "images";
     const color = this._accent || "var(--hc-accent)";
     box.innerHTML = list.length ? list.map((p) => {
       const parts = p.label.split(" · ");
@@ -2919,6 +2972,7 @@ class HomeConnectCard extends HTMLElement {
     if (q) q.addEventListener("input", () => { this._ui.search = q.value; if (R.querySelector(".disp[data-cat]")) { this._ui.dispIdx = {}; this._fillDisp(); } else { this._fillList(); this._bindList(); } });
     if (R.querySelector(".tiles[data-cat]")) { this._fillList(); this._bindList(); }
     if (R.querySelector(".disp[data-cat]")) this._fillDisp();
+    R.querySelectorAll("[data-pview]").forEach((b) => b.addEventListener("click", () => { const box = R.querySelector("[data-cat]"); if (box) this._setProgView(box.dataset.cat, b.dataset.pview); }));
     R.querySelectorAll("[data-ctl]").forEach((el) => {
       if (el.classList.contains("bslider")) {
         const ctl = m.controls[el.dataset.ctl];

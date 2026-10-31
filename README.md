@@ -71,7 +71,7 @@ demo: washer   # oven, microwave, dishwasher, washer, dryer, washerdryer, coffee
 | `price_entity` | Strompreis-Sensor mit Prognose für „Günstigster Start“ (Tibber, EPEX Spot, Nordpool …) – wird sonst automatisch gesucht, `none` schaltet ab |
 | `hide` | Module ausblenden: `camera`, `banner`, `hero`, `programs`, `controls`, `idos`, `options`, `consumables`, `actions`, `more` |
 | `favorites` | Namen für Favoriten-Plätze, z. B. `favorite_001: Sandras Cappu` |
-| `program_view` | `icons` (Standard), `display` (Karussell wie am Gerätedisplay: großes Bild in Draufsicht, Name, Herkunft, Stärke, Menge, Wischen/Pfeile/Punkte) oder `images`: Programme als Vorschaubilder – Getränke im Glas mit Schichten, Backofen-Heizarten wie im Gerätedisplay, Gerichte, Spül-/Waschprogramme mit Temperatur |
+| `program_view` | Startansicht der Programme; in der Karte lässt sie sich je Unterkategorie (Reiter) über die drei Symbole oben rechts umschalten und wird im Browser gemerkt. Werte:  `icons` (Standard), `display` (Karussell wie am Gerätedisplay: großes Bild in Draufsicht, Name, Herkunft, Stärke, Menge, Wischen/Pfeile/Punkte) oder `images`: Programme als Vorschaubilder – Getränke im Glas mit Schichten, Backofen-Heizarten wie im Gerätedisplay, Gerichte, Spül-/Waschprogramme mit Temperatur |
 | `program_image_path` | Ordner mit eigenen Fotos, Dateiname = Programmschlüssel (z. B. `/local/hc/cappuccino.png`), fehlende Bilder fallen auf die Vorschau zurück |
 | `program_images` | einzelne eigene Bilder, z. B. `cappuccino: /local/cappu.jpg` |
 | `sub_buttons` | Schnellwahl-Knöpfe in der Kompakt-Ansicht (Standard `true`) |
