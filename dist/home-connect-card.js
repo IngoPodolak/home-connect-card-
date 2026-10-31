@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.1.6";
+const HC_VERSION = "1.2.0";
 
 /* ------------------------------------------------------------------ */
 /* Quellen                                                             */
@@ -58,7 +58,7 @@ const I18N = {
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
     cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
-    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_images: "Vorschaubilder", e_pimg: "Ordner für eigene Programmbilder (optional, z. B. /local/hc-bilder)", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
@@ -103,7 +103,7 @@ const I18N = {
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
     cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
-    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
+    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", e_pimg: "Folder with own program images (optional, e.g. /local/hc-images)", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
     ph_wash: "Washing", ph_rinse: "Rinsing", ph_spin: "Spinning", ph_dry: "Drying", ph_done: "Done",
@@ -1675,6 +1675,161 @@ function beanSym(o, i, n, size = 22) {
   const pl = plus ? `<g stroke="currentColor" stroke-width="2" stroke-linecap="round">${Array.from({ length: plus }, (_, j) => `<path d="M${20.5 - j * 5.5} 1.8v5M${18 - j * 5.5} 4.3h5"/>`).join("")}</g>` : "";
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${body}${pl}</svg>`;
 }
+/* ------------------------------------------------------------------ */
+/* Vorschaubilder für Programme (statt Symbolen, im Editor wählbar)    */
+/* ------------------------------------------------------------------ */
+const PV_C = { esp: "#3a2114", crema: "#b9824d", coffee: "#5e3a22", milk: "#efe4d2", foam: "#fbf6ee", water: "rgba(150,205,255,.55)", warm: "#f4e8d4", choc: "#4a2a1a" };
+const DRINKS = [
+  [/ristretto/, "esp", [["esp", .5], ["crema", .14]]],
+  [/espressomacchiato|macchiatoespresso/, "esp", [["esp", .5], ["foam", .32]]],
+  [/espressodoppio|doppio/, "cup", [["esp", .62], ["crema", .14]]],
+  [/espresso/, "esp", [["esp", .7], ["crema", .16]]],
+  [/lattemacchiato|galao/, "tall", [["milk", .46], ["esp", .18], ["foam", .26]]],
+  [/cappuccino|cappu/, "cup", [["esp", .34], ["milk", .26], ["foam", .3]]],
+  [/flatwhite/, "cup", [["esp", .42], ["milk", .44], ["foam", .06]]],
+  [/cortado|cafecortado/, "glass", [["esp", .42], ["milk", .34]]],
+  [/caffelatte|cafeaulait|milchkaffee|milkcoffee|koffieverkeerd/, "mug", [["coffee", .4], ["milk", .44], ["foam", .1]]],
+  [/cafeconleche/, "glass", [["coffee", .45], ["milk", .42]]],
+  [/wienermelange|kaapi/, "cup", [["coffee", .46], ["foam", .42]]],
+  [/kleinerbrauner|garoto/, "esp", [["esp", .5], ["milk", .3]]],
+  [/grosserbrauner|verlaengerterbraun/, "cup", [["esp", .5], ["milk", .32]]],
+  [/caffegrande|xlcoffee|grande/, "big", [["coffee", .8], ["crema", .1]]],
+  [/redeye|blackeye|deadeye|americano|verlaengerter/, "mug", [["coffee", .84], ["crema", .05]]],
+  [/hotwater|heisseswasser|water/, "glass", [["water", .8]]],
+  [/milkfroth|milchschaum|froth/, "glass", [["milk", .3], ["foam", .58]]],
+  [/warmmilk|warmemilch|milk/, "glass", [["warm", .8]]],
+  [/chocolate|kakao|cocoa/, "mug", [["choc", .7], ["foam", .18]]],
+  [/coffee|kaffee|crema/, "cup", [["coffee", .74], ["crema", .12]]],
+];
+function drinkSvg(key, id) {
+  const k = canon(key);
+  const d = DRINKS.find(([re]) => re.test(k)) || [null, "cup", [["esp", .34], ["milk", .26], ["foam", .3]]];
+  const [, vessel, layers] = d;
+  // Gefäß: Innenform (für Füllung), Außenkontur, Henkel, Untertasse
+  const V = {
+    esp: { x: 28, y: 42, w: 24, h: 18, r: 7, handle: true, saucer: 18 },
+    cup: { x: 21, y: 34, w: 34, h: 26, r: 11, handle: true, saucer: 24 },
+    big: { x: 18, y: 28, w: 40, h: 32, r: 13, handle: true, saucer: 27 },
+    mug: { x: 22, y: 26, w: 32, h: 36, r: 5, handle: true, saucer: 0 },
+    tall: { x: 29, y: 12, w: 22, h: 52, r: 3, handle: false, saucer: 0, glass: true, taper: 3 },
+    glass: { x: 24, y: 26, w: 32, h: 36, r: 4, handle: false, saucer: 0, glass: true, taper: 3 },
+  }[vessel];
+  const { x, y, w, h, r } = V;
+  const t = V.taper || 0;
+  const shape = V.glass
+    ? `M${x} ${y} H${x + w} L${x + w - t} ${y + h - r} Q${x + w - t} ${y + h} ${x + w - t - r} ${y + h} H${x + t + r} Q${x + t} ${y + h} ${x + t} ${y + h - r} Z`
+    : `M${x} ${y} H${x + w} V${y + h - r} A${r} ${r} 0 0 1 ${x + w - r} ${y + h} H${x + r} A${r} ${r} 0 0 1 ${x} ${y + h - r} Z`;
+  let cy = y + h; let fill = "";
+  for (const [c, f] of layers) { const lh = h * f; cy -= lh; fill += `<rect x="${x - 2}" y="${cy.toFixed(1)}" width="${w + 4}" height="${(lh + 0.6).toFixed(1)}" fill="${PV_C[c]}"/>`; }
+  const top = layers[layers.length - 1][0];
+  if (["foam", "crema", "milk"].includes(top)) fill += `<path d="M${x} ${cy.toFixed(1)} q${w / 4} -2.5 ${w / 2} 0 t${w / 2} 0" fill="${PV_C[top]}"/>`;
+  const stroke = "rgba(255,255,255,.7)";
+  const body = V.glass ? "rgba(255,255,255,.07)" : "#f4f1ec";
+  const handle = V.handle ? `<path d="M${x + w} ${y + 5} h4 a${h * .28} ${h * .28} 0 0 1 0 ${h * .56} h-4" fill="none" stroke="${stroke}" stroke-width="3.2"/>` : "";
+  const saucer = V.saucer ? `<ellipse cx="${x + w / 2}" cy="${y + h + 2}" rx="${V.saucer}" ry="4" fill="#e3ddd4"/><ellipse cx="${x + w / 2}" cy="${y + h + 1}" rx="${V.saucer - 6}" ry="2.2" fill="#cfc8bd"/>` : "";
+  const hot = !/cold|eis|ice/.test(k);
+  const steam = hot ? `<g fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.8" stroke-linecap="round"><path d="M${x + w * .35} ${y - 4} c-3 -4 3 -6 0 -10"/><path d="M${x + w * .62} ${y - 6} c-3 -4 3 -6 0 -10"/></g>` : "";
+  // Porzellan: Tasse außen weiß, Inhalt nur am oberen Rand sichtbar -> Draufsicht-Andeutung; Glas: Schichten sichtbar
+  const inner = `<defs><clipPath id="${id}"><path d="${shape}"/></clipPath></defs><path d="${shape}" fill="rgba(255,255,255,.08)"/><g clip-path="url(#${id})">${fill}</g><path d="${shape}" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"/><path d="M${x + 4} ${y + 5} v${h - 14}" stroke="rgba(255,255,255,.4)" stroke-width="2" stroke-linecap="round"/>`;
+  return `${saucer}${handle}${inner}${steam}`;
+}
+// Backofen-Heizart wie im Gerätedisplay: Garraum mit Heizelementen
+function ovenModeSvg(key) {
+  const k = canon(key);
+  const hot = "#ff6a3d";
+  const box = `<rect x="12" y="12" width="56" height="56" rx="8" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.55)" stroke-width="2.4"/>`;
+  const topH = `<path d="M20 21h40" stroke="${hot}" stroke-width="3" stroke-linecap="round"/>`;
+  const botH = `<path d="M20 59h40" stroke="${hot}" stroke-width="3" stroke-linecap="round"/>`;
+  const grill = (w) => `<path d="M${40 - w} 21 l4 4 4 -4 4 4 4 -4 4 4 4 -4 4 4 4 -4${w > 14 ? " 4 4 4 -4 4 4 4 -4" : ""}" fill="none" stroke="${hot}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const fan = `<circle cx="40" cy="40" r="9" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2"/><path d="M40 33c3 0 4 3 2 5l-2 2-2-2c-2-2-1-5 2-5zM47 40c0 3-3 4-5 2l-2-2 2-2c2-2 5-1 5 2zM40 47c-3 0-4-3-2-5l2-2 2 2c2 2 1 5-2 5zM33 40c0-3 3-4 5-2l2 2-2 2c-2 2-5 1-5-2z" fill="rgba(255,255,255,.85)"/>`;
+  const ring = `<circle cx="40" cy="40" r="13" fill="none" stroke="${hot}" stroke-width="2.4" stroke-dasharray="4 3"/>`;
+  const waves = `<g fill="none" stroke="#b3a6ff" stroke-width="2.4" stroke-linecap="round"><path d="M26 30c4-4 8 4 12 0s8 4 12 0 8 4 12 0"/><path d="M26 40c4-4 8 4 12 0s8 4 12 0 8 4 12 0"/><path d="M26 50c4-4 8 4 12 0s8 4 12 0 8 4 12 0"/></g>`;
+  const steam = `<g fill="rgba(160,210,255,.85)"><path d="M30 34c-2.5 3.2-4 5-4 6.6a4 4 0 0 0 8 0c0-1.6-1.5-3.4-4-6.6z"/><path d="M44 28c-2.5 3.2-4 5-4 6.6a4 4 0 0 0 8 0c0-1.6-1.5-3.4-4-6.6z"/><path d="M50 42c-2.5 3.2-4 5-4 6.6a4 4 0 0 0 8 0c0-1.6-1.5-3.4-4-6.6z"/></g>`;
+  const warmP = `<path d="M24 52h32M28 46h24" stroke="${hot}" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>`;
+  let inner;
+  if (/microwave/.test(k)) inner = waves;
+  else if (/steam|dampf|regenerat|reheat|dough|sousvide/.test(k)) inner = steam + (/combi|hotair/.test(k) ? fan : "");
+  else if (/hotairgrill|umluftgrill|airgrill/.test(k)) inner = grill(16) + fan;
+  else if (/grillsmall|kleinflaeche|grillsmallarea/.test(k)) inner = grill(10);
+  else if (/grill/.test(k)) inner = grill(16);
+  else if (/pizza/.test(k)) inner = fan + ring + botH;
+  else if (/eco|gentle|hotairgentle/.test(k)) inner = fan + ring + `<path d="M58 54c-6 0-9-4-9-8 6 0 9 3 9 8z" fill="#7cc35a"/>`;
+  else if (/hotair|umluft|3d|4d|convection|circulat/.test(k)) inner = fan + ring;
+  else if (/intensive|intensiv/.test(k)) inner = topH + botH + fan;
+  else if (/bottom|unterhitze/.test(k)) inner = botH;
+  else if (/topbottom|oberunter|conventional|toptbottom/.test(k)) inner = topH + botH;
+  else if (/keepwarm|warm|plate|cups|tassen|teller/.test(k)) inner = warmP;
+  else if (/defrost|auftau/.test(k)) inner = fan + `<path d="M40 30v20M31.3 35l17.4 10M31.3 45l17.4-10" stroke="#9ad7ff" stroke-width="2.2" stroke-linecap="round"/>`;
+  else if (/slow|nieder|lowtemp/.test(k)) inner = topH.replace(/stroke-width="3"/, 'stroke-width="2" opacity=".6"') + botH.replace(/stroke-width="3"/, 'stroke-width="2" opacity=".6"') + `<circle cx="40" cy="40" r="9" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"/><path d="M40 35v5l3 2" stroke="rgba(255,255,255,.8)" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+  else if (/pyroly|clean|reinig|descal|entkalk|dry|trockn/.test(k)) inner = `<path d="M40 26l2.5 6.5 6.5 2.5-6.5 2.5-2.5 6.5-2.5-6.5-6.5-2.5 6.5-2.5z" fill="#ffd36e"/><path d="M52 44l1.4 3.6 3.6 1.4-3.6 1.4-1.4 3.6-1.4-3.6-3.6-1.4 3.6-1.4z" fill="#ffd36e"/>`;
+  else if (/preheat|vorheiz/.test(k)) inner = topH + botH + `<path d="M40 50V30m-6 6 6-6 6 6" stroke="${hot}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  else inner = topH + botH;
+  return box + inner;
+}
+// Gerichte nach Stichwort
+function dishSvg(key) {
+  const k = norm(key);
+  const plate = `<ellipse cx="40" cy="52" rx="30" ry="10" fill="#e9e4dc"/><ellipse cx="40" cy="50" rx="22" ry="6.5" fill="#d8d1c6"/>`;
+  const tray = `<rect x="10" y="50" width="60" height="9" rx="3" fill="#6d737c"/><rect x="10" y="48" width="60" height="4" rx="2" fill="#8a9099"/>`;
+  const dish = `<rect x="14" y="40" width="52" height="20" rx="6" fill="#d97a3a"/><rect x="14" y="40" width="52" height="5" rx="2.5" fill="#e8955a"/>`;
+  if (/pizza|flammkuchen|tarte flamb/.test(k)) return `<circle cx="40" cy="42" r="25" fill="#e2a24f"/><circle cx="40" cy="42" r="21" fill="#d2452f"/><g fill="#f6e2a8"><circle cx="33" cy="35" r="4"/><circle cx="47" cy="38" r="3.5"/><circle cx="38" cy="49" r="4"/><circle cx="50" cy="49" r="3"/></g><g fill="#3d6b2e"><circle cx="42" cy="31" r="1.8"/><circle cx="31" cy="46" r="1.8"/></g>`;
+  if (/brötchen|broetchen|semmel|roll|croissant|baguettebrötchen/.test(k)) return tray + `<g fill="#c98a45"><ellipse cx="24" cy="42" rx="10" ry="8"/><ellipse cx="44" cy="40" rx="10" ry="9"/><ellipse cx="60" cy="43" rx="8" ry="7"/></g><g stroke="#8a5a2a" stroke-width="1.6" stroke-linecap="round"><path d="M20 40l6-3M40 38l8-3"/></g>`;
+  if (/brot|bread|baguette|zopf|loaf/.test(k)) return tray + `<path d="M14 48c0-14 10-20 26-20s26 6 26 20z" fill="#c07a3a"/><g stroke="#e9b77a" stroke-width="2.2" stroke-linecap="round"><path d="M26 36l6 6M38 33l6 7M50 35l5 6"/></g>`;
+  if (/kuchen|torte|cake|gugelhupf|biskuit|käsekuchen|kaesekuchen|cheesecake|strudel/.test(k)) return plate + `<path d="M22 46V32l36-6v20z" fill="#f2d39a"/><path d="M22 32l36-6v5l-36 6z" fill="#fbf3e2"/><path d="M22 40l36-6" stroke="#c46b5a" stroke-width="2.6"/><circle cx="46" cy="26" r="3" fill="#d6334a"/>`;
+  if (/muffin|cupcake/.test(k)) return `<path d="M26 44h28l-4 18H30z" fill="#c98a45"/><path d="M28 44h4l1 18M36 44l.5 18M44 44l-.5 18M50 44l-1 18" stroke="#a86a2e" stroke-width="1.4"/><path d="M24 44c0-12 8-16 16-16s16 4 16 16z" fill="#6b3f22"/><circle cx="34" cy="36" r="1.8" fill="#f6e2a8"/><circle cx="44" cy="34" r="1.8" fill="#f6e2a8"/>`;
+  if (/plätzchen|plaetzchen|keks|cookie|biscuit|gebäck|gebaeck/.test(k)) return tray + `<g fill="#d8a25a"><circle cx="24" cy="42" r="8"/><circle cx="44" cy="40" r="8"/><circle cx="60" cy="43" r="6"/></g><g fill="#5a3418"><circle cx="22" cy="40" r="1.4"/><circle cx="27" cy="44" r="1.4"/><circle cx="42" cy="38" r="1.4"/><circle cx="46" cy="43" r="1.4"/></g>`;
+  if (/hähnchen|haehnchen|huhn|chicken|geflügel|gefluegel|ente|duck|pute|turkey|gans/.test(k)) return plate + `<path d="M24 46c-4-12 6-20 18-18 12 2 16 12 12 20z" fill="#c9762f"/><path d="M50 30l8-8" stroke="#f1e6d2" stroke-width="4" stroke-linecap="round"/><circle cx="59" cy="21" r="3" fill="#f1e6d2"/><path d="M30 38c4-4 10-5 16-3" stroke="#e9a35a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if (/fisch|fish|lachs|salmon|forelle/.test(k)) return plate + `<path d="M18 42c8-10 26-10 36 0-10 10-28 10-36 0z" fill="#9cb7c9"/><path d="M54 42l10-7v14z" fill="#9cb7c9"/><circle cx="25" cy="40" r="1.6" fill="#2a3a46"/><path d="M34 37c2 3 2 7 0 10M42 37c2 3 2 7 0 10" stroke="#7b98ab" stroke-width="1.6" fill="none"/>`;
+  if (/auflauf|gratin|lasagne|moussaka|casserole|überbacken|ueberbacken/.test(k)) return dish + `<path d="M18 42c4-4 8 2 12-1s8 2 12-1 8 3 12 0 6 1 8 2v4H18z" fill="#f2c24f"/><g fill="#c0632f"><circle cx="26" cy="44" r="1.8"/><circle cx="40" cy="43" r="1.8"/><circle cx="54" cy="44" r="1.8"/></g>`;
+  if (/quiche|tarte|pie|wähe|waehe/.test(k)) return `<ellipse cx="40" cy="48" rx="28" ry="12" fill="#d39a52"/><ellipse cx="40" cy="45" rx="23" ry="9" fill="#f0c95a"/><g fill="#5b8a3a"><circle cx="32" cy="44" r="2"/><circle cx="46" cy="46" r="2"/></g><circle cx="40" cy="42" r="2" fill="#c0632f"/>`;
+  if (/kartoffel|potato|pommes|fries|wedges|rösti|roesti/.test(k)) return tray + `<g fill="#f0c24f" stroke="#c99a2e" stroke-width="1"><rect x="18" y="32" width="6" height="18" rx="2" transform="rotate(-12 21 41)"/><rect x="28" y="30" width="6" height="20" rx="2" transform="rotate(8 31 40)"/><rect x="38" y="31" width="6" height="19" rx="2" transform="rotate(-6 41 40)"/><rect x="48" y="32" width="6" height="18" rx="2" transform="rotate(10 51 41)"/><rect x="57" y="34" width="6" height="16" rx="2" transform="rotate(-8 60 42)"/></g>`;
+  if (/gemüse|gemuese|vegetable|veggie|paprika|zucchini|ratatouille/.test(k)) return tray + `<path d="M22 46l18-20 4 4-18 20z" fill="#f08a2a"/><path d="M40 26l4-6M42 28l6-4" stroke="#5b9a3a" stroke-width="2.4" stroke-linecap="round"/><circle cx="52" cy="38" r="8" fill="#5b9a3a"/><circle cx="58" cy="34" r="6" fill="#6fb04a"/><path d="M54 46v4" stroke="#3d6b2e" stroke-width="3"/><circle cx="32" cy="46" r="4" fill="#d6334a"/>`;
+  if (/braten|roast|rind|beef|schwein|pork|lamm|lamb|fleisch|meat|steak|filet|haxe|keule/.test(k)) return plate + `<ellipse cx="40" cy="40" rx="20" ry="13" fill="#8a3f2a"/><ellipse cx="40" cy="38" rx="16" ry="9" fill="#a64b33"/><path d="M28 36c6-4 18-4 24 0" stroke="#e7a07a" stroke-width="2" fill="none"/><path d="M58 30l7-6" stroke="#f1e6d2" stroke-width="4" stroke-linecap="round"/>`;
+  if (/reis|rice|risotto|nudel|pasta|spaghetti/.test(k)) return plate + `<ellipse cx="40" cy="42" rx="18" ry="9" fill="#f6eedc"/><g stroke="#e0d3b5" stroke-width="1.4" stroke-linecap="round"><path d="M28 42l4-2M36 40l4 2M44 41l4-2M32 46l4-1M42 46l4-1"/></g><circle cx="44" cy="38" r="3" fill="#d6334a"/>`;
+  if (/ei|egg|omelett|soufflé|souffle/.test(k)) return plate + `<ellipse cx="40" cy="44" rx="15" ry="9" fill="#fbf6ee"/><circle cx="40" cy="43" r="5.5" fill="#f2b632"/>`;
+  if (/dessert|crème|creme|pudding|brûlée|brulee/.test(k)) return `<ellipse cx="40" cy="54" rx="22" ry="6" fill="#e9e4dc"/><path d="M24 40h32l-3 14H27z" fill="#fbf6ee"/><ellipse cx="40" cy="40" rx="16" ry="4" fill="#d9a04f"/>`;
+  return plate + `<path d="M20 48a20 20 0 0 1 40 0z" fill="#c9ced6"/><circle cx="40" cy="26" r="3" fill="#c9ced6"/><path d="M26 42a14 14 0 0 1 8-8" stroke="#eef1f4" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+}
+// Spül-/Wasch-/Trocknerprogramme: Symbol + Temperatur
+function careSvg(type, key, label, color) {
+  const k = canon(key) + " " + norm(label || "");
+  const tm = String(label || "").match(/(\d{2})\s*(?:°|grad)/i) || k.match(/(?:^|[^0-9])(20|30|40|45|50|55|60|65|70|90)(?:[^0-9]|$)/);
+  const temp = tm ? tm[1] : null;
+  const s = `stroke="${color}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
+  const f = `fill="${color}"`;
+  let g;
+  if (/eco|spar/.test(k)) g = `<path d="M54 24C30 22 22 36 26 56c18 2 30-10 28-32z" ${f} opacity=".9"/><path d="M28 54c6-10 12-16 22-24" stroke="rgba(0,0,0,.35)" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  else if (/auto/.test(k)) g = `<circle cx="40" cy="40" r="18" ${s}/><path d="M32 48l8-18 8 18M35 42h10" ${s}/>`;
+  else if (/intensiv|intensive|power|pot|topf/.test(k)) g = `<path d="M22 34h36v14a10 10 0 0 1-10 10H32a10 10 0 0 1-10-10z" ${s}/><path d="M18 34h44M30 28h20" ${s}/><path d="M32 22c-2-3 2-4 0-7M40 22c-2-3 2-4 0-7M48 22c-2-3 2-4 0-7" ${s} stroke-width="2"/>`;
+  else if (/glas|glass/.test(k)) g = `<path d="M30 20h20c0 12-4 18-10 18S30 32 30 20zM40 38v16M32 56h16" ${s}/>`;
+  else if (/schnell|quick|speed|kurz|express|minute|15min|30min|60min|rapid/.test(k)) g = `<circle cx="40" cy="42" r="16" ${s}/><path d="M40 32v10l7 4M34 20h12" ${s}/><path d="M60 26l-6 8h6l-6 8" ${s} stroke-width="2.2"/>`;
+  else if (/silence|leise|night|nacht|quiet/.test(k)) g = `<path d="M52 46A16 16 0 1 1 36 26a12 12 0 0 0 16 20z" ${s}/>`;
+  else if (/vorspül|vorspuel|prerinse|spülen|spuelen|rinse/.test(k)) g = `<path d="M30 24c-5 7-8 11-8 15a8 8 0 0 0 16 0c0-4-3-8-8-15zM50 34c-5 7-8 11-8 15a8 8 0 0 0 16 0c0-4-3-8-8-15z" ${s}/>`;
+  else if (/pflege|care|clean|reinig|hygien|trommel|drum|selbst|machine/.test(k)) g = `<circle cx="40" cy="42" r="16" ${s}/><circle cx="40" cy="42" r="8" ${s}/><path d="M56 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" ${f}/>`;
+  else if (/wolle|wool|hand/.test(k)) g = `<circle cx="40" cy="42" r="16" ${s}/><path d="M28 34c8 2 16 8 20 18M26 44c8 0 16 4 20 12M34 27c6 4 12 10 14 18" ${s} stroke-width="2"/>`;
+  else if (/fein|delicat|seide|silk|gardin|curtain/.test(k)) g = `<path d="M24 56c12-4 24-18 28-34-14 4-26 16-28 34zM30 48l12-12" ${s}/>`;
+  else if (/sport|fitness|outdoor|jacke|jacket|imprägn/.test(k)) g = `<path d="M18 50l6-14 10 2 6 8h18v6H18z" ${s}/><path d="M28 36l2-8" ${s}/>`;
+  else if (/jeans|dunkel|dark|denim/.test(k)) g = `<path d="M28 18h24l2 40h-9l-5-26-5 26h-9z" ${s}/><path d="M28 24h24" ${s}/>`;
+  else if (/hemd|shirt|bluse|business/.test(k)) g = `<path d="M32 18l8 6 8-6 10 6-4 8-4-2v28H30V30l-4 2-4-8z" ${s}/><path d="M40 24v34" ${s} stroke-width="1.6"/>`;
+  else if (/handtuch|towel|bett|bed|duvet|daunen|down|kissen|pillow/.test(k)) g = `<rect x="20" y="24" width="40" height="10" rx="3" ${s}/><rect x="20" y="36" width="40" height="10" rx="3" ${s}/><rect x="20" y="48" width="40" height="10" rx="3" ${s}/>`;
+  else if (/baby|allergie|allergy|sensitiv/.test(k)) g = `<path d="M40 56s-16-9-16-20a9 9 0 0 1 16-5 9 9 0 0 1 16 5c0 11-16 20-16 20z" ${s}/>`;
+  else if (/schleuder|spin|abpump|drain/.test(k)) g = `<circle cx="40" cy="42" r="16" ${s}/><path d="M40 30a12 12 0 1 1-12 12" ${s}/><path d="M28 36v6h6" ${s}/>`;
+  else if (/trock|dry|bügel|buegel|iron|schrank|cupboard/.test(k)) g = `<path d="M18 50c0-12 10-18 24-18h12l8 18z" ${s}/><path d="M28 50h34" ${s}/><path d="M32 22c-2-3 2-4 0-7M40 22c-2-3 2-4 0-7" ${s} stroke-width="2"/>`;
+  else if (/mix|bunt|baumwoll|cotton|koch|synthet|pflegeleicht|easy/.test(k)) g = `<path d="M30 18l-12 8 5 9 5-3v26h24V32l5 3 5-9-12-8c-2 4-6 6-10 6s-8-2-10-6z" ${s}/>`;
+  else if (type === "dishwasher") g = `<rect x="20" y="20" width="40" height="40" rx="6" ${s}/><path d="M28 34h24M30 34a10 10 0 0 0 20 0" ${s}/>`;
+  else g = `<circle cx="40" cy="42" r="17" ${s}/><circle cx="40" cy="42" r="10" ${s} stroke-width="1.8"/><path d="M22 20h36" ${s}/>`;
+  const badge = temp ? `<g><rect x="44" y="52" width="30" height="18" rx="9" fill="${color}"/><text x="59" y="65" text-anchor="middle" font-size="11" font-weight="800" font-family="system-ui,sans-serif" fill="#141414">${temp}°</text></g>` : "";
+  return g + badge;
+}
+function previewSvg(m, p, color) {
+  const id = `pv${++_uid}`;
+  const key = p.tail || p.canon;
+  let body = null;
+  if (m.type === "coffee") body = p.cat === "clean" ? null : drinkSvg(`${key} ${p.label}`, id);
+  else if (["oven", "microwave", "warmingdrawer", "cookprocessor"].includes(m.type)) body = p.cat === "dish" || p.cat === "world" ? dishSvg(`${p.label} ${key}`) : (p.cat === "clean" ? careSvg(m.type, key, p.label, color) : ovenModeSvg(`${key} ${p.label}`));
+  else if (["dishwasher", "washer", "dryer", "washerdryer"].includes(m.type)) body = careSvg(m.type, key, p.label, color);
+  return body ? `<svg viewBox="0 0 80 80" aria-hidden="true">${body}</svg>` : null;
+}
 function animSvg(kind, color, m) {
   const id = `hc${++_uid}`;
   const glass = (inner) => `<circle cx="60" cy="60" r="54" fill="var(--hc-s2)" stroke="var(--hc-line)" stroke-width="4"/><circle cx="60" cy="60" r="42" fill="var(--hc-deep)"/><g clip-path="url(#${id})">${inner}</g><path d="M36 40 a30 30 0 0 1 20 -12" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round"/>`;
@@ -1846,6 +2001,12 @@ button{font:inherit;color:inherit}
 .tiles.scroll{max-height:290px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:var(--hc-line2) transparent}
 .tiles.scroll::-webkit-scrollbar{width:6px}.tiles.scroll::-webkit-scrollbar-thumb{background:var(--hc-line2);border-radius:3px}
 .tile{min-height:90px;border-radius:20px;border:0;background:var(--hc-s2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;padding:8px;text-align:center;line-height:1.2}
+.tiles.pvmode .tile{padding:0 0 8px;justify-content:flex-start;overflow:hidden;min-height:122px;gap:6px}
+.tiles.pvmode.scroll{max-height:400px}
+.tile .pv{position:relative;width:100%;height:78px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--hc-accent) 18%,transparent),transparent 68%),rgba(0,0,0,.22);flex:none}
+.tile .pv svg{width:70px;height:70px}
+.tile .pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tiles.pvmode .tile span,.tiles.pvmode .tile small{padding:0 6px}
 .tile.on{background:color-mix(in srgb,var(--hc-accent) 22%,transparent);box-shadow:inset 0 0 0 2px var(--hc-accent)}
 .tile span{overflow-wrap:anywhere;hyphens:auto}
 .tile small{font-size:10px;font-weight:500;color:var(--hc-muted);overflow-wrap:anywhere;hyphens:auto;max-width:100%}
@@ -2327,8 +2488,19 @@ class HomeConnectCard extends HTMLElement {
     const count = m.programs.filter((p) => p.cat === tab).length;
     const q = this._ui.search || "";
     const search = count > 12 ? `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label>` : "";
-    const body = `${search}<div class="tiles ${count > 9 ? "scroll" : ""}" data-cat="${tab}"></div>`;
+    const pvMode = this._config.program_view === "images";
+    const body = `${search}<div class="tiles ${pvMode ? "pvmode" : ""} ${count > (pvMode ? 6 : 9) ? "scroll" : ""}" data-cat="${tab}"></div>`;
     return `<div class="box" data-mod="programs"><div class="row"><span class="lbl sp">${esc(T.program)}</span></div>${tabs}${body}</div>`;
+  }
+  // Eigene Fotos: program_images {Schlüssel/Name: URL} oder program_image_path (Datei = Programmschlüssel.png)
+  _progImage(p) {
+    const c = this._config;
+    const keys = [p.tail, p.canon, canon(p.label || ""), canon((p.label || "").split(" · ")[0])].filter(Boolean);
+    if (c.program_images && typeof c.program_images === "object") {
+      for (const [k, v] of Object.entries(c.program_images)) if (keys.includes(canon(k))) return v;
+    }
+    if (c.program_image_path) return `${String(c.program_image_path).replace(/\/+$/, "")}/${p.tail || p.canon}.${c.program_image_ext || "png"}`;
+    return null;
   }
   _progIcon(m, p) {
     const t = p.tail || p.canon;
@@ -2362,8 +2534,15 @@ class HomeConnectCard extends HTMLElement {
     list = list.slice(0, 150);
     const qc = this.shadowRoot.querySelector(".qc");
     if (qc) qc.textContent = `${total} ${T.results}`;
+    const pvMode = this._config.program_view === "images";
+    const color = this._accent || "var(--hc-accent)";
     box.innerHTML = list.length ? list.map((p) => {
       const parts = p.label.split(" · ");
+      if (pvMode) {
+        const url = this._progImage(p);
+        const art = previewSvg(m, p, color) || this._progIcon(m, p);
+        return `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}"><div class="pv">${art}${url ? `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</div><span>${esc(parts[0])}</span>${parts[1] ? `<small>${esc(parts[1])}</small>` : ""}</button>`;
+      }
       return `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(parts[0])}</span>${parts[1] ? `<small>${esc(parts[1])}</small>` : ""}</button>`;
     }).join("") : `<div class="empty" style="grid-column:1/-1">${esc(T.no_results)}</div>`;
     box.scrollTop = 0;
@@ -2880,6 +3059,8 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "color", selector: { color_rgb: {} } },
       { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
       { name: "price_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "program_view", selector: { select: { mode: "dropdown", options: [{ value: "icons", label: T.pv_icons }, { value: "images", label: T.pv_images }] } } },
+      { name: "program_image_path", selector: { text: {} } },
       { name: "sub_buttons", selector: { boolean: {} } },
       { name: "cheapest_default", selector: { boolean: {} } },
       { name: "valetudo_topic", selector: { text: {} } },
@@ -2895,7 +3076,7 @@ class HomeConnectCardEditor extends HTMLElement {
     const roleL = this.lang === "de"
       ? { camera: "Kamera / Karte", battery: "Akku", error: "Fehler", op: "Betriebszustand", remaining: "Restzeit", progress: "Fortschritt", selectedProg: "Programmauswahl", power: "Ein/Aus", light: "Licht", cavity: "Ist-Temperatur", setpoint: "Soll-Temperatur", duration: "Dauer", startIn: "Startverzögerung", start: "Start-Taste", pause: "Pause-Taste", stop: "Stopp-Taste", waterTank: "Wassertank", display: "Display / Anzeige (Klima)" }
       : { camera: "Camera / map", battery: "Battery", error: "Error", op: "Operation state", remaining: "Remaining time", progress: "Progress", selectedProg: "Program select", power: "Power", light: "Light", cavity: "Current temperature", setpoint: "Target temperature", duration: "Duration", startIn: "Start delay", start: "Start button", pause: "Pause button", stop: "Stop button", waterTank: "Water tank", display: "Display (air conditioner)" };
-    const labels = { ...roleL, entity: T.e_entity, ha_device: T.e_hadevice, extra_entities: T.e_extra, entities: T.e_roles, device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, sub_buttons: T.e_subbtn, cheapest_default: T.e_cheapdef, valetudo_topic: T.e_valtopic, camera_max_age: T.e_camage };
+    const labels = { ...roleL, entity: T.e_entity, ha_device: T.e_hadevice, extra_entities: T.e_extra, entities: T.e_roles, device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, program_view: T.e_pview, program_image_path: T.e_pimg, sub_buttons: T.e_subbtn, cheapest_default: T.e_cheapdef, valetudo_topic: T.e_valtopic, camera_max_age: T.e_camage };
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => labels[s.name] || s.name;
