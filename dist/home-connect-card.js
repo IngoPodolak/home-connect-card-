@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.6.2";
+const HC_VERSION = "1.6.3";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -42,7 +42,7 @@ const I18N = {
     tab_clean: "Pflege", tab_drink: "Getränke", tab_world: "Kaffeewelt", tab_prog: "Programme",
     options: "Optionen", settings: "Einstellungen", consumables: "Status & Pflege", more: "Weitere Einstellungen",
     start: "Starten", pause_btn: "Pausieren", resume: "Fortsetzen", stop: "Stopp", power: "Ein/Aus", light: "Licht",
-    camera: "Kamera", live: "LIVE", recognized: "Gericht erkannt / vorgeschlagen", apply_start: "Starten",
+    browning: "Bräunung", level: "Stufe", camera: "Kamera", live: "LIVE", recognized: "Gericht erkannt / vorgeschlagen", apply_start: "Starten",
     other_dish: "Anderes Gericht", target: "Ziel", temperature: "Temperatur", duration: "Dauer", start_in: "Startzeit",
     now: "Sofort", local: "LOKAL", cloud: "CLOUD", both: "LOKAL + CLOUD", door_open: "Tür offen", door_closed: "Tür zu",
     beans: "Bohnenmenge", fill: "Füllmenge", ratio: "Kaffee / Milch", coffee: "Kaffee", milk: "Milch",
@@ -87,7 +87,7 @@ const I18N = {
     tab_clean: "Care", tab_drink: "Drinks", tab_world: "Coffee world", tab_prog: "Programs",
     options: "Options", settings: "Settings", consumables: "Status & care", more: "More settings",
     start: "Start", pause_btn: "Pause", resume: "Resume", stop: "Stop", power: "Power", light: "Light",
-    camera: "Camera", live: "LIVE", recognized: "Dish detected / suggested", apply_start: "Start",
+    browning: "Browning", level: "Level", camera: "Camera", live: "LIVE", recognized: "Dish detected / suggested", apply_start: "Start",
     other_dish: "Other dish", target: "Target", temperature: "Temperature", duration: "Duration", start_in: "Start time",
     now: "Now", local: "LOCAL", cloud: "CLOUD", both: "LOCAL + CLOUD", door_open: "Door open", door_closed: "Door closed",
     beans: "Bean amount", fill: "Fill quantity", ratio: "Coffee / milk", coffee: "Coffee", milk: "Milk",
@@ -492,6 +492,7 @@ const CONCEPTS = {
   snapTime: { d: ["sensor"], re: /image_acquisition_time|last_snapshot_time|snapshot_time|image_time/ },
   snapAge: { d: ["sensor"], re: /snapshot_age|image_age/ },
   camRefresh: { d: ["button"], re: /refresh_snapshot|refresh_image|snapshot_refresh|refresh_camera/ },
+  browning: { d: ["sensor", "select"], re: /browning|braunung|bräunung/ },
   idosLevel: { d: ["sensor"], re: /i_?dos|dosier/, not: /active|aktiv/ },
   idosSwitch: { d: ["switch", "select"], re: /i_?dos|auto_?dos|dosier|stain|flecken/ },
   turnFoodMsg: { d: ["sensor"], re: /turn_food_message/ },
@@ -745,6 +746,9 @@ function buildModel(hass, g, cfg, lang) {
     model.camStale = model.camTime != null && (Date.now() - model.camTime) / 1000 > model.camMax;
   }
 
+  // Bräunungsgrad (z. B. Pizza mit Bräunungserkennung): Cooking.Oven.EnumType.Browning.Level04 → 4
+  const brw = P("browning");
+  if (brw?.avail) { const mm = /level0*(\d+)/i.exec(brw.st.state) || /^(\d+)$/.exec(brw.st.state); if (mm) model.browning = +mm[1]; }
   // Hinweise (Oven Private)
   const turn = P("turnFood"), turnMsg = P("turnFoodMsg"), notif = P("notification");
   if (turn?.st?.state === "on") model.banner = { kind: "turn", title: T.turn_food, text: turnMsg?.avail ? turnMsg.st.state : "" };
@@ -2116,6 +2120,7 @@ button{font:inherit;color:inherit}
 .b-local{background:rgba(54,207,196,.18);color:#36cfc4}.b-cloud{background:var(--hc-s2);color:var(--hc-muted)}
 .b-both{background:color-mix(in srgb,var(--hc-accent) 20%,transparent);color:var(--hc-accent)}.b-offline{background:rgba(255,107,107,.18);color:var(--hc-bad)}
 .b-demo{background:rgba(157,140,255,.2);color:#b3a6ff}
+.brw{display:inline-flex;gap:3px;margin-left:4px}.brw i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}.brw i.on{background:linear-gradient(135deg,#f3c27a,#9a5a1c)}
 .cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;max-height:70vh;margin:0 auto;cursor:pointer}
 .cam img{width:100%;height:100%;object-fit:cover;display:block}
 .cam .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#a0a6af;font-size:13px}
@@ -2622,6 +2627,7 @@ class HomeConnectCard extends HTMLElement {
     if (m.running && m.end) info.push(`<div><div class="lbl">${esc(T.ends)}</div><div class="mid hc-end">${fmtClock(m.end)}</div></div>`);
     if (m.startsIn) info.push(`<div><div class="lbl">${esc(T.starts_in)}</div><div class="mid">${esc(fmtDur(m.startsIn, this.lang))}</div></div>`);
     if (m.temp?.current != null && ["oven", "warmingdrawer", "cookprocessor"].includes(m.type)) info.push(`<div><div class="lbl">${esc(T.temperature)}</div><div class="mid"><span class="hc-temp">${m.temp.current}</span> °C${m.temp.target && m.running ? ` <span class="lbl">/ ${esc(T.target)} ${m.temp.target} °C</span>` : ""}</div></div>`);
+    if (m.browning != null && (m.running || m.banner?.kind === "dish")) info.push(`<div><div class="lbl">${esc(T.browning)}</div><div class="mid row" style="gap:6px">${esc(T.level)} ${m.browning}<span class="brw">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= m.browning ? "on" : ""}"></i>`).join("")}</span></div></div>`);
     if (m.temp?.probe != null) info.push(`<div><div class="lbl">${esc(T.meat_probe)}</div><div class="mid">${m.temp.probe} °C</div></div>`);
     if (["fridge", "freezer", "winecooler"].includes(m.type) && m.temp?.current != null) info.push(`<div><div class="lbl">${esc(T.temperature)}</div><div class="big">${m.temp.current} °C</div></div>`);
     if (m.phase && m.running) info.push(`<div><div class="lbl">${esc(T.phase)}</div><div class="mid">${esc(m.phase)}</div></div>`);
