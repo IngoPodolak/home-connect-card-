@@ -1,0 +1,95 @@
+hc_glass:
+    name: "HC Glass (pro Nutzer)"
+    version: "v1.0"
+    creator: "Home Connect Card"
+    link: "https://github.com/IngoPodolak/home-connect-card-"
+    supported:
+        - button
+        - separator
+        - pop-up
+        - cover
+        - climate
+        - media-player
+        - select
+        - calendar
+        - horizontal-buttons-stack
+    description: |
+        Frosted Glass, Liquid Glass und Window Glow in einem Modul – gesteuert vom Stil-Umschalter
+        (hc-style-card) der Home Connect Card. Die Einstellung gilt pro Dashboard und pro Nutzer.
+        Window Glow nutzt die Einstellungen unter light_window_glow (Bereich, Licht, Fenster).
+    code: |
+        ${(() => {
+          const card = this;
+          const cfg = this.config || {};
+          const dash = location.pathname.split('/')[1] || 'lovelace';
+          const G = (window.__hcGlass && window.__hcGlass[dash]) || cfg.hc_glass || {};
+          const st = G.style || 'none';
+          const a = G.alpha ?? 0.45;
+          const b = G.blur ?? 20;
+          const type = cfg.card_type || 'button';
+          const root = card.shadowRoot || card;
+          const cont = root && root.querySelector ? root.querySelector('.card-content') : null;
+          if (cont && cont._hcLq && st !== 'liquid') { cont._hcLq.remove(); cont._hcLq = null; }
+          if (st === 'none') return '';
+          const frost = `ha-card{backdrop-filter:none;-webkit-backdrop-filter:none;--background-color-2:transparent;}
+        .bubble-container{background:rgba(22,24,28,${a});--bubble-secondary-background-color:rgba(15,15,15,0.2);-webkit-backdrop-filter:blur(${b}px);backdrop-filter:blur(${b}px);box-shadow:none;}
+        .bubble-icon-container{box-shadow:none;}
+        .bubble-pop-up-background{background-color:rgba(22,24,28,${a}) !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important;}`;
+          if (st === 'frosted' || (st === 'liquid' && type === 'pop-up')) return frost;
+          if (st === 'glow') {
+            const sepGlow = `.bubble-container{background:radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,0.15),transparent 65%),linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.06)),rgba(22,24,28,${a}) !important;border:1px solid rgba(120,120,120,0.18) !important;}`;
+            if (type !== 'button') return frost + (type === 'pop-up' ? '' : sepGlow);
+            const c = cfg.light_window_glow || {};
+            const ents = hass.entities || {}, devs = hass.devices || {};
+            const inArea = (id) => { const e = ents[id]; if (!e) return false; if (e.area_id) return e.area_id === c.area; return !!(e.device_id && devs[e.device_id] && devs[e.device_id].area_id === c.area); };
+            const isOpen = (id) => ['on', 'open'].includes(hass.states[id] && hass.states[id].state);
+            const lightOn = c.area ? Object.keys(hass.states).some((id) => id.startsWith('light.') && hass.states[id].state === 'on' && inArea(id))
+              : (c.light_entity ? (hass.states[c.light_entity] && hass.states[c.light_entity].state === 'on') : state === 'on');
+            const cls = (c.window_device_classes || 'window, door, garage_door, opening').split(',').map((s) => s.trim().toLowerCase());
+            const excl = Array.isArray(c.exclude_entities) ? c.exclude_entities : [];
+            const windowOpen = (Array.isArray(c.window_entities) && c.window_entities.length) ? c.window_entities.some(isOpen)
+              : c.area ? Object.keys(hass.states).some((id) => id.startsWith('binary_sensor.') && cls.includes(((hass.states[id].attributes || {}).device_class || '').toLowerCase()) && !excl.includes(id) && isOpen(id) && inArea(id))
+              : (c.window_entity ? isOpen(c.window_entity) : false);
+            const t = (v, f) => Array.isArray(v) ? v.join(', ') : (v || f);
+            const gold = t(c.rgb_gold, '255, 196, 71'), coral = t(c.rgb_coral, '240, 102, 91');
+            const offL = t(c.rgb_off_left, '255, 255, 255'), offR = t(c.rgb_off_right, '255, 255, 255');
+            const alert = t(c.rgb_alert, '255, 0, 0'), grey = t(c.rgb_inactive, '120, 120, 120');
+            const aG = c.fill_alpha_glow ?? 0.15, a1 = c.fill_alpha_1 ?? 0.09, a2 = c.fill_alpha_2 ?? 0.06;
+            if (c.state_source === 'area_temperature' || (c.state_source === 'entity' && c.state_entity)) {
+              let tid = c.state_source === 'entity' ? c.state_entity : c.temperature_entity;
+              if (!tid && c.area) tid = Object.keys(hass.states).find((id) => id.startsWith('sensor.') && (hass.states[id].attributes || {}).device_class === 'temperature' && !['unavailable', 'unknown'].includes(hass.states[id].state) && inArea(id));
+              const s = tid && hass.states[tid];
+              if (s) { const n = parseFloat(s.state); const v = isNaN(n) ? s.state : Math.round(n * 10) / 10; const u = (s.attributes || {}).unit_of_measurement; const el = root.querySelector && root.querySelector('.bubble-state'); if (el) el.innerText = u ? `${v} ${u}` : `${v}`; }
+            }
+            return frost + `
+        .bubble-icon{color:${lightOn ? `rgb(${t(c.color_active, '255, 196, 71')})` : `rgb(${t(c.color_inactive, '107, 107, 107')})`} !important;transition:color 0.4s ease !important;}
+        .bubble-button-card-container{background:${lightOn ? `radial-gradient(600px 220px at 0% 0%, rgba(${gold},${aG}), transparent 65%), linear-gradient(135deg, rgba(${gold},${a1}), rgba(${coral},${a2}))` : `radial-gradient(600px 220px at 0% 0%, rgba(${offL},${aG}), transparent 65%), linear-gradient(135deg, rgba(${offL},${a1}), rgba(${offR},${a2}))`} !important;border:1px solid ${lightOn ? `rgba(${gold},0.22)` : `rgba(${grey},0.18)`} !important;box-shadow:${windowOpen ? `0 0 22px 3px rgba(${alert},0.50), 0 0 10px 1px rgba(${alert},0.35)` : lightOn ? `0 28px 60px rgba(${gold},0.18), 0 0 80px rgba(${coral},0.10)` : 'none'} !important;transition:all 0.4s ease !important;}`;
+          }
+          // Liquid Glass (wie liquid_glass_2)
+          const L = cfg.liquid_glass_2 || {};
+          const radius = L.radius ?? 28, lb = G.liquid_blur ?? Math.max(1, Math.round(b / 5)), sat = L.saturate ?? 120, depth = L.depth ?? 4, strength = L.strength ?? 100, ca = L.chromaticAberration ?? 3;
+          window.bubbleCardFilterCache = window.bubbleCardFilterCache || {};
+          const cache = window.bubbleCardFilterCache;
+          const filt = (width, height) => {
+            const key = `${width}-${height}-${radius}-${depth}-${strength}-${ca}`;
+            if (cache[key]) return cache[key];
+            const map = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><style>.mix { mix-blend-mode: screen; }</style><defs><linearGradient id="Y" x1="0" x2="0" y1="${Math.ceil((radius / height) * 15)}%" y2="${Math.floor(100 - (radius / height) * 15)}%"><stop offset="0%" stop-color="#0F0" /><stop offset="100%" stop-color="#000" /></linearGradient><linearGradient id="X" x1="${Math.ceil((radius / width) * 15)}%" x2="${Math.floor(100 - (radius / width) * 15)}%" y1="0" y2="0"><stop offset="0%" stop-color="#F00" /><stop offset="100%" stop-color="#000" /></linearGradient></defs><rect x="0" y="0" height="${height}" width="${width}" fill="#808080" /><g filter="blur(2px)"><rect x="0" y="0" height="${height}" width="${width}" fill="#000080" /><rect x="0" y="0" height="${height}" width="${width}" fill="url(#Y)" class="mix" /><rect x="0" y="0" height="${height}" width="${width}" fill="url(#X)" class="mix" /><rect x="${depth}" y="${depth}" height="${height - 2 * depth}" width="${width - 2 * depth}" fill="#808080" rx="${radius}" ry="${radius}" filter="blur(${depth}px)" /></g></svg>`);
+            const uri = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><defs><filter id="displace" color-interpolation-filters="sRGB"><feImage x="0" y="0" height="${height}" width="${width}" href="${map}" result="displacementMap" /><feDisplacementMap transform-origin="center" in="SourceGraphic" in2="displacementMap" scale="${strength + ca * 2}" xChannelSelector="R" yChannelSelector="G" /><feColorMatrix type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="displacedR" /><feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength + ca}" xChannelSelector="R" yChannelSelector="G" /><feColorMatrix type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="displacedG" /><feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength}" xChannelSelector="R" yChannelSelector="G" /><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="displacedB" /><feBlend in="displacedR" in2="displacedG" mode="screen"/><feBlend in2="displacedB" mode="screen"/></filter></defs></svg>`) + '#displace';
+            cache[key] = uri; return uri;
+          };
+          if (cont) {
+            if (!cont._hcLq) {
+              const d = document.createElement('div');
+              d.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:${radius}px;pointer-events:none;background:rgba(0,0,0,0);transform:translateZ(0);box-shadow:inset 0px 1px 2px rgba(255,255,255,0.4),inset 0px 2px 4px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.6);`;
+              cont.insertBefore(d, cont.firstChild);
+              cont._hcLq = d;
+              const upd = () => { const w = d.clientWidth || 500, h = d.clientHeight || 56; if (d._w === w && d._h === h) return; d._w = w; d._h = h; d.style.backdropFilter = `blur(${lb}px) saturate(${sat}%) url("${filt(w, h)}")`; };
+              d._ro = new ResizeObserver(upd); d._ro.observe(d);
+              requestAnimationFrame(upd);
+            }
+          }
+          return `ha-card{--bubble-button-background-color:rgba(0,0,0,0.4);--bubble-sub-button-background-color:rgba(0,0,0,0.4);--bubble-icon-background-color:rgba(0,0,0,0.4);--bubble-secondary-background-color:rgba(0,0,0,0.4);}
+        .bubble-container{background:none;}
+        .card-content::after{background:none;}
+        .bubble-range-fill,.bubble-background{opacity:0.4 !important;}`;
+        })()}
