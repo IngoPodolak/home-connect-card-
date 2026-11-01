@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.10.2";
+const HC_VERSION = "1.10.3";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -3983,8 +3983,13 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
             else frosted();
           } else if (d.style === "glow") {
             frosted();
-            const le = c.light_window_glow?.light_entity || (String(c.entity || "").startsWith("light.") ? c.entity : null);
-            if (le && ct === "button") { mods.push("light_window_glow"); c.light_window_glow = { rgb_off_left: [255, 255, 255], rgb_off_right: [255, 255, 255], state_source: "entity", ...(c.light_window_glow || {}), light_entity: le }; }
+            // Window Glow auf allen Buttons – auch Räume ohne Licht (z. B. nur Rollläden) bekommen den "aus"-Schimmer
+            if (ct === "button") {
+              mods.push("light_window_glow");
+              const le = c.light_window_glow?.light_entity || (String(c.entity || "").startsWith("light.") ? c.entity : undefined);
+              c.light_window_glow = { rgb_off_left: [255, 255, 255], rgb_off_right: [255, 255, 255], ...(c.light_window_glow || {}) };
+              if (le) c.light_window_glow.light_entity = le;
+            }
           }
           if (ct === "pop-up") { c.bg_opacity = String(Math.round(alpha * 100)); c.bg_blur = String(blur); }
           c.modules = [...new Set(mods)];
