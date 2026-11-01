@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.12.2";
+const HC_VERSION = "1.13.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -1952,6 +1952,25 @@ function motifKey(m, p) {
   }
   return p.tail || p.canon;
 }
+const PROG_GROUPS = {
+  coffee: [["espresso", "Espresso", "Espresso", /^(espresso|ristretto|doppio)$/], ["milk", "Mit Milch", "With milk", /^(cappuccino|lattemacchiato|milkcoffee|flatwhite|espressomacchiato)$/], ["coffee", "Kaffee", "Coffee", /^(caffecrema|caffexl)$/], ["cold", "Kalt", "Cold", /^coldbrew$/], ["more", "Milch & Wasser", "Milk & water", /^(milkfroth|warmmilk|hotwater|chocolate)$/]],
+  dish: [["meat", "Fleisch", "Meat", /^(meat|ham|meatballs|skewers|stew)$/], ["poultry", "Geflügel", "Poultry", /^poultry/], ["fish", "Fisch", "Fish", /^fish$/], ["bread", "Brot", "Bread", /^(bread|breadrolls|pretzel)$/], ["sweet", "Kuchen & Gebäck", "Cakes & pastry", /^(puffpastry|stollen|cake|muffins|fruittart|scones|cookies|meringue|crumble)$/], ["savory", "Pizza & Herzhaftes", "Pizza & savoury", /^(pizza|quiche|filledpastry|souffle|gratin)$/], ["side", "Beilagen", "Sides", /^(potatoes|sweetpotatoes|fries|hashbrowns|rice|couscous|grains|polenta)$/], ["veg", "Gemüse & Käse", "Veg & cheese", /^(vegetables|cheese)$/], ["reheat", "Aufwärmen", "Reheat", /^reheat$/]],
+  mode: [["air", "Heißluft", "Hot air", /hot.?air|circulat|4d|heissluft|umluft|eco/], ["topb", "Ober-/Unterhitze", "Top/bottom", /top|bottom|conventional|ober|unter/], ["grill", "Grill", "Grill", /grill|broil/], ["steam", "Dampf", "Steam", /steam|dampf|sous|vapor|humid/], ["micro", "Mikrowelle", "Microwave", /micro/]],
+};
+function progGroups(m, list, lang) {
+  const de = lang === "de";
+  const isOven = ["oven", "microwave", "warmingdrawer", "cookprocessor"].includes(m.type);
+  const defs = m.type === "coffee" ? PROG_GROUPS.coffee : isOven && list.some((p) => p.cat === "dish" || p.cat === "world") ? PROG_GROUPS.dish : isOven ? PROG_GROUPS.mode : null;
+  const other = { id: "other", label: de ? "Weitere" : "More", items: [] };
+  if (!defs) return [{ ...other, items: list }];
+  const out = defs.map(([id, lde, len]) => ({ id, label: de ? lde : len, items: [] }));
+  for (const p of list) {
+    const k = defs === PROG_GROUPS.mode ? canon(`${p.tail || p.canon} ${p.label}`) : (motifKey(m, p) || "");
+    const i = defs.findIndex((d) => d[3].test(k));
+    (i >= 0 ? out[i] : other).items.push(p);
+  }
+  return [...out, other].filter((g) => g.items.length);
+}
 function previewSvg(m, p, color) {
   const id = `pv${++_uid}`;
   const key = p.tail || p.canon;
@@ -2149,7 +2168,7 @@ button{font:inherit;color:inherit}
 .pill.compact .ico{width:38px;height:38px}
 .pill.compact .ico svg{width:20px;height:20px}
 :host{container-type:inline-size;position:relative}
-.confirm{position:absolute;z-index:21;display:flex;flex-direction:column;gap:12px;padding:14px;background-color:var(--card-background-color,#1c1e22);border:0.8px solid var(--hc-line2);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:ddin .14s ease-out;color:var(--hc-text)}
+.confirm{position:absolute;z-index:21;display:flex;flex-direction:column;gap:12px;padding:14px;background:#1d1f24 !important;opacity:1;border:0.8px solid var(--hc-line2);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:ddin .14s ease-out;color:var(--hc-text)}
 .confirm .ct{font-weight:700;font-size:14px;margin-bottom:2px}.confirm > .row > svg{color:var(--hc-accent);flex:none;margin-top:1px}
 .confirm .sub.on{background:var(--hc-accent);color:#141414;gap:6px}
 .ddm{position:absolute;z-index:20;display:flex;flex-direction:column;gap:2px;padding:6px;overflow-y:auto;background:var(--bubble-main-background-color,var(--hc-card));background-color:var(--card-background-color,#1c1e22);border:0.8px solid var(--hc-line2);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.45);backdrop-filter:blur(12px);animation:ddin .14s ease-out}
@@ -2239,24 +2258,33 @@ button{font:inherit;color:inherit}
 .vsw{display:flex;gap:2px;padding:2px;border-radius:14px;background:var(--hc-s1)}
 .vsw button{width:32px;height:26px;border:0;border-radius:12px;background:transparent;color:var(--hc-muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .vsw button.on{background:var(--hc-s2);color:var(--hc-text)}
-.dview{position:relative;height:210px;border-radius:20px;overflow:hidden;background:radial-gradient(120% 100% at 30% 50%,#2a2c33,#17181c);color:#f2f3f5;touch-action:pan-y;user-select:none;outline:none}
-.dcat{position:absolute;left:16px;top:12px;font-size:12px;font-weight:700;color:var(--hc-accent);letter-spacing:.2px}
-.dring{position:absolute;left:46%;top:50%;width:180px;height:180px;margin:-90px 0 0 -46px;border-radius:50%;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.03)}
-.dart{position:absolute;left:48px;top:22px;width:160px;height:160px;border:0;padding:0;background:none;cursor:pointer;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
-.dart svg,.dart img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-.dinfo{position:absolute;left:50%;right:44px;top:50%;transform:translateY(-55%);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.dname{font-size:26px;font-weight:700;line-height:1.08;letter-spacing:-.2px;text-shadow:0 2px 8px rgba(0,0,0,.5);overflow-wrap:break-word;hyphens:manual}
-.dmeta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;font-weight:600;color:#dfe2e6}
-.dmeta span{display:inline-flex;align-items:center;gap:5px}.dmeta svg{color:#dfe2e6}
-.flag{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
-.dpick{border:0;border-radius:16px;height:32px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.12);color:#f2f3f5}
-.dpick.on{background:var(--hc-accent);color:#141414}
-.dnav{position:absolute;left:8px;top:50%;margin-top:-17px;width:44px;height:34px;border-radius:17px;border:0;background:#eceef0;color:#333;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.dnav svg{transform:rotate(90deg)}.dnav.next{left:auto;right:8px}.dnav.next svg{transform:rotate(-90deg)}
-.ddots{position:absolute;left:46%;bottom:10px;display:flex;gap:6px;transform:translateX(-10%)}
-.ddots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.55);cursor:pointer}
-.ddots button.on{background:#e3212b}.ddots button.edge{width:4px;height:4px;margin-top:1.5px}
-@container (max-width: 420px){.dview{height:190px}.dart{left:40px;top:30px;width:128px;height:128px}.dring{width:150px;height:150px;margin:-75px 0 0 -40px}.dname{font-size:20px}.dinfo{left:47%;right:40px}.dmeta{font-size:12px}}
+.sgrp{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 0 10px;margin:0 -2px}
+.sgrp::-webkit-scrollbar{display:none}
+.sgrp button{flex:none;height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--hc-s2);color:var(--hc-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s,color .2s}
+.sgrp button small{font-size:10.5px;font-weight:700;opacity:.6}
+.sgrp button.on{background:var(--hc-accent);color:#141414}
+.swrap{position:relative}
+.strack{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px;outline:none;overscroll-behavior-x:contain}
+.strack::-webkit-scrollbar{display:none}
+.sc{flex:0 0 43%;scroll-snap-align:start;border:0;padding:0;border-radius:20px;overflow:hidden;background:#0a0a0b;color:#f4f5f7;position:relative;cursor:pointer;text-align:left;font:inherit;aspect-ratio:1/1.08;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .2s ease,box-shadow .2s ease}
+.sc:active{transform:scale(.97)}
+.si{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--hc-accent) 16%,#202227),#0a0a0b 72%)}
+.sc.ph .si{background:#000}
+.si > svg,.sfb svg{position:absolute;left:14%;top:8%;width:72%;height:72%}
+.si img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.sc:hover .si img{transform:scale(1.04)}
+.sfb{display:none}.si.noimg .sfb{display:block}
+.st{position:absolute;left:0;right:0;bottom:0;padding:34px 12px 11px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6) 45%,rgba(0,0,0,.88));display:flex;flex-direction:column;gap:3px}
+.st b{font-size:14px;font-weight:700;line-height:1.15;letter-spacing:-.1px}
+.st small{font-size:11.5px;font-weight:600;color:#c8cbd0;display:flex;align-items:center;gap:5px}
+.sc.on{box-shadow:inset 0 0 0 2.5px var(--hc-accent),0 6px 18px rgba(0,0,0,.35)}
+.ck{position:absolute;top:9px;right:9px;width:26px;height:26px;border-radius:50%;background:var(--hc-accent);color:#141414;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.snav{position:absolute;top:50%;left:6px;z-index:2;width:34px;height:34px;margin-top:-17px;border-radius:50%;border:0;background:rgba(20,21,24,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.snav svg{transform:rotate(90deg)}.snav.next{left:auto;right:6px}.snav.next svg{transform:rotate(-90deg)}
+@media (hover:hover){.swrap:hover .snav{display:flex}}
+.flag{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
+@container (min-width: 560px){.sc{flex-basis:30%}}
+@container (min-width: 820px){.sc{flex-basis:23%}}
 .tiles.pvmode .tile{padding:0 0 8px;justify-content:flex-start;overflow:hidden;min-height:122px;gap:6px}
 .tiles.pvmode.scroll{max-height:400px}
 .tile .pv{position:relative;width:100%;height:78px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--hc-accent) 18%,transparent),transparent 68%),rgba(0,0,0,.22);flex:none}
@@ -2798,7 +2826,7 @@ class HomeConnectCard extends HTMLElement {
     const pvMode = view === "images" || view === "photos";
     const vsw = `<div class="vsw" role="group" aria-label="${esc(T.e_pview)}">${[["icons", "grid"], ["images", "image"], ["photos", "camera"], ["display", "slides"]].map(([v, i]) => `<button class="${v === view ? "on" : ""}" data-pview="${v}" title="${esc(T[`pv_${v}`])}" aria-label="${esc(T[`pv_${v}`])}" aria-pressed="${v === view}">${ic(i, 16, 2)}</button>`).join("")}</div>`;
     const head = `<div class="row"><span class="lbl sp">${esc(T.program)}</span>${vsw}</div>`;
-    if (view === "display") return `<div class="box" data-mod="programs">${head}${tabs}${search}<div class="disp" data-cat="${tab}"></div></div>`;
+    if (view === "display" || view === "photos") return `<div class="box" data-mod="programs">${head}${tabs}${search}<div class="disp" data-cat="${tab}" data-pv="${view}"></div></div>`;
     const body = `${search}<div class="tiles ${pvMode ? "pvmode" : ""} ${count > (pvMode ? 6 : 9) ? "scroll" : ""}" data-cat="${tab}"></div>`;
     return `<div class="box" data-mod="programs">${head}${tabs}${body}</div>`;
   }
@@ -2886,50 +2914,52 @@ class HomeConnectCard extends HTMLElement {
     if (!box || !m) return;
     const T = I18N[this.lang];
     const cat = box.dataset.cat;
+    const photo = box.dataset.pv === "photos";
     const q = norm(this._ui.search || "").trim();
     let list = m.programs.filter((p) => p.cat === cat);
     if (q) list = list.filter((p) => norm(p.label).includes(q) || p.canon.includes(canon(q)));
     const qc = this.shadowRoot.querySelector(".qc"); if (qc) qc.textContent = `${list.length} ${T.results}`;
     if (!list.length) { box.innerHTML = `<div class="empty">${esc(T.no_results)}</div>`; return; }
-    this._ui.dispIdx = this._ui.dispIdx || {};
-    let i = this._ui.dispIdx[cat];
-    if (i == null) { i = Math.max(0, list.findIndex((p) => p.canon === m.selectedCanon)); }
-    i = (i + list.length) % list.length;
-    this._ui.dispIdx[cat] = i;
-    const p = list[i];
-    const sel = p.canon === m.selectedCanon;
-    const name = p.label.split(" · ")[0].replace(/\//g, "/\u200b");
-    const sub = p.label.split(" · ")[1];
-    const meta = [];
-    if (m.type === "coffee") {
-      const o = drinkOrigin(`${p.tail || p.canon} ${p.label}`);
-      if (o) meta.push(`<span>${flagSvg(o)}${o}</span>`);
-      if (sel && m.controls.beans?.value) { const bc = m.controls.beans; const bi = bc.options.indexOf(bc.value); meta.push(`<span>${beanSym(bc.value, bi, bc.options.length, 16)}${esc(beanLabel(bc.value, bc.optionLabels?.[bi], this.lang))}</span>`); }
-      if (sel && m.controls.fill?.value && !isNaN(parseFloat(m.controls.fill.value))) meta.push(`<span>${ic("drop", 14, 2)}${Math.round(parseFloat(m.controls.fill.value))} ml</span>`);
-    } else if (sub) meta.push(`<span>${esc(sub)}</span>`);
-    const url = this._progImage(p);
-    const art = `${displayArt(m, p, this._accent || "var(--hc-accent)")}${url ? `<img src="${esc(url)}" alt="" onerror="this.remove()">` : ""}`;
-    const n = list.length, W = 9;
-    const start = Math.max(0, Math.min(n - W, i - Math.floor(W / 2)));
-    const dots = n > 1 ? `<div class="ddots">${Array.from({ length: Math.min(W, n) }, (_, j) => { const k = start + j; return `<button class="${k === i ? "on" : ""} ${(j === 0 && start > 0) || (j === W - 1 && start + W < n) ? "edge" : ""}" data-di="${k}" aria-label="${k + 1}"></button>`; }).join("")}</div>` : "";
-    box.innerHTML = `<div class="dview" tabindex="0">
-      <span class="dcat">${esc(T[`tab_${cat}`] || cat)}</span>
-      ${n > 1 ? `<button class="dnav" data-dstep="-1" aria-label="‹">${ic("chev", 18, 2.2)}</button>` : ""}
-      <div class="dring"></div>
-      <button class="dart" data-dsel aria-label="${esc(name)}">${art}</button>
-      <div class="dinfo"><div class="dname">${esc(name)}</div>${meta.length ? `<div class="dmeta">${meta.join("")}</div>` : ""}
-        <button class="dpick ${sel ? "on" : ""}" data-dsel>${sel ? `${ic("check", 14, 2.6)}${esc(T.selected)}` : esc(T.choose)}</button></div>
-      ${n > 1 ? `<button class="dnav next" data-dstep="1" aria-label="›">${ic("chev", 18, 2.2)}</button>` : ""}
-      ${dots}</div>`;
-    const go = (d) => { this._ui.dispIdx[cat] = i + d; this._fillDisp(); };
-    box.querySelectorAll("[data-dstep]").forEach((b) => b.addEventListener("click", (ev) => { ev.stopPropagation(); go(+b.dataset.dstep); }));
-    box.querySelectorAll("[data-di]").forEach((b) => b.addEventListener("click", (ev) => { ev.stopPropagation(); this._ui.dispIdx[cat] = +b.dataset.di; this._fillDisp(); }));
-    box.querySelectorAll("[data-dsel]").forEach((b) => b.addEventListener("click", () => { if (!sel) this._selectProgram(p.canon, b); }));
-    const v = box.querySelector(".dview");
-    let x0 = null;
-    v.addEventListener("pointerdown", (ev) => { x0 = ev.clientX; });
-    v.addEventListener("pointerup", (ev) => { if (x0 != null && Math.abs(ev.clientX - x0) > 40) go(ev.clientX < x0 ? 1 : -1); x0 = null; });
-    v.addEventListener("keydown", (ev) => { if (ev.key === "ArrowRight") go(1); else if (ev.key === "ArrowLeft") go(-1); });
+    const groups = progGroups(m, list, this.lang);
+    const color = this._accent || "var(--hc-accent)";
+    this._srcOverride = photo ? "photo" : null;
+    const cards = groups.map((g) => g.items.map((p) => {
+      const sel = p.canon === m.selectedCanon;
+      const parts = p.label.split(" · ");
+      let meta = parts[1] || "";
+      if (m.type === "coffee") { const o = drinkOrigin(`${p.tail || p.canon} ${p.label}`); if (o) meta = `${flagSvg(o)}${esc(o)}`; else meta = esc(meta); } else meta = esc(meta);
+      const url = this._progImage(p);
+      const art = photo && url ? `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sfb">${displayArt(m, p, color)}</span>` : displayArt(m, p, color);
+      return `<button class="sc ${sel ? "on" : ""} ${photo && url ? "ph" : ""}" data-prog="${esc(p.canon)}" data-g="${g.id}" aria-pressed="${sel}"><div class="si">${art}</div><div class="st"><b>${esc(parts[0])}</b>${meta ? `<small>${meta}</small>` : ""}</div>${sel ? `<span class="ck">${ic("check", 14, 3)}</span>` : ""}</button>`;
+    }).join("")).join("");
+    this._srcOverride = null;
+    const chips = groups.length > 1 ? `<div class="sgrp" role="tablist">${groups.map((g, i) => `<button data-sg="${g.id}" class="${i === 0 ? "on" : ""}">${esc(g.label)}<small>${g.items.length}</small></button>`).join("")}</div>` : "";
+    box.innerHTML = `<div class="sl">${chips}<div class="swrap"><button class="snav" data-sstep="-1" aria-label="‹">${ic("chev", 18, 2.2)}</button><div class="strack" tabindex="0">${cards}</div><button class="snav next" data-sstep="1" aria-label="›">${ic("chev", 18, 2.2)}</button></div></div>`;
+    const tr = box.querySelector(".strack");
+    this._ui.slx = this._ui.slx || {};
+    const sk = `${cat}|${q}|${photo}`;
+    if (this._ui.slx[sk] != null) tr.scrollLeft = this._ui.slx[sk];
+    else { const on = tr.querySelector(".sc.on"); if (on) tr.scrollLeft = on.offsetLeft - tr.offsetLeft - 4; }
+    const syncChips = () => {
+      const cs = box.querySelectorAll("[data-sg]"); if (!cs.length) return;
+      const x = tr.scrollLeft + 8;
+      let g = tr.firstElementChild?.dataset.g;
+      for (const c of tr.children) { if (c.offsetLeft - tr.offsetLeft <= x) g = c.dataset.g; else break; }
+      if (tr.scrollLeft + tr.clientWidth >= tr.scrollWidth - 4) g = tr.lastElementChild.dataset.g;
+      cs.forEach((c) => { const on = c.dataset.sg === g; c.classList.toggle("on", on); if (on && c.parentNode.scrollWidth > c.parentNode.clientWidth) c.parentNode.scrollTo({ left: c.offsetLeft - c.parentNode.offsetLeft - 40, behavior: "smooth" }); });
+    };
+    let raf = 0, lastG = null;
+    tr.addEventListener("scroll", () => { this._ui.slx[sk] = tr.scrollLeft; if (!raf) raf = requestAnimationFrame(() => { raf = 0; syncChips(); }); }, { passive: true });
+    syncChips();
+    box.querySelectorAll("[data-sg]").forEach((c) => c.addEventListener("click", () => {
+      const f = tr.querySelector(`[data-g="${c.dataset.sg}"]`); if (f) tr.scrollTo({ left: f.offsetLeft - tr.offsetLeft - 4, behavior: "smooth" });
+    }));
+    const step = (d) => tr.scrollBy({ left: d * Math.max(160, tr.clientWidth * 0.8), behavior: "smooth" });
+    box.querySelectorAll("[data-sstep]").forEach((b) => b.addEventListener("click", (ev) => { ev.stopPropagation(); step(+b.dataset.sstep); }));
+    tr.addEventListener("keydown", (ev) => { if (ev.key === "ArrowRight") step(1); else if (ev.key === "ArrowLeft") step(-1); });
+    // Mausrad horizontal scrollen (Desktop)
+    tr.addEventListener("wheel", (ev) => { if (Math.abs(ev.deltaY) > Math.abs(ev.deltaX) && tr.scrollWidth > tr.clientWidth) { const max = tr.scrollWidth - tr.clientWidth; if ((ev.deltaY > 0 && tr.scrollLeft < max) || (ev.deltaY < 0 && tr.scrollLeft > 0)) { ev.preventDefault(); tr.scrollLeft += ev.deltaY; } } }, { passive: false });
+    tr.querySelectorAll(".sc").forEach((b) => b.addEventListener("click", () => { if (b.dataset.prog !== m.selectedCanon) this._selectProgram(b.dataset.prog, b); }));
   }
   _m_controls(m, T) {
     const c = m.controls;
