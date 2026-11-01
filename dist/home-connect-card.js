@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.11.2";
+const HC_VERSION = "1.12.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -3744,6 +3744,12 @@ const HC_GRADIENTS = [
   { id: "g-forest", name: "Wald", css: "radial-gradient(100% 80% at 20% 10%,#2f6b3a 0%,transparent 55%),radial-gradient(80% 70% at 100% 90%,#6b5a22 0%,transparent 60%),linear-gradient(180deg,#0a120b,#050705)" },
   { id: "g-graphite", name: "Graphit", css: "linear-gradient(160deg,#2a2d33 0%,#15171b 60%,#0b0c0e 100%)" },
 ];
+// Eingebaute KI-Hintergründe (Google Gemini), liegen neben der Karte in backgrounds/
+const HC_BG_BUILTIN = [
+  { id: "b:bg-house-night", name: "Haus" }, { id: "b:bg-forest-night", name: "Nachtwald" },
+  { id: "b:bg-aurora", name: "Polarlicht" }, { id: "b:bg-silk", name: "Seide" },
+];
+function hcBgUrl(id) { return `${photoBase().replace(/\/images$/, "")}/backgrounds/${id.slice(2)}.jpg`; }
 const HC_STY = {
   de: { title: "Darstellung", style: "Stil", none: "Standard", frosted: "Frosted Glass", liquid: "Liquid Glass", glow: "Window Glow", transp: "Transparenz", blur: "Unschärfe", bg: "Hintergrund", nobg: "Keiner", upload: "Foto hochladen", url: "Bild-Adresse (URL)", apply: "Übernehmen", cancel: "Abbrechen", saving: "Speichere Dashboard …", saved: "Dashboard umgestellt", err: "Fehler: ", hint: "Gilt nur für dich und nur für dieses Dashboard – auf allen deinen Geräten." },
   en: { title: "Appearance", style: "Style", none: "Default", frosted: "Frosted glass", liquid: "Liquid glass", glow: "Window glow", transp: "Transparency", blur: "Blur", bg: "Background", nobg: "None", upload: "Upload photo", url: "Image URL", apply: "Apply", cancel: "Cancel", saving: "Saving dashboard …", saved: "Dashboard updated", err: "Error: ", hint: "Applies only to you and only to this dashboard – on all your devices." },
@@ -3947,7 +3953,7 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
     this._draft = c;
     const ov = document.createElement("div");
     ov.className = "hcsov";
-    const imgs = [...(c.images || []), ...(c.background && !String(c.background).startsWith("g-") && !(c.images || []).includes(c.background) ? [c.background] : [])];
+    const imgs = [...(c.images || []), ...(c.background && !/^(g-|b:)/.test(String(c.background)) && !(c.images || []).includes(c.background) ? [c.background] : [])];
     const styles = ["none", "frosted", "liquid", "glow"];
     const prev = { none: "background:#1c1e22", frosted: "background:rgba(255,255,255,.12);backdrop-filter:blur(6px)", liquid: "background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)", glow: "background:rgba(255,255,255,.1);box-shadow:0 0 18px rgba(255,190,90,.75),inset 0 0 0 1px rgba(255,210,150,.4)" };
     ov.innerHTML = `<style>
@@ -3980,6 +3986,7 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
       <div><div class="row"><span class="lbl">${L.blur}</span><span class="val" data-v="blur">${c.blur}px</span></div><input type="range" min="0" max="40" step="1" value="${c.blur}" data-r="blur"></div>
       <div><div class="lbl" style="margin-bottom:8px">${L.bg}</div><div class="bgs">
         <button class="bg none ${!c.background ? "on" : ""}" data-bg="">${L.nobg}</button>
+        ${HC_BG_BUILTIN.map((g) => `<button class="bg ${c.background === g.id ? "on" : ""}" data-bg="${g.id}" style="background-image:url('${hcBgUrl(g.id)}')">${g.name}</button>`).join("")}
         ${HC_GRADIENTS.map((g) => `<button class="bg ${c.background === g.id ? "on" : ""}" data-bg="${g.id}" style="background:${g.css}">${g.name}</button>`).join("")}
         ${imgs.map((u) => `<button class="bg ${c.background === u ? "on" : ""}" data-bg="${u}" style="background-image:url('${u}')"></button>`).join("")}
         <button class="bg up" data-upload="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>${L.upload}</button>
@@ -4028,7 +4035,9 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
   _bgCss(bg) {
     if (!bg) return null;
     const g = HC_GRADIENTS.find((x) => x.id === bg);
-    return g ? `${g.css} fixed` : `center / cover no-repeat fixed url('${bg}')`;
+    if (g) return `${g.css} fixed`;
+    if (String(bg).startsWith("b:")) return `center / cover no-repeat fixed url('${hcBgUrl(bg)}')`;
+    return `center / cover no-repeat fixed url('${bg}')`;
   }
   _previewBg(bg) {
     const view = this._findView();
