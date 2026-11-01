@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.6.4";
+const HC_VERSION = "1.7.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -1603,6 +1603,69 @@ const ICON = {
   turn: '<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/>',
 };
 const ic = (name, size = 20, sw = 1.8) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ICON.generic}</svg>`;
+
+// ---------- Symbol-Auswahl (Klima, Sauger …): kompakte Icon-Leisten statt Text ----------
+const SEG_GLYPH = {
+  automode: '<path d="M19 12a7 7 0 1 1-2.05-4.95"/><path d="M19 4v4h-4"/><path d="M9.5 15l2.5-6 2.5 6M10.3 13h3.4"/>',
+  zigzag: '<path d="M4 6h16M20 6v4H4v4h16v4H4"/>',
+  layers: '<path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/>',
+  swingv: '<path d="M4 6h16"/><path d="M8 9l-2 6M12 9v6M16 9l2 6"/><path d="M12 17v4M10 19l2 2 2-2"/>',
+  swingh: '<path d="M4 6h16"/><path d="M8 9v6M12 9v6M16 9v6"/><path d="M3 19h18M5.5 17l-2.5 2 2.5 2M18.5 17l2.5 2-2.5 2"/>',
+};
+const gl = (name, size = 20, sw = 1.8) => SEG_GLYPH[name] ? `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SEG_GLYPH[name]}</svg>` : ic(name, size, sw);
+// Stufe: Symbol + Balken (n von total)
+function stageSvg(glyph, n, total, mode) {
+  const g = `<g transform="translate(-1 1) scale(.9)">${ICON[glyph] || SEG_GLYPH[glyph] || ""}</g>`;
+  let extra = "";
+  if (mode === "off") extra = '<path d="M1 21L17 4" stroke-width="2"/>';
+  else if (mode === "auto") extra = '<text x="26" y="20" font-size="13" font-weight="800" fill="currentColor" stroke="none" text-anchor="middle" font-family="system-ui,sans-serif">A</text>';
+  else for (let i = 0; i < total; i++) { const h = 5 + (total > 1 ? i * (15 / (total - 1)) : 15); extra += `<rect x="${23 + i * 5}" y="${22 - h}" width="3.4" height="${h}" rx="1.2" fill="currentColor" stroke="none" opacity="${i < n ? 1 : 0.25}"/>`; }
+  const w = mode ? 33 : 23 + total * 5;
+  return `<svg width="${Math.round(w * 1.1)}" height="26" viewBox="0 0 ${w} 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${g}${extra}</svg>`;
+}
+// Liefert pro Option ein Symbol – oder null, wenn die Auswahl nicht sinnvoll als Symbole darstellbar ist
+function segIcons(k, ctl) {
+  const opts = ctl.options || [];
+  if (!opts.length || opts.length > 7) return null;
+  const txt = (i) => `${opts[i]} ${(ctl.optionLabels || [])[i] || ""}`.toLowerCase();
+  const id = `${k} ${ctl.label || ""} ${ctl.svcKey || ""}`.toLowerCase();
+  if (/hvac/.test(id)) {
+    const M = { off: "power", cool: "snow", heat: "flame", dry: "drop", fan_only: "fan", heat_cool: "automode", auto: "automode" };
+    const r = opts.map((o) => M[o] ? gl(M[o], 20, 2) : null);
+    return r.every(Boolean) ? r : null;
+  }
+  if (/fan|lüfter|lufter|suction|saug(kraft|stufe|leistung)|water|wasser|feucht|wetness|humid|intensit/.test(id) && !/mode|modus|route/.test(id.replace(/fan_mode/, ""))) {
+    const glyph = /water|wasser|feucht|wetness|humid/.test(id) ? "drop" : "fan";
+    const kind = opts.map((o, i) => /(^| )(off|aus)( |$)/.test(txt(i)) ? "off" : /auto|smart|intelligent/.test(txt(i)) ? "auto" : "stage");
+    const stages = kind.filter((x) => x === "stage").length;
+    if (!stages || stages > 5) return null;
+    let n = 0;
+    return opts.map((o, i) => kind[i] === "stage" ? stageSvg(glyph, ++n, stages) : stageSvg(glyph, 0, 0, kind[i]));
+  }
+  if (/cleaning_mode|reinigungsmodus|clean_mode/.test(id)) {
+    const r = opts.map((o, i) => {
+      const t = txt(i), sw = /sweep|vacuum|saug/.test(t), mop = /mop|wisch/.test(t);
+      if (sw && mop) return /after|nach/.test(t) ? `<span class="icpair">${ic("robot", 16, 2)}<b>›</b>${ic("drop", 16, 2)}</span>` : `<span class="icpair">${ic("robot", 16, 2)}<b>+</b>${ic("drop", 16, 2)}</span>`;
+      if (sw) return ic("robot", 20, 2);
+      if (mop) return ic("drop", 20, 2);
+      return null;
+    });
+    return r.every(Boolean) ? r : null;
+  }
+  if (/swing|lamell/.test(id)) {
+    const r = opts.map((o, i) => { const t = txt(i); return /(^| )(off|aus|stop)( |$)/.test(t) ? `<span class="icoff">${gl("swingv", 20, 2)}</span>` : /both|beide|3d/.test(t) ? `<span class="icpair">${gl("swingv", 17, 2)}${gl("swingh", 17, 2)}</span>` : /horizont/.test(t) ? gl("swingh", 20, 2) : /vertical|vertikal|on|ein|swing/.test(t) ? gl("swingv", 20, 2) : null; });
+    return r.every(Boolean) ? r : null;
+  }
+  if (/preset|profil/.test(id)) {
+    const r = opts.map((o, i) => { const t = txt(i); return /eco|spar/.test(t) ? ic("leaf", 20, 2) : /boost|turbo|power/.test(t) ? ic("bolt", 20, 2) : /sleep|schlaf|night|nacht/.test(t) ? ic("moon", 20, 2) : /away|abwesen/.test(t) ? ic("home2", 20, 2) : /none|keins|kein|normal|aus/.test(t) ? '<span style="font-weight:700">–</span>' : /comfort|komfort/.test(t) ? ic("star", 20, 2) : null; });
+    return r.every(Boolean) ? r : null;
+  }
+  if (/route/.test(id)) {
+    const r = opts.map((o, i) => { const t = txt(i); return /quick|schnell|fast/.test(t) ? ic("bolt", 20, 2) : /standard|normal/.test(t) ? gl("zigzag", 20, 2) : /deep|intens|tief|gründlich|grundlich/.test(t) ? gl("layers", 20, 2) : null; });
+    return r.every(Boolean) ? r : null;
+  }
+  return null;
+}
 Object.assign(ICON, {
   grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
   image: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-5-8 8"/>',
@@ -2120,6 +2183,15 @@ button{font:inherit;color:inherit}
 .b-local{background:rgba(54,207,196,.18);color:#36cfc4}.b-cloud{background:var(--hc-s2);color:var(--hc-muted)}
 .b-both{background:color-mix(in srgb,var(--hc-accent) 20%,transparent);color:var(--hc-accent)}.b-offline{background:rgba(255,107,107,.18);color:var(--hc-bad)}
 .b-demo{background:rgba(157,140,255,.2);color:#b3a6ff}
+.iseg{display:flex;flex-direction:column;gap:6px}.iseg .ival{font-size:13px;font-weight:600;color:var(--hc-text)}
+.seg.icn button{min-width:40px;height:44px;padding:0 6px;display:flex;align-items:center;justify-content:center}
+.icoff{position:relative;display:inline-flex;opacity:.55}.icoff::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:currentColor;transform:rotate(-45deg)}
+.icpair{display:inline-flex;align-items:center;gap:1px}.icpair b{font-size:12px;font-weight:700;margin:0 1px}
+.climrow{display:grid;grid-template-columns:minmax(150px,1fr) auto;gap:8px;align-items:stretch}
+.ctiles{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-content:center}
+.ctile{width:58px;height:58px;border:0;border-radius:16px;background:var(--hc-s2);color:var(--hc-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:9.5px;font-weight:600;padding:0}
+.ctile span{white-space:nowrap}.ctile.on{background:var(--hc-accent);color:#141414}.ctile:disabled{opacity:.4}
+@container (max-width:330px){.climrow{grid-template-columns:1fr}.ctiles{justify-content:flex-start}}
 .brw{display:inline-flex;gap:3px;margin-left:4px}.brw i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}.brw i.on{background:linear-gradient(135deg,#f3c27a,#9a5a1c)}
 .cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;max-height:70vh;width:100%;cursor:pointer}
 .cam img{width:100%;height:100%;object-fit:cover;display:block}
@@ -2809,7 +2881,30 @@ class HomeConnectCard extends HTMLElement {
     const c = m.controls;
     const out = [];
     const steppers = ["setpoint", "duration", "fill", "fridgeSet", "freezerSet"].filter((k) => c[k]);
-    if (steppers.length) {
+    const climTiles = [];
+    const done = new Set();
+    if (m.profile === "climate") {
+      // Zwei-Werte-Auswahlen (Lamellen an/aus, Eco/Komfort) als Symbol-Kacheln
+      const tog = (k, icon, label, onRe) => {
+        const x = c[k];
+        if (!x?.options || x.options.length !== 2) return;
+        const onIdx = x.options.findIndex((o) => onRe.test(String(o).toLowerCase()));
+        if (onIdx < 0) return;
+        const isOn = x.value === x.options[onIdx];
+        climTiles.push(`<button class="ctile ${isOn ? "on" : ""}" data-ctl="${k}" data-opt="${esc(x.options[isOn ? 1 - onIdx : onIdx])}" title="${esc(label)}" aria-label="${esc(label)}" aria-pressed="${isOn}" ${x.avail ? "" : "disabled"}>${icon}<span>${esc(label)}</span></button>`);
+        done.add(k);
+      };
+      const L = this.lang === "de";
+      tog("swing", gl("swingv", 22, 2), L ? "Lamellen ↕" : "Swing ↕", /^(on|ein|vertical|both)$/);
+      tog("swingh", gl("swingh", 22, 2), L ? "Lamellen ↔" : "Swing ↔", /^(on|ein|horizontal|both)$/);
+      tog("preset", ic("leaf", 22, 2), "Eco", /eco/);
+      if (m.display) climTiles.push(`<button class="ctile ${m.display.on ? "on" : ""}" data-act="display" title="Display" aria-pressed="${m.display.on}">${ic("display", 22, 2)}<span>Display</span></button>`);
+    }
+    if (steppers.length && climTiles.length) {
+      out.push(`<div class="climrow">${steppers.map((k) => this._stepper(k, c[k])).join("")}<div class="ctiles">${climTiles.join("")}</div></div>`);
+    } else if (climTiles.length) {
+      out.push(`<div class="ctiles">${climTiles.join("")}</div>`);
+    } else if (steppers.length) {
       out.push(`<div class="grid2">${steppers.map((k) => this._stepper(k, c[k])).join("")}</div>`);
     }
     for (const k of ["beans"]) if (c[k]) out.push(this._beans(k, c[k]));
@@ -2820,7 +2915,7 @@ class HomeConnectCard extends HTMLElement {
     const known = new Set(["setpoint", "duration", "fill", "fridgeSet", "freezerSet", "beans", "ratio", "washTemp", "spin", "dry", "level", "rooms", "size", "waterTemp", "aroma", "multi", "startIn"]);
     const extraSteppers = Object.keys(c).filter((k) => !known.has(k) && c[k] && c[k].kind === "stepper");
     if (extraSteppers.length) out.push(`<div class="grid2">${extraSteppers.map((k) => this._stepper(k, c[k])).join("")}</div>`);
-    for (const k of Object.keys(c)) if (!known.has(k) && c[k] && c[k].kind === "segment" && c[k].options) out.push(this._segment(k, c[k]));
+    for (const k of Object.keys(c)) if (!known.has(k) && !done.has(k) && c[k] && c[k].kind === "segment" && c[k].options) out.push(this._segment(k, c[k]));
     if (m.modeButtons?.length) out.push(`<div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">${esc(T.modes)}</span><div class="chips">${m.modeButtons.map((b, i) => `<button class="chip" data-modebtn="${i}">${esc(b.label)}</button>`).join("")}</div></div>`);
     if (!out.length) return "";
     return `<div class="box"><span class="lbl">${esc(T.settings)}</span>${out.join("")}</div>`;
@@ -2845,6 +2940,11 @@ class HomeConnectCard extends HTMLElement {
   }
   _segment(k, ctl) {
     const labels = ctl.optionLabels || ctl.options;
+    const icons = segIcons(k, ctl);
+    if (icons) {
+      const cur = ctl.options.indexOf(ctl.value);
+      return `<div class="iseg"><div class="row"><span class="lbl sp">${esc(ctl.label)}</span><span class="ival">${esc(cur >= 0 ? labels[cur] : "–")}</span></div><div class="seg icn">${ctl.options.map((o, i) => `<button class="${o === ctl.value ? "on" : ""}" data-ctl="${k}" data-opt="${esc(o)}" title="${esc(labels[i])}" aria-label="${esc(labels[i])}" ${ctl.avail ? "" : "disabled"}>${icons[i]}</button>`).join("")}</div></div>`;
+    }
     if (ctl.options.length > 7 || labels.reduce((n, l) => n + String(l).length, 0) > 38) {
       return `<div class="morerow"><span class="ml lbl">${esc(ctl.label)}</span><select class="dd" data-ctl="${k}" ${ctl.avail ? "" : "disabled"}>${ctl.options.map((o, i) => `<option value="${esc(o)}" ${o === ctl.value ? "selected" : ""}>${esc(labels[i])}</option>`).join("")}</select></div>`;
     }
