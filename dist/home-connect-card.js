@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.10.0";
+const HC_VERSION = "1.10.2";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2557,7 +2557,8 @@ class HomeConnectCard extends HTMLElement {
     const hide = new Set(cfg.hide || []);
     const glass = this._glass();
     this._glassNow = glass;
-    let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}}${hcGlassCss(glass)}</style>`;
+    const glowOn = glass?.style === "glow" && (m.running || ["run", "pause", "delayedstart", "actionrequired", "cleaning", "heat", "cool"].includes(m.status) || (m.profile === "climate" && m.status === "run")) ? hcRgb(color) : null;
+    let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}}${hcGlassCss(glass, glowOn)}</style>`;
     if (cfg.layout === "compact") {
       html += this._compact(m, T);
     } else {
@@ -3690,9 +3691,16 @@ function hcLiquidFilter({ height, width, radius, depth, strength, chromaticAberr
   cache[key] = uri;
   return uri;
 }
-function hcGlassCss(g) {
+function hcGlassCss(g, glowRgb) {
   if (!g || !g.style || g.style === "none") return "";
   const a = g.alpha ?? 0.4, b = g.blur ?? 20;
+  if (g.style === "glow") {
+    // wie Bubble "light_window_glow" (aus: Weiß 0.15/0.09/0.06, an: Gerätefarbe) über Frosted Glass
+    const c = glowRgb || "255,255,255", on = !!glowRgb;
+    return `:host{--bubble-icon-background-color:rgba(0,0,0,.18);--bubble-sub-button-background-color:rgba(0,0,0,.18);--bubble-secondary-background-color:rgba(0,0,0,.18)}
+.pill,.box{background:radial-gradient(600px 220px at 0% 0%,rgba(${c},${on ? 0.32 : 0.15}),transparent 65%),linear-gradient(135deg,rgba(${c},${on ? 0.16 : 0.09}),rgba(${c},${on ? 0.08 : 0.06})),rgba(22,24,28,${a}) !important;border:1px solid ${on ? `rgba(${c},.35)` : "rgba(120,120,120,0.18)"} !important;box-shadow:${on ? `0 0 18px rgba(${c},.25)` : "none"} !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
+.ico.idle,.qb:not(.on),.qstep{background:rgba(0,0,0,.18) !important}`;
+  }
   if (g.style === "liquid") {
     return `:host{--bubble-icon-background-color:rgba(0,0,0,.4);--bubble-sub-button-background-color:rgba(0,0,0,.4);--bubble-secondary-background-color:rgba(0,0,0,.4)}
 .pill,.box{background:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;isolation:isolate}
@@ -3704,6 +3712,16 @@ function hcGlassCss(g) {
   return `:host{--bubble-icon-background-color:rgba(15,15,15,.2);--bubble-sub-button-background-color:rgba(15,15,15,.2);--bubble-secondary-background-color:rgba(15,15,15,.2)}
 .pill,.box{background:rgba(22,24,28,${a}) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
 .ico.idle,.qb:not(.on),.qstep{background:rgba(15,15,15,.2) !important}`;
+}
+function hcRgb(col) {
+  const s = String(col || "").trim();
+  let m = /^#([0-9a-f]{6})$/i.exec(s);
+  if (m) { const n = parseInt(m[1], 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; }
+  m = /^#([0-9a-f]{3})$/i.exec(s);
+  if (m) return m[1].split("").map((h) => parseInt(h + h, 16)).join(",");
+  m = /rgba?\(([^)]+)\)/i.exec(s);
+  if (m) return m[1].split(",").slice(0, 3).map((x) => parseInt(x, 10)).join(",");
+  return "255,138,61";
 }
 function hcGlassVars(g) {
   if (!g || !g.style || g.style === "none") return null;
@@ -3731,7 +3749,7 @@ const HC_STY = {
   en: { title: "Appearance", style: "Style", none: "Default", frosted: "Frosted glass", liquid: "Liquid glass", glow: "Window glow", transp: "Transparency", blur: "Blur", bg: "Background", nobg: "None", upload: "Upload photo", url: "Image URL", apply: "Apply", cancel: "Cancel", saving: "Saving dashboard …", saved: "Dashboard updated", err: "Error: ", hint: "Applies to all Bubble Cards and pop-ups of this dashboard, on every device." },
 };
 const HC_GLASS_MODS = ["frosted_glass", "liquid_glass_2", "light_window_glow"];
-const HC_LIQUID_OK = ["button", "calendar", "climate", "cover", "media-player", "select"];
+const HC_LIQUID_OK = ["button", "calendar", "climate", "cover", "media-player", "select", "separator"];
 
 class HcStyleCard extends HTMLElement {
   static getStubConfig() { return { style: "frosted", transparency: 60, blur: 20 }; }
@@ -3754,7 +3772,7 @@ class HcStyleCard extends HTMLElement {
     if (!el) { if (!this._retry) { this._retry = setTimeout(() => { this._retry = null; this._applyVars(this._config); }, 800); } return; }
     this._clearVars();
     const v = hcGlassVars({ style: c.style, alpha: this._alpha(c), blur: c.blur });
-    if (!v) return;
+    if (!v) { this._skin(c); return; }
     const a = this._alpha(c), b = c.blur ?? 20;
     const all = { ...v, "--hc-glass-style": c.style, "--hc-glass-alpha": String(a), "--hc-glass-blur": String(b),
       "--ha-card-background": c.style === "liquid" ? v["--hc-glass-bg"] : `rgba(22,24,28,${a})`,
@@ -3766,8 +3784,54 @@ class HcStyleCard extends HTMLElement {
     };
     for (const [k, val] of Object.entries(all)) el.style.setProperty(k, val);
     this._varEl = el; this._varKeys = Object.keys(all);
+    this._skin(c);
+    if (!this._skinT) this._skinT = setInterval(() => this._skin(this._draft && this.shadowRoot.querySelector(".hcsov") ? this._draft : this._config), 2000);
+  }
+  // Fremde Karten mit eigenem Design (z. B. podolan-desktop-card) mit anpassen
+  _skinCss(c) {
+    if (!c || c.style === "none") return "";
+    const a = this._alpha(c), b = c.blur ?? 20;
+    const tiles = ".chip,.person,.room,.clim,.efl,.tile,.cam,.ev,.day,.trash";
+    if (c.style === "liquid") return `.app{background:transparent !important}
+.p{background:none !important;border:0 !important;box-shadow:inset 0px 1px 2px rgba(255,255,255,0.4),inset 0px 2px 4px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.6) !important;transform:translateZ(0)}
+${tiles}{background-color:rgba(0,0,0,.4) !important;border-color:transparent !important}`;
+    if (c.style === "glow") return `.app{background:transparent !important}
+.p{background:radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,0.15),transparent 65%),linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.06)),rgba(22,24,28,${a}) !important;border:1px solid rgba(120,120,120,0.18) !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
+${tiles}{background-color:rgba(0,0,0,.18) !important;border-color:rgba(120,120,120,0.18) !important}`;
+    return `.app{background:transparent !important}
+.p{background:rgba(22,24,28,${a}) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
+${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent !important}`;
+  }
+  _skin(c) {
+    const view = this._findView(true); if (!view) return;
+    const css = this._skinCss(c);
+    const found = [];
+    const walk = (root, depth) => {
+      if (!root || depth > 12) return;
+      root.querySelectorAll("*").forEach((el) => {
+        if (el.tagName === "PODOLAN-DESKTOP-CARD") found.push(el);
+        if (el.shadowRoot && el.tagName !== "HOME-CONNECT-CARD" && !el.tagName.startsWith("BUBBLE")) walk(el.shadowRoot, depth + 1);
+      });
+    };
+    walk(view.shadowRoot || view, 0); walk(view, 0);
+    for (const el of found) {
+      const sr = el.shadowRoot; if (!sr) continue;
+      let st = sr.getElementById("hc-glass-skin");
+      if (!css) { st?.remove(); sr.querySelectorAll(".p").forEach((p) => { p.style.backdropFilter = ""; }); continue; }
+      if (!st) { st = document.createElement("style"); st.id = "hc-glass-skin"; }
+      if (st.textContent !== css) st.textContent = css;
+      if (st.parentNode !== sr || sr.lastChild !== st) sr.appendChild(st);
+      if (c.style === "liquid") sr.querySelectorAll(".p").forEach((p) => {
+        const w = p.clientWidth, h = p.clientHeight; if (!w || !h) return;
+        if (p._lqW === w && p._lqH === h) return; p._lqW = w; p._lqH = h;
+        const r = Math.min(parseFloat(getComputedStyle(p).borderTopLeftRadius) || 28, h / 2);
+        p.style.backdropFilter = `blur(${Math.max(1, Math.round((c.blur ?? 10) / 5))}px) saturate(120%) url("${hcLiquidFilter({ height: h, width: w, radius: r, depth: 4, strength: 100, chromaticAberration: 3 })}")`;
+      });
+      else sr.querySelectorAll(".p").forEach((p) => { p.style.backdropFilter = ""; p._lqW = 0; });
+    }
   }
   _clearVars() {
+    if (this._skinT) { clearInterval(this._skinT); this._skinT = null; }
     if (!this._varEl) return;
     for (const k of this._varKeys || []) this._varEl.style.removeProperty(k);
     this._varEl = null;
@@ -3906,7 +3970,7 @@ class HcStyleCard extends HTMLElement {
         if (!c || typeof c !== "object") return c;
         if (c.type === "custom:hc-style-card") return { ...c, ...me };
         if (c.type === "custom:home-connect-card") { if (d.style === "none") delete c.glass; else c.glass = { style: d.style, alpha, blur }; }
-        if (c.type === "custom:bubble-card" && c.card_type !== "separator") {
+        if (c.type === "custom:bubble-card") {
           const ct = c.card_type || "button";
           let mods = (c.modules || []).filter((m) => !HC_GLASS_MODS.includes(m));
           const frosted = () => {
