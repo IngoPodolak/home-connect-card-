@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.9.1";
+const HC_VERSION = "1.9.2";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -3649,7 +3649,8 @@ class HomeConnectCardEditor extends HTMLElement {
 function hcGlassVars(g) {
   if (!g || !g.style || g.style === "none") return null;
   const a = g.alpha ?? 0.4, b = g.blur ?? 20;
-  const v = { "--hc-glass-bg": `rgba(22,24,28,${a})`, "--hc-glass-filter": `blur(${b}px) saturate(130%)`, "--hc-glass-border": "0.8px solid rgba(255,255,255,.14)", "--hc-glass-shadow": "none" };
+  // wie das Bubble-Modul "Frosted Glass": nur Blur, kein extra Rand
+  const v = { "--hc-glass-bg": `rgba(22,24,28,${a})`, "--hc-glass-filter": `blur(${b}px)`, "--hc-glass-border": "0px solid transparent", "--hc-glass-shadow": "none" };
   if (g.style === "liquid") {
     v["--hc-glass-bg"] = `linear-gradient(135deg,rgba(255,255,255,${Math.min(0.3, a * 0.5 + 0.06)}),rgba(255,255,255,.02) 55%,rgba(0,0,0,${Math.min(0.6, a)}))`;
     v["--hc-glass-filter"] = `blur(${Math.max(2, Math.round(b / 5))}px) saturate(140%)`;
@@ -3699,8 +3700,7 @@ class HcStyleCard extends HTMLElement {
     const all = { ...v,
       "--ha-card-background": c.style === "liquid" ? v["--hc-glass-bg"] : `rgba(22,24,28,${a})`,
       "--ha-card-backdrop-filter": v["--hc-glass-filter"],
-      "--ha-card-border-color": "rgba(255,255,255,.14)",
-      "--ha-card-border-width": "0.8px",
+      "--ha-card-border-color": "rgba(255,255,255,.08)",
       "--ha-card-box-shadow": v["--hc-glass-shadow"],
       "--card-background-color": `rgba(22,24,28,${Math.min(0.9, a + 0.15)})`,
       "--ha-badge-background-color": `rgba(22,24,28,${a})`,
