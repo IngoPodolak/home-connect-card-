@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.8.0";
+const HC_VERSION = "1.8.1";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -68,7 +68,7 @@ const I18N = {
     t_washerdryer: "Waschtrockner", t_coffee: "Kaffeevollautomat", t_fridge: "Kühlschrank", t_freezer: "Gefrierschrank",
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
-    cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", plan: "Planen", plan_title: "Planung", plan_text: "Programm und Einstellungen jetzt wählen – sie werden erst zum Termin ans Gerät gesendet.", plan_when: "Start am", plan_save: "Planen", plan_saved: "Geplant für {t} – im Kalender eingetragen", plan_nocal: "Kein Planungskalender gefunden (schedule_calendar)", plan_steps: "Auswahl", plan_none: "Noch nichts gewählt", e_schedcal: "Kalender für Planungen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
+    cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", plan: "Planen", plan_title: "Planung", planned: "Geplant", plan_del: "Planung löschen", plan_deleted: "Planung gelöscht", days_short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"], plan_text: "Programm und Einstellungen jetzt wählen – sie werden erst zum Termin ans Gerät gesendet.", plan_when: "Start am", plan_save: "Planen", plan_saved: "Geplant für {t} – im Kalender eingetragen", plan_nocal: "Kein Planungskalender gefunden (schedule_calendar)", plan_steps: "Auswahl", plan_none: "Noch nichts gewählt", e_schedcal: "Kalender für Planungen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
     e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner der eigenen Bilder (z. B. /local/hc-bilder)", e_isrc: "Bildquelle", src_drawn: "Gezeichnet (eingebaut)", src_photo: "Fotos (eingebautes Bildpaket)", src_custom: "Eigene Bilder aus Ordner", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
@@ -113,7 +113,7 @@ const I18N = {
     t_washerdryer: "Washer dryer", t_coffee: "Coffee machine", t_fridge: "Fridge", t_freezer: "Freezer",
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
-    cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", plan: "Schedule", plan_title: "Schedule", plan_text: "Choose program and settings now – they are sent to the appliance at the scheduled time.", plan_when: "Start at", plan_save: "Schedule", plan_saved: "Scheduled for {t} – added to calendar", plan_nocal: "No schedule calendar found (schedule_calendar)", plan_steps: "Selection", plan_none: "Nothing selected yet", e_schedcal: "Calendar for schedules", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
+    cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", plan: "Schedule", plan_title: "Schedule", planned: "Scheduled", plan_del: "Delete schedule", plan_deleted: "Schedule deleted", days_short: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], plan_text: "Choose program and settings now – they are sent to the appliance at the scheduled time.", plan_when: "Start at", plan_save: "Schedule", plan_saved: "Scheduled for {t} – added to calendar", plan_nocal: "No schedule calendar found (schedule_calendar)", plan_steps: "Selection", plan_none: "Nothing selected yet", e_schedcal: "Calendar for schedules", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
     e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with your own images (e.g. /local/hc-images)", e_isrc: "Image source", src_drawn: "Drawn (built-in)", src_photo: "Photos (built-in image pack)", src_custom: "Own images from folder", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
@@ -1607,6 +1607,7 @@ const ic = (name, size = 20, sw = 1.8) => `<svg width="${size}" height="${size}"
 // ---------- Symbol-Auswahl (Klima, Sauger …): kompakte Icon-Leisten statt Text ----------
 const SEG_GLYPH = {
   automode: '<path d="M19 12a7 7 0 1 1-2.05-4.95"/><path d="M19 4v4h-4"/><path d="M9.5 15l2.5-6 2.5 6M10.3 13h3.4"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
   zigzag: '<path d="M4 6h16M20 6v4H4v4h16v4H4"/>',
   layers: '<path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/>',
   swingv: '<path d="M4 6h16"/><path d="M8 9l-2 6M12 9v6M16 9l2 6"/><path d="M12 17v4M10 19l2 2 2-2"/>',
@@ -2192,6 +2193,7 @@ button{font:inherit;color:inherit}
 .ctile{width:58px;height:58px;border:0;border-radius:16px;background:var(--hc-s2);color:var(--hc-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:9.5px;font-weight:600;padding:0}
 .ctile span{white-space:nowrap}.ctile.on{background:var(--hc-accent);color:#141414}.ctile:disabled{opacity:.4}
 @container (max-width:330px){.climrow{grid-template-columns:1fr}.ctiles{justify-content:flex-start}}
+.plannext .row > svg{color:var(--hc-accent);flex:none}.plannext{gap:10px}
 .planbox{border:1.5px solid var(--hc-accent)}.planbox .sub.on{background:var(--hc-accent);color:#141414;gap:6px}.planbox .sub:disabled{opacity:.45}.planbox .ct{font-weight:700;font-size:14px}.planbox > .row > svg{color:var(--hc-accent);flex:none}
 .planwhen{display:flex;align-items:center;justify-content:space-between;gap:10px}.planin{background:var(--hc-s2);color:var(--hc-text);border:0;border-radius:14px;padding:10px 12px;font:inherit;font-size:14px;color-scheme:dark}
 .grid3s{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.grid3s .sub{gap:5px;padding:0 6px;font-size:13px}
@@ -2407,6 +2409,7 @@ class HomeConnectCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     this._update();
+    if (!this._config?.demo && this._config?.schedule !== false && Date.now() - (this._plansAt || 0) > 60000) this._loadPlans();
   }
   get lang() { return (this._config?.language || this._hass?.language || "de").startsWith("de") ? "de" : "en"; }
   connectedCallback() {
@@ -2485,7 +2488,7 @@ class HomeConnectCard extends HTMLElement {
     const T = I18N[this.lang];
     const live = m ? { state: this._statusText(m, T) } : null;
     const sm = m && { ...m, camTime: null, end: null, remaining: m.remaining != null, progress: m.progress != null, temp: m.temp ? { ...m.temp, current: m.temp.current != null } : null, statusText: null };
-    const sig = JSON.stringify([sm, this._plan && { c: this._plan.calls.length, w: this._plan.when }, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
+    const sig = JSON.stringify([sm, this._plansSig, this._plan && { c: this._plan.calls.length, w: this._plan.when }, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
     if (sig === this._sig) { this._updateLive(m, live); return; }
     this._sig = sig;
     this._render(m);
@@ -2529,6 +2532,7 @@ class HomeConnectCard extends HTMLElement {
     } else {
       const parts = [this._header(m, T)];
       if (this._plan) parts.push(this._m_plan(m, T));
+      else { const pn = this._m_planned(m, T); if (pn) parts.push(pn); }
       for (const mod of MODULES) {
         if (hide.has(mod)) continue;
         const fn = this[`_m_${mod}`];
@@ -2546,6 +2550,11 @@ class HomeConnectCard extends HTMLElement {
   }
 
   _statusText(m, T) {
+    const base = this._statusText0(m, T);
+    const nx = !m.running && this._plans?.[0];
+    return nx ? `${base} · ⏰ ${this._fmtPlan(nx.start, true)}` : base;
+  }
+  _statusText0(m, T) {
     if (m.statusText) return m.statusText;
     const st = T[m.status] || m.status;
     const parts = [];
@@ -3133,6 +3142,7 @@ class HomeConnectCard extends HTMLElement {
     if (R.querySelector(".tiles[data-cat]")) { this._fillList(); this._bindList(); }
     if (R.querySelector(".disp[data-cat]")) this._fillDisp();
     R.querySelectorAll("[data-pview]").forEach((b) => b.addEventListener("click", () => { const box = R.querySelector("[data-cat]"); if (box) this._setProgView(box.dataset.cat, b.dataset.pview); }));
+    R.querySelectorAll("[data-pdel]").forEach((el) => el.addEventListener("click", (ev) => { ev.stopPropagation(); this._planDelete(+el.dataset.pdel); }));
     R.querySelectorAll("[data-plan]").forEach((el) => el.addEventListener("click", (ev) => {
       ev.stopPropagation();
       if (el.dataset.plan === "cancel") { this._plan = null; this._sig = ""; this._update(true); }
@@ -3322,7 +3332,8 @@ class HomeConnectCard extends HTMLElement {
   _planCal() {
     const c = this._config.schedule_calendar;
     if (c && this._hass.states[c]) return c;
-    return Object.keys(this._hass.states).find((id) => id.startsWith("calendar.") && /home_connect|planung|schedul/.test(id)) || null;
+    const ids = Object.keys(this._hass.states).filter((id) => id.startsWith("calendar."));
+    return ids.find((id) => /haushalt/.test(id)) || ids.find((id) => /home_connect|planung|schedul/.test(id)) || null;
   }
   _enterPlan() {
     const m = this._m;
@@ -3358,6 +3369,53 @@ class HomeConnectCard extends HTMLElement {
     }
     return [...seen.values()];
   }
+
+  _planKey() { const c = this._config; return String(c.device || c.ha_device || c.entity || c.name || ""); }
+  _fmtPlan(iso, short) {
+    const d = new Date(iso); if (isNaN(d)) return "";
+    const T = I18N[this.lang], pad = (n) => String(n).padStart(2, "0");
+    const today = new Date(); const tom = new Date(Date.now() + 86400000);
+    const same = (a, b) => a.toDateString() === b.toDateString();
+    const day = same(d, today) ? (this.lang === "de" ? "heute" : "today") : same(d, tom) ? (this.lang === "de" ? "morgen" : "tomorrow") : `${T.days_short[d.getDay()]}${short ? "" : ` ${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`}`;
+    return `${day} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  async _loadPlans(force) {
+    if (!this._hass || (!force && this._plansBusy)) return;
+    this._plansAt = Date.now(); this._plansBusy = true;
+    try {
+      const cals = Object.keys(this._hass.states).filter((id) => id.startsWith("calendar.") && /haushalt|home_connect|planung|schedul/.test(id));
+      const c = this._config.schedule_calendar; if (c && !cals.includes(c)) cals.unshift(c);
+      const start = new Date().toISOString(), end = new Date(Date.now() + 30 * 86400000).toISOString();
+      const key = this._planKey(), name = this._config.name || this._m?.name;
+      const out = [];
+      for (const cal of cals) {
+        let evs = [];
+        try { evs = await this._hass.callApi("GET", `calendars/${cal}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`); } catch (e) { continue; }
+        for (const ev of evs || []) {
+          const desc = ev.description || ""; const i = desc.indexOf("HC-PLAN:"); if (i < 0) continue;
+          let pl = null; try { pl = JSON.parse(desc.slice(i + 8)); } catch (e) { continue; }
+          if (pl.key ? pl.key !== key : pl.device !== name) continue;
+          out.push({ cal, uid: ev.uid, rid: ev.recurrence_id, start: ev.start?.dateTime || ev.start?.date, summary: ev.summary, steps: desc.slice(0, i).trim().split("\n").filter((l) => l && !/^Start/.test(l)) });
+        }
+      }
+      out.sort((a, b) => new Date(a.start) - new Date(b.start));
+      const sig = JSON.stringify(out);
+      if (sig !== this._plansSig) { this._plansSig = sig; this._plans = out; this._sig = ""; this._update(true); }
+    } finally { this._plansBusy = false; }
+  }
+  async _planDelete(i) {
+    const p = this._plans?.[i]; if (!p) return;
+    try {
+      await this._hass.callWS({ type: "calendar/event/delete", entity_id: p.cal, uid: p.uid, ...(p.rid ? { recurrence_id: p.rid } : {}) });
+      this._toast(I18N[this.lang].plan_deleted);
+    } catch (e) { this._toast(e.message || String(e)); }
+    this._loadPlans(true);
+  }
+  _m_planned(m, T) {
+    const ps = this._plans || [];
+    if (!ps.length) return "";
+    return `<div class="box plannext">${ps.slice(0, 3).map((p, i) => `<div class="row" style="gap:10px">${ic("clock", 20, 2)}<div class="sp"><div class="lbl">${esc(T.planned)}</div><div class="mid">${esc(this._fmtPlan(p.start))}</div><div class="lbl">${esc((p.steps.length ? p.steps : [p.summary]).join(" · "))}</div></div><button class="sub" data-pdel="${i}" aria-label="${esc(T.plan_del)}" title="${esc(T.plan_del)}">${gl("trash", 18, 2)}</button></div>`).join("")}</div>`;
+  }
   _m_plan(m, T) {
     if (!this._plan) return "";
     const steps = this._planSteps();
@@ -3389,12 +3447,13 @@ class HomeConnectCard extends HTMLElement {
     const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
     const name = this._config.name || m?.name || "Gerät";
     const prog = m?.program?.label ? m.program.label.split(" · ")[0] : "";
-    const payload = { v: 1, device: name, calls: P.calls };
+    const payload = { v: 1, key: this._planKey(), device: name, calls: P.calls };
     const desc = `${this._planSteps().join("\n")}\n\nHC-PLAN:${JSON.stringify(payload)}`;
     try {
       await this._hass.callService("calendar", "create_event", { entity_id: cal, summary: `${name}${prog ? ": " + prog : ""}`, description: desc, start_date_time: fmt(start), end_date_time: fmt(end) });
       this._toast(T.plan_saved.replace("{t}", `${pad(start.getDate())}.${pad(start.getMonth() + 1)}. ${pad(start.getHours())}:${pad(start.getMinutes())}`));
       this._plan = null; this._sig = ""; this._update(true);
+      setTimeout(() => this._loadPlans(true), 1500);
     } catch (e) { this._toast(e.message || String(e)); }
   }
   async _ensureOn(anchor) {
