@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.7.0";
+const HC_VERSION = "1.8.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -68,7 +68,7 @@ const I18N = {
     t_washerdryer: "Waschtrockner", t_coffee: "Kaffeevollautomat", t_fridge: "Kühlschrank", t_freezer: "Gefrierschrank",
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
-    cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
+    cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", plan: "Planen", plan_title: "Planung", plan_text: "Programm und Einstellungen jetzt wählen – sie werden erst zum Termin ans Gerät gesendet.", plan_when: "Start am", plan_save: "Planen", plan_saved: "Geplant für {t} – im Kalender eingetragen", plan_nocal: "Kein Planungskalender gefunden (schedule_calendar)", plan_steps: "Auswahl", plan_none: "Noch nichts gewählt", e_schedcal: "Kalender für Planungen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
     e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner der eigenen Bilder (z. B. /local/hc-bilder)", e_isrc: "Bildquelle", src_drawn: "Gezeichnet (eingebaut)", src_photo: "Fotos (eingebautes Bildpaket)", src_custom: "Eigene Bilder aus Ordner", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
@@ -113,7 +113,7 @@ const I18N = {
     t_washerdryer: "Washer dryer", t_coffee: "Coffee machine", t_fridge: "Fridge", t_freezer: "Freezer",
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
-    cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
+    cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", plan: "Schedule", plan_title: "Schedule", plan_text: "Choose program and settings now – they are sent to the appliance at the scheduled time.", plan_when: "Start at", plan_save: "Schedule", plan_saved: "Scheduled for {t} – added to calendar", plan_nocal: "No schedule calendar found (schedule_calendar)", plan_steps: "Selection", plan_none: "Nothing selected yet", e_schedcal: "Calendar for schedules", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
     e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with your own images (e.g. /local/hc-images)", e_isrc: "Image source", src_drawn: "Drawn (built-in)", src_photo: "Photos (built-in image pack)", src_custom: "Own images from folder", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
@@ -1634,7 +1634,7 @@ function segIcons(k, ctl) {
     const r = opts.map((o) => M[o] ? gl(M[o], 20, 2) : null);
     return r.every(Boolean) ? r : null;
   }
-  if (/fan|lüfter|lufter|suction|saug(kraft|stufe|leistung)|water|wasser|feucht|wetness|humid|intensit/.test(id) && !/mode|modus|route/.test(id.replace(/fan_mode/, ""))) {
+  if (/fan|lüfter|lufter|suction|saug(kraft|stufe|leistung)|water|wasser|feucht|wetness|humid|intensit/.test(id) && !/mode|modus|route|temp/.test(id.replace(/fan_mode/, ""))) {
     const glyph = /water|wasser|feucht|wetness|humid/.test(id) ? "drop" : "fan";
     const kind = opts.map((o, i) => /(^| )(off|aus)( |$)/.test(txt(i)) ? "off" : /auto|smart|intelligent/.test(txt(i)) ? "auto" : "stage");
     const stages = kind.filter((x) => x === "stage").length;
@@ -2192,6 +2192,9 @@ button{font:inherit;color:inherit}
 .ctile{width:58px;height:58px;border:0;border-radius:16px;background:var(--hc-s2);color:var(--hc-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:9.5px;font-weight:600;padding:0}
 .ctile span{white-space:nowrap}.ctile.on{background:var(--hc-accent);color:#141414}.ctile:disabled{opacity:.4}
 @container (max-width:330px){.climrow{grid-template-columns:1fr}.ctiles{justify-content:flex-start}}
+.planbox{border:1.5px solid var(--hc-accent)}.planbox .sub.on{background:var(--hc-accent);color:#141414;gap:6px}.planbox .sub:disabled{opacity:.45}.planbox .ct{font-weight:700;font-size:14px}.planbox > .row > svg{color:var(--hc-accent);flex:none}
+.planwhen{display:flex;align-items:center;justify-content:space-between;gap:10px}.planin{background:var(--hc-s2);color:var(--hc-text);border:0;border-radius:14px;padding:10px 12px;font:inherit;font-size:14px;color-scheme:dark}
+.grid3s{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.grid3s .sub{gap:5px;padding:0 6px;font-size:13px}
 .brw{display:inline-flex;gap:3px;margin-left:4px}.brw i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}.brw i.on{background:linear-gradient(135deg,#f3c27a,#9a5a1c)}
 .cam{position:relative;border-radius:var(--hc-radius);overflow:hidden;background:#111;aspect-ratio:16/9;max-height:70vh;width:100%;cursor:pointer}
 .cam img{width:100%;height:100%;object-fit:cover;display:block}
@@ -2447,6 +2450,11 @@ class HomeConnectCard extends HTMLElement {
     return g;
   }
   _model() {
+    if (this._plan && this._hass && !this._planHassActive) {
+      const real = this._hass;
+      this._hass = this._planHass(real); this._planHassActive = true;
+      try { return this._model(); } finally { this._hass = real; this._planHassActive = false; }
+    }
     const cfg = this._config;
     if (cfg.demo) return demoModel(cfg.demo, this.lang, cfg, this._ui);
     const g = this._group();
@@ -2477,7 +2485,7 @@ class HomeConnectCard extends HTMLElement {
     const T = I18N[this.lang];
     const live = m ? { state: this._statusText(m, T) } : null;
     const sm = m && { ...m, camTime: null, end: null, remaining: m.remaining != null, progress: m.progress != null, temp: m.temp ? { ...m.temp, current: m.temp.current != null } : null, statusText: null };
-    const sig = JSON.stringify([sm, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
+    const sig = JSON.stringify([sm, this._plan && { c: this._plan.calls.length, w: this._plan.when }, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
     if (sig === this._sig) { this._updateLive(m, live); return; }
     this._sig = sig;
     this._render(m);
@@ -2520,6 +2528,7 @@ class HomeConnectCard extends HTMLElement {
       html += this._compact(m, T);
     } else {
       const parts = [this._header(m, T)];
+      if (this._plan) parts.push(this._m_plan(m, T));
       for (const mod of MODULES) {
         if (hide.has(mod)) continue;
         const fn = this[`_m_${mod}`];
@@ -3036,7 +3045,8 @@ class HomeConnectCard extends HTMLElement {
     } else if (m.status !== "offline") {
       // Kein Programm gewählt: Start-Taste trotzdem zeigen (deaktiviert), damit klar ist, wo gestartet wird
       if ((a.start || m.activeSelect || a.startPause || (a.startOff && m.power)) && !m.program && !m.banner && !m.profile) btns.push(`<button class="abtn pri" disabled style="opacity:.45;cursor:default">${ic("play", 18)}${esc(T.start)} · ${esc(T.pick_prog)}</button>`);
-      if ((a.start || m.activeSelect || a.startPause || (a.startOff && m.power)) && m.program && !m.banner) { const pre = this._cheapPre(m); btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}${pre ? ` · ${ic("euro", 14, 2)}+${String(Math.round(pre.h * 100) / 100).replace(".", ",")} h` : ""}</button>`); }
+      if (this._plan && m.program) btns.push(`<button class="abtn pri" data-plan="save">${ic("clock", 18, 2)}${esc(T.plan_save)} · ${esc(m.program.label.split(" · ")[0])}</button>`);
+      else if ((a.start || m.activeSelect || a.startPause || (a.startOff && m.power)) && m.program && !m.banner) { const pre = this._cheapPre(m); btns.push(`<button class="abtn pri" data-act="start">${ic("play", 18)}${esc(T.start)}${m.program ? ` · ${esc(m.program.label.split(" · ")[0])}` : ""}${pre ? ` · ${ic("euro", 14, 2)}+${String(Math.round(pre.h * 100) / 100).replace(".", ",")} h` : ""}</button>`); }
     }
     if (!btns.length) return "";
     return `<div class="actions ${btns.length === 1 ? "one" : ""}">${btns.join("")}</div>`;
@@ -3123,6 +3133,12 @@ class HomeConnectCard extends HTMLElement {
     if (R.querySelector(".tiles[data-cat]")) { this._fillList(); this._bindList(); }
     if (R.querySelector(".disp[data-cat]")) this._fillDisp();
     R.querySelectorAll("[data-pview]").forEach((b) => b.addEventListener("click", () => { const box = R.querySelector("[data-cat]"); if (box) this._setProgView(box.dataset.cat, b.dataset.pview); }));
+    R.querySelectorAll("[data-plan]").forEach((el) => el.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (el.dataset.plan === "cancel") { this._plan = null; this._sig = ""; this._update(true); }
+      else this._planSave();
+    }));
+    R.querySelector(".planin")?.addEventListener("change", (ev) => { if (this._plan) this._plan.when = ev.target.value; });
     R.querySelectorAll("[data-ctl]").forEach((el) => {
       if (el.classList.contains("bslider")) {
         const ctl = m.controls[el.dataset.ctl];
@@ -3205,6 +3221,7 @@ class HomeConnectCard extends HTMLElement {
     clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove("show"), 1800);
   }
   _call(domain, service, data) {
+    if (this._plan) { this._planRecord(domain, service, data); return Promise.resolve(); }
     if (this._m?.demo) { this._toast(I18N[this.lang].demo_note); return Promise.resolve(); }
     return this._hass.callService(domain, service, data).catch((e) => this._toast(e.message || String(e)));
   }
@@ -3259,11 +3276,12 @@ class HomeConnectCard extends HTMLElement {
     const T = I18N[this.lang];
     this._closeDD();
     this.shadowRoot.querySelector(".confirm")?.remove();
+    const canPlan = this._config.layout !== "compact" && this._config.schedule !== false;
     return new Promise((resolve) => {
       const box = document.createElement("div");
       box.className = "confirm"; box.setAttribute("role", "alertdialog");
       box.innerHTML = `<div class="row" style="gap:10px;align-items:flex-start">${ic("power", 20, 2)}<div><div class="ct">${esc(T.off_title)}</div><div class="lbl">${esc(T.off_text)}</div></div></div>
-        <div class="grid2s"><button class="sub" data-c="0">${esc(T.cancel)}</button><button class="sub on" data-c="1">${ic("power", 16, 2)}${esc(T.switch_on)}</button></div>`;
+        <div class="${canPlan ? "grid3s" : "grid2s"}"><button class="sub" data-c="0">${esc(T.cancel)}</button>${canPlan ? `<button class="sub" data-c="2">${ic("clock", 16, 2)}${esc(T.plan)}</button>` : ""}<button class="sub on" data-c="1">${ic("power", 16, 2)}${esc(T.switch_on)}</button></div>`;
       this.shadowRoot.appendChild(box);
       const host = this.getBoundingClientRect();
       const r = (anchor && anchor.isConnected ? anchor : this).getBoundingClientRect();
@@ -3276,18 +3294,118 @@ class HomeConnectCard extends HTMLElement {
       this.style.zIndex = "10";
       const done = (v) => { box.remove(); this.style.zIndex = ""; document.removeEventListener("pointerdown", out, true); resolve(v); };
       const out = (ev) => { if (!ev.composedPath().includes(box)) done(false); };
-      box.addEventListener("click", (ev) => { ev.stopPropagation(); const b = ev.target.closest("[data-c]"); if (b) done(b.dataset.c === "1"); });
+      box.addEventListener("click", (ev) => { ev.stopPropagation(); const b = ev.target.closest("[data-c]"); if (b) done(b.dataset.c === "1" ? true : b.dataset.c === "2" ? "plan" : false); });
       box.querySelector('[data-c="1"]').focus({ preventScroll: true });
       box.addEventListener("keydown", (ev) => { if (ev.key === "Escape") done(false); });
       setTimeout(() => document.addEventListener("pointerdown", out, true), 0);
     });
   }
+
+  // ---------- Planen: Auswahl aufzeichnen und als Kalendertermin speichern ----------
+  _planHass(real) {
+    const g = this._group();
+    const states = { ...real.states };
+    if (g) for (const e of g.entities) {
+      const st = real.states[e.eid]; if (!st) continue;
+      const ov = this._plan.over[e.eid];
+      let v = ov;
+      if (v == null && ["unavailable", "unknown"].includes(st.state)) {
+        if (e.domain === "number") v = String(st.attributes.min ?? 0);
+        else if (e.domain === "switch") v = "off";
+        else if (e.domain === "select" && !/program|programm/.test(e.eid)) v = (st.attributes.options || [])[0];
+      }
+      if (this._plan.power && e.eid === this._plan.power) v = "on";
+      if (v != null) states[e.eid] = { ...st, state: String(v) };
+    }
+    const h = Object.create(real); h.states = states; return h;
+  }
+  _planCal() {
+    const c = this._config.schedule_calendar;
+    if (c && this._hass.states[c]) return c;
+    return Object.keys(this._hass.states).find((id) => id.startsWith("calendar.") && /home_connect|planung|schedul/.test(id)) || null;
+  }
+  _enterPlan() {
+    const m = this._m;
+    const d = new Date(Date.now() + 60 * 60000); d.setMinutes(0, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    const when = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
+    this._plan = { calls: [], over: {}, when, power: m?.power?.entity || null, steps: [] };
+    if (m?.power) this._plan.calls.push({ domain: m.power.svcDomain || "switch", service: "turn_on", data: { entity_id: m.power.entity }, wait: 20 });
+    this._sig = ""; this._update(true);
+  }
+  _planRecord(domain, service, data) {
+    const P = this._plan;
+    if (["update_entity"].includes(service) || domain === "camera") return;
+    const eid = data?.entity_id;
+    P.calls.push({ domain, service, data });
+    if (service === "select_option") P.over[eid] = data.option;
+    else if (service === "set_value") P.over[eid] = String(data.value);
+    else if (service === "turn_on" || service === "turn_off") P.over[eid] = service === "turn_on" ? "on" : "off";
+    else if (service === "toggle") { const cur = P.over[eid] ?? this._hass.states[eid]?.state; P.over[eid] = cur === "on" ? "off" : "on"; }
+    if (service === "press") P.started = true;
+    this._sig = ""; setTimeout(() => this._update(true), 0);
+  }
+  _planSteps() {
+    const P = this._plan, T = I18N[this.lang];
+    const seen = new Map();
+    for (const c of P.calls.slice(P.power ? 1 : 0)) {
+      const eid = c.data?.entity_id; if (!eid) continue;
+      const st = this._hass.states[eid];
+      const name = (st?.attributes?.friendly_name || eid).replace(/^(Bosch|Siemens|Neff|Gaggenau)\s+\S+\s*/i, "");
+      let val = c.data.option ?? c.data.value ?? (c.service === "press" ? "▶" : c.service.replace("turn_", ""));
+      if (c.data.option) val = programLabel({}, c.data.option, this.lang, { favNames: {} }) || c.data.option;
+      seen.set(eid, `${name}: ${val}`);
+    }
+    return [...seen.values()];
+  }
+  _m_plan(m, T) {
+    if (!this._plan) return "";
+    const steps = this._planSteps();
+    return `<div class="box planbox"><div class="row" style="gap:10px">${ic("clock", 20, 2)}<div class="sp"><div class="ct">${esc(T.plan_title)}</div><div class="lbl">${esc(T.plan_text)}</div></div></div>
+      <label class="planwhen"><span class="lbl">${esc(T.plan_when)}</span><input type="datetime-local" class="planin" value="${esc(this._plan.when)}"></label>
+      <div class="lbl">${esc(T.plan_steps)}: ${steps.length ? steps.map(esc).join(" · ") : esc(T.plan_none)}</div>
+      <div class="grid2s"><button class="sub" data-plan="cancel">${esc(T.cancel)}</button><button class="sub on" data-plan="save" ${steps.length || m.program ? "" : "disabled"}>${ic("clock", 16, 2)}${esc(T.plan_save)}</button></div></div>`;
+  }
+  async _planSave() {
+    const P = this._plan, T = I18N[this.lang], m = this._m;
+    const cal = this._planCal();
+    if (!cal) { this._toast(T.plan_nocal); return; }
+    if (!P.started && m) {
+      const a = m.actions || {};
+      const btn = a.start || a.startPause || a.startOff;
+      if (btn) P.calls.push({ domain: "button", service: "press", data: { entity_id: btn } });
+      else if (m.activeSelect && m.program) {
+        const opt = (this._hass.states[m.activeSelect]?.attributes?.options || []).find((o) => canon(o) === m.program.canon);
+        if (opt) P.calls.push({ domain: "select", service: "select_option", data: { entity_id: m.activeSelect, option: opt } });
+      }
+    }
+    const start = new Date(P.when);
+    if (isNaN(start)) return;
+    const durS = (m?.controls?.duration && parseFloat(m.controls.duration.value)) || 0;
+    const unit = m?.controls?.duration?.unit;
+    const durMin = Math.max(15, Math.round(unit === "min" ? durS : unit === "h" ? durS * 60 : durS / 60) || 30);
+    const end = new Date(start.getTime() + durMin * 60000);
+    const pad = (n) => String(n).padStart(2, "0");
+    const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+    const name = this._config.name || m?.name || "Gerät";
+    const prog = m?.program?.label ? m.program.label.split(" · ")[0] : "";
+    const payload = { v: 1, device: name, calls: P.calls };
+    const desc = `${this._planSteps().join("\n")}\n\nHC-PLAN:${JSON.stringify(payload)}`;
+    try {
+      await this._hass.callService("calendar", "create_event", { entity_id: cal, summary: `${name}${prog ? ": " + prog : ""}`, description: desc, start_date_time: fmt(start), end_date_time: fmt(end) });
+      this._toast(T.plan_saved.replace("{t}", `${pad(start.getDate())}.${pad(start.getMonth() + 1)}. ${pad(start.getHours())}:${pad(start.getMinutes())}`));
+      this._plan = null; this._sig = ""; this._update(true);
+    } catch (e) { this._toast(e.message || String(e)); }
+  }
   async _ensureOn(anchor) {
     const m = this._m;
     const offish = (x) => ["off", "inactive", "standby"].includes(x?.status) || (x?.power && !x.power.on);
+    if (this._plan) return true;
     if (!m || m.demo || !m.power || !offish(m)) return true;
     const T = I18N[this.lang];
-    if (!(await this._confirmOn(anchor))) return false;
+    const ans = await this._confirmOn(anchor);
+    if (ans === "plan") { this._enterPlan(); return true; }
+    if (!ans) return false;
     this._toast(T.switching_on);
     await this._call(m.power.svcDomain || "switch", "turn_on", { entity_id: m.power.entity });
     for (let i = 0; i < 50; i++) {
@@ -3427,6 +3545,7 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "sub_buttons", selector: { boolean: {} } },
       { name: "cheapest_default", selector: { boolean: {} } },
       { name: "valetudo_topic", selector: { text: {} } },
+      { name: "schedule_calendar", selector: { entity: { domain: "calendar" } } },
       { name: "camera_max_age", selector: { number: { min: 1, max: 1440, mode: "box", unit_of_measurement: "min" } } },
       { name: "hide", selector: { select: { multiple: true, mode: "list", options: MODULES.map((m) => ({ value: m, label: T[`m_${m}`] || m })) } } },
       { name: "extra_entities", selector: { entity: { multiple: true } } },
@@ -3439,7 +3558,7 @@ class HomeConnectCardEditor extends HTMLElement {
     const roleL = this.lang === "de"
       ? { camera: "Kamera / Karte", battery: "Akku", error: "Fehler", op: "Betriebszustand", remaining: "Restzeit", progress: "Fortschritt", selectedProg: "Programmauswahl", power: "Ein/Aus", light: "Licht", cavity: "Ist-Temperatur", setpoint: "Soll-Temperatur", duration: "Dauer", startIn: "Startverzögerung", start: "Start-Taste", pause: "Pause-Taste", stop: "Stopp-Taste", waterTank: "Wassertank", display: "Display / Anzeige (Klima)" }
       : { camera: "Camera / map", battery: "Battery", error: "Error", op: "Operation state", remaining: "Remaining time", progress: "Progress", selectedProg: "Program select", power: "Power", light: "Light", cavity: "Current temperature", setpoint: "Target temperature", duration: "Duration", startIn: "Start delay", start: "Start button", pause: "Pause button", stop: "Stop button", waterTank: "Water tank", display: "Display (air conditioner)" };
-    const labels = { ...roleL, entity: T.e_entity, ha_device: T.e_hadevice, extra_entities: T.e_extra, entities: T.e_roles, device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, program_view: T.e_pview, image_source: T.e_isrc, program_image_path: T.e_pimg, sub_buttons: T.e_subbtn, cheapest_default: T.e_cheapdef, valetudo_topic: T.e_valtopic, camera_max_age: T.e_camage };
+    const labels = { ...roleL, entity: T.e_entity, ha_device: T.e_hadevice, extra_entities: T.e_extra, entities: T.e_roles, device: T.e_device, demo: T.e_demo, layout: T.e_layout, name: T.e_name, navigation_path: T.e_nav, color: T.e_color, hide: T.e_hide, device_type: T.e_type, price_entity: T.e_price, program_view: T.e_pview, image_source: T.e_isrc, program_image_path: T.e_pimg, sub_buttons: T.e_subbtn, cheapest_default: T.e_cheapdef, valetudo_topic: T.e_valtopic, camera_max_age: T.e_camage, schedule_calendar: T.e_schedcal };
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.computeLabel = (s) => labels[s.name] || s.name;
