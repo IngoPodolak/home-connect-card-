@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.9.2";
+const HC_VERSION = "1.10.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2452,6 +2452,35 @@ class HomeConnectCard extends HTMLElement {
     }
     return g;
   }
+
+  // Glas-Stil: aus der Kartenkonfiguration (vom Stil-Umschalter geschrieben) oder vom Dashboard geerbt
+  _glass() {
+    const g = this._config.glass;
+    if (g && g.style) return g;
+    if (!this.isConnected) { if (!this._glassRetry) this._glassRetry = setTimeout(() => { this._glassRetry = null; this._sig = ""; this._update(true); }, 400); return null; }
+    const cs = getComputedStyle(this);
+    const st = cs.getPropertyValue("--hc-glass-style").trim();
+    if (!st || st === "none") return null;
+    return { style: st, alpha: parseFloat(cs.getPropertyValue("--hc-glass-alpha")) || 0.4, blur: parseFloat(cs.getPropertyValue("--hc-glass-blur")) || 20 };
+  }
+  _liquid() {
+    const R = this.shadowRoot;
+    const g = this._glassNow || {};
+    const blur = Math.max(1, Math.round((g.blur ?? 10) / 5)), saturate = 120, depth = 4, strength = 100, ca = 3;
+    if (!this._lqRO) this._lqRO = new ResizeObserver((ents) => ents.forEach((e) => upd(e.target)));
+    const upd = (el) => {
+      const lq = el.querySelector(":scope > .lq"); if (!lq) return;
+      const w = el.clientWidth, h = el.clientHeight; if (!w || !h) return;
+      const radius = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 28, h / 2);
+      if (lq._w === w && lq._h === h) return;
+      lq._w = w; lq._h = h;
+      lq.style.backdropFilter = `blur(${blur}px) saturate(${saturate}%) url("${hcLiquidFilter({ height: h, width: w, radius, depth, strength, chromaticAberration: ca })}")`;
+    };
+    R.querySelectorAll(".pill, .wrap > .box").forEach((el) => {
+      if (!el.querySelector(":scope > .lq")) { const d = document.createElement("div"); d.className = "lq"; el.insertBefore(d, el.firstChild); }
+      this._lqRO.observe(el); upd(el);
+    });
+  }
   _model() {
     if (this._plan && this._hass && !this._planHassActive) {
       const real = this._hass;
@@ -2488,7 +2517,7 @@ class HomeConnectCard extends HTMLElement {
     const T = I18N[this.lang];
     const live = m ? { state: this._statusText(m, T) } : null;
     const sm = m && { ...m, camTime: null, end: null, remaining: m.remaining != null, progress: m.progress != null, temp: m.temp ? { ...m.temp, current: m.temp.current != null } : null, statusText: null };
-    const sig = JSON.stringify([sm, this._plansSig, this._plan && { c: this._plan.calls.length, w: this._plan.when }, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
+    const sig = JSON.stringify([sm, this._config.glass ? 0 : JSON.stringify(this._glass()), this._plansSig, this._plan && { c: this._plan.calls.length, w: this._plan.when }, this._ui.tab, this._ui.demoSel, this._config, this._hass?.themes?.darkMode, this.lang]);
     if (sig === this._sig) { this._updateLive(m, live); return; }
     this._sig = sig;
     this._render(m);
@@ -2526,8 +2555,9 @@ class HomeConnectCard extends HTMLElement {
     const cc = cfg.color;
     const color = Array.isArray(cc) ? `rgb(${cc.join(",")})` : (cc || m.color || TYPE_META[m.type]?.color || TYPE_META.generic.color);
     const hide = new Set(cfg.hide || []);
-    const gv = hcGlassVars(cfg.glass);
-    let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}${gv ? ";" + Object.entries(gv).map(([k, v]) => `${k}:${v}`).join(";") : ""}}</style>`;
+    const glass = this._glass();
+    this._glassNow = glass;
+    let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}}${hcGlassCss(glass)}</style>`;
     if (cfg.layout === "compact") {
       html += this._compact(m, T);
     } else {
@@ -2543,6 +2573,7 @@ class HomeConnectCard extends HTMLElement {
       html += `<div class="wrap" lang="${this.lang}">${parts.join("")}</div><div class="toast"></div>`;
     }
     this.shadowRoot.innerHTML = html;
+    if (this._glassNow?.style === "liquid") this._liquid();
     this._bind(m);
     if (focusSearch) {
       const q = this.shadowRoot.querySelector("input.q");
@@ -3646,6 +3677,34 @@ class HomeConnectCardEditor extends HTMLElement {
 //  hc-style-card: Stil-Umschalter für das ganze Dashboard
 //  (Bubble-Module Frosted Glass / Liquid Glass 2 / Window Glow, Transparenz, Blur, Hintergrund)
 // =====================================================================
+
+// ---------- Glas-Stile wie die Bubble-Card-Module (Frosted Glass / Liquid Glass 2) ----------
+// Liquid Glass: gleiche SVG-Verschiebungskarte wie das Bubble-Modul "liquid_glass_2" (ken-hacs-2025)
+function hcLiquidFilter({ height, width, radius, depth, strength, chromaticAberration }) {
+  window.bubbleCardFilterCache = window.bubbleCardFilterCache || {};
+  const cache = window.bubbleCardFilterCache;
+  const key = `${width}-${height}-${radius}-${depth}-${strength}-${chromaticAberration}`;
+  if (cache[key]) return cache[key];
+  const map = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><style>.mix { mix-blend-mode: screen; }</style><defs><linearGradient id="Y" x1="0" x2="0" y1="${Math.ceil((radius / height) * 15)}%" y2="${Math.floor(100 - (radius / height) * 15)}%"><stop offset="0%" stop-color="#0F0" /><stop offset="100%" stop-color="#000" /></linearGradient><linearGradient id="X" x1="${Math.ceil((radius / width) * 15)}%" x2="${Math.floor(100 - (radius / width) * 15)}%" y1="0" y2="0"><stop offset="0%" stop-color="#F00" /><stop offset="100%" stop-color="#000" /></linearGradient></defs><rect x="0" y="0" height="${height}" width="${width}" fill="#808080" /><g filter="blur(2px)"><rect x="0" y="0" height="${height}" width="${width}" fill="#000080" /><rect x="0" y="0" height="${height}" width="${width}" fill="url(#Y)" class="mix" /><rect x="0" y="0" height="${height}" width="${width}" fill="url(#X)" class="mix" /><rect x="${depth}" y="${depth}" height="${height - 2 * depth}" width="${width - 2 * depth}" fill="#808080" rx="${radius}" ry="${radius}" filter="blur(${depth}px)" /></g></svg>`);
+  const uri = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg height="${height}" width="${width}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><defs><filter id="displace" color-interpolation-filters="sRGB"><feImage x="0" y="0" height="${height}" width="${width}" href="${map}" result="displacementMap" /><feDisplacementMap transform-origin="center" in="SourceGraphic" in2="displacementMap" scale="${strength + chromaticAberration * 2}" xChannelSelector="R" yChannelSelector="G" /><feColorMatrix type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="displacedR" /><feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength + chromaticAberration}" xChannelSelector="R" yChannelSelector="G" /><feColorMatrix type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="displacedG" /><feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="${strength}" xChannelSelector="R" yChannelSelector="G" /><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="displacedB" /><feBlend in="displacedR" in2="displacedG" mode="screen"/><feBlend in2="displacedB" mode="screen"/></filter></defs></svg>`) + "#displace";
+  cache[key] = uri;
+  return uri;
+}
+function hcGlassCss(g) {
+  if (!g || !g.style || g.style === "none") return "";
+  const a = g.alpha ?? 0.4, b = g.blur ?? 20;
+  if (g.style === "liquid") {
+    return `:host{--bubble-icon-background-color:rgba(0,0,0,.4);--bubble-sub-button-background-color:rgba(0,0,0,.4);--bubble-secondary-background-color:rgba(0,0,0,.4)}
+.pill,.box{background:none !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;isolation:isolate}
+.box{position:relative}
+.lq{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:rgba(0,0,0,0);transform:translateZ(0);box-shadow:inset 0px 1px 2px rgba(255,255,255,0.4),inset 0px 2px 4px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.6)}
+.ico.idle,.qb:not(.on),.qstep{background:rgba(0,0,0,.4) !important}`;
+  }
+  // Frosted Glass (auch Basis für Window Glow): rgba(Farbe, Deckkraft) + blur, dunkle Symbol-Hintergründe
+  return `:host{--bubble-icon-background-color:rgba(15,15,15,.2);--bubble-sub-button-background-color:rgba(15,15,15,.2);--bubble-secondary-background-color:rgba(15,15,15,.2)}
+.pill,.box{background:rgba(22,24,28,${a}) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
+.ico.idle,.qb:not(.on),.qstep{background:rgba(15,15,15,.2) !important}`;
+}
 function hcGlassVars(g) {
   if (!g || !g.style || g.style === "none") return null;
   const a = g.alpha ?? 0.4, b = g.blur ?? 20;
@@ -3697,7 +3756,7 @@ class HcStyleCard extends HTMLElement {
     const v = hcGlassVars({ style: c.style, alpha: this._alpha(c), blur: c.blur });
     if (!v) return;
     const a = this._alpha(c), b = c.blur ?? 20;
-    const all = { ...v,
+    const all = { ...v, "--hc-glass-style": c.style, "--hc-glass-alpha": String(a), "--hc-glass-blur": String(b),
       "--ha-card-background": c.style === "liquid" ? v["--hc-glass-bg"] : `rgba(22,24,28,${a})`,
       "--ha-card-backdrop-filter": v["--hc-glass-filter"],
       "--ha-card-border-color": "rgba(255,255,255,.08)",
