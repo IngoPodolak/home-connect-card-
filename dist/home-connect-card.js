@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.12.1";
+const HC_VERSION = "1.12.2";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -69,7 +69,7 @@ const I18N = {
     t_hob: "Kochfeld", t_hood: "Dunstabzug", t_warmingdrawer: "Wärmeschublade", t_generic: "Hausgerät",
     t_winecooler: "Weinklimaschrank", t_cleaningrobot: "Saugroboter", t_cookprocessor: "Küchenmaschine", t_microwave: "Mikrowelle",
     cheapest: "Günstigster Start", off_title: "Gerät ist ausgeschaltet", off_text: "Für diese Aktion muss es zuerst eingeschaltet werden.", switch_on: "Einschalten", cancel: "Abbrechen", plan: "Planen", plan_title: "Planung", planned: "Geplant", plan_del: "Planung löschen", plan_deleted: "Planung gelöscht", days_short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"], plan_text: "Programm und Einstellungen jetzt wählen – sie werden erst zum Termin ans Gerät gesendet.", plan_when: "Start am", plan_save: "Planen", plan_saved: "Geplant für {t} – im Kalender eingetragen", plan_nocal: "Kein Planungskalender gefunden (schedule_calendar)", plan_steps: "Auswahl", plan_none: "Noch nichts gewählt", e_schedcal: "Kalender für Planungen", switching_on: "Schalte ein …", not_ready: "Gerät meldet sich nicht bereit – bitte am Gerät prüfen", preselected: "vorausgewählt – wird beim Start gesetzt", cheap_in: "+{h} h · Ø {p}", save: "spart ca. {p} %", e_type: "Gerätetyp (nur falls falsch erkannt)",
-    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner der eigenen Bilder (z. B. /local/hc-bilder)", e_isrc: "Bildquelle", src_drawn: "Gezeichnet (eingebaut)", src_photo: "Fotos (eingebautes Bildpaket)", src_custom: "Eigene Bilder aus Ordner", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
+    e_price: "Strompreis-Prognose (für günstigsten Start)", e_cheapdef: "Günstigste Startzeit vorauswählen", e_subbtn: "Schnellwahl-Knöpfe in der Kompakt-Ansicht", e_pview: "Programmansicht", pv_icons: "Symbole", pv_icons: "Symbole", pv_images: "Vorschaubilder", pv_photos: "Fotos", pv_display: "Wie am Gerätedisplay", selected: "Ausgewählt", choose: "Auswählen", e_pimg: "Ordner der eigenen Bilder (z. B. /local/hc-bilder)", e_isrc: "Bildquelle", src_drawn: "Gezeichnet (eingebaut)", src_photo: "Fotos (eingebautes Bildpaket)", src_custom: "Eigene Bilder aus Ordner", e_valtopic: "Valetudo MQTT-Topic (nur falls abweichend, z. B. valetudo/MeinRoboter)", auto: "automatisch", no_price: "keine Preisprognose gefunden",
     battery: "Akku", cleaning: "Reinigen", docked: "In der Station", rooms: "Räume", bottles: "Zonen", speed: "Geschwindigkeit",
     ph_prerinse: "Vorspülen", ph_mainwash: "Reinigen", ph_finalrinse: "Klarspülen", ph_drying: "Trocknen",
     ph_wash: "Waschen", ph_rinse: "Spülen", ph_spin: "Schleudern", ph_dry: "Trocknen", ph_done: "Fertig",
@@ -114,7 +114,7 @@ const I18N = {
     t_hob: "Hob", t_hood: "Hood", t_warmingdrawer: "Warming drawer", t_generic: "Appliance",
     t_winecooler: "Wine cooler", t_cleaningrobot: "Robot vacuum", t_cookprocessor: "Cook processor", t_microwave: "Microwave",
     cheapest: "Cheapest start", off_title: "Appliance is switched off", off_text: "It has to be switched on first for this action.", switch_on: "Switch on", cancel: "Cancel", plan: "Schedule", plan_title: "Schedule", planned: "Scheduled", plan_del: "Delete schedule", plan_deleted: "Schedule deleted", days_short: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], plan_text: "Choose program and settings now – they are sent to the appliance at the scheduled time.", plan_when: "Start at", plan_save: "Schedule", plan_saved: "Scheduled for {t} – added to calendar", plan_nocal: "No schedule calendar found (schedule_calendar)", plan_steps: "Selection", plan_none: "Nothing selected yet", e_schedcal: "Calendar for schedules", switching_on: "Switching on …", not_ready: "Appliance did not become ready – please check it", preselected: "preselected – applied on start", cheap_in: "+{h} h · avg {p}", save: "saves approx. {p} %", e_type: "Appliance type (only if misdetected)",
-    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with your own images (e.g. /local/hc-images)", e_isrc: "Image source", src_drawn: "Drawn (built-in)", src_photo: "Photos (built-in image pack)", src_custom: "Own images from folder", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
+    e_price: "Electricity price forecast (for cheapest start)", e_cheapdef: "Preselect cheapest start time", e_subbtn: "Quick buttons in compact view", e_pview: "Program view", pv_icons: "Icons", pv_images: "Preview images", pv_photos: "Photos", pv_display: "Like the appliance display", selected: "Selected", choose: "Select", e_pimg: "Folder with your own images (e.g. /local/hc-images)", e_isrc: "Image source", src_drawn: "Drawn (built-in)", src_photo: "Photos (built-in image pack)", src_custom: "Own images from folder", e_valtopic: "Valetudo MQTT topic (only if different, e.g. valetudo/MyRobot)", auto: "automatic", no_price: "no price forecast found",
     battery: "Battery", cleaning: "Cleaning", docked: "Docked", rooms: "Rooms", bottles: "Zones", speed: "Speed",
     ph_prerinse: "Pre-rinse", ph_mainwash: "Main wash", ph_finalrinse: "Final rinse", ph_drying: "Drying",
     ph_wash: "Washing", ph_rinse: "Rinsing", ph_spin: "Spinning", ph_dry: "Drying", ph_done: "Done",
@@ -2795,8 +2795,8 @@ class HomeConnectCard extends HTMLElement {
     const q = this._ui.search || "";
     const search = count > 12 ? `<label class="search">${ic("search", 18)}<input class="q" type="text" value="${esc(q)}" placeholder="${esc(T.search)}" aria-label="${esc(T.search)}"><span class="lbl qc"></span></label>` : "";
     const view = this._progView(tab);
-    const pvMode = view === "images";
-    const vsw = `<div class="vsw" role="group" aria-label="${esc(T.e_pview)}">${[["icons", "grid"], ["images", "image"], ["display", "slides"]].map(([v, i]) => `<button class="${v === view ? "on" : ""}" data-pview="${v}" title="${esc(T[`pv_${v}`])}" aria-label="${esc(T[`pv_${v}`])}" aria-pressed="${v === view}">${ic(i, 16, 2)}</button>`).join("")}</div>`;
+    const pvMode = view === "images" || view === "photos";
+    const vsw = `<div class="vsw" role="group" aria-label="${esc(T.e_pview)}">${[["icons", "grid"], ["images", "image"], ["photos", "camera"], ["display", "slides"]].map(([v, i]) => `<button class="${v === view ? "on" : ""}" data-pview="${v}" title="${esc(T[`pv_${v}`])}" aria-label="${esc(T[`pv_${v}`])}" aria-pressed="${v === view}">${ic(i, 16, 2)}</button>`).join("")}</div>`;
     const head = `<div class="row"><span class="lbl sp">${esc(T.program)}</span>${vsw}</div>`;
     if (view === "display") return `<div class="box" data-mod="programs">${head}${tabs}${search}<div class="disp" data-cat="${tab}"></div></div>`;
     const body = `${search}<div class="tiles ${pvMode ? "pvmode" : ""} ${count > (pvMode ? 6 : 9) ? "scroll" : ""}" data-cat="${tab}"></div>`;
@@ -2807,7 +2807,7 @@ class HomeConnectCard extends HTMLElement {
     const key = `hc-card-view-${this._m?.key || "x"}`;
     if (!this._views) { try { this._views = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { this._views = {}; } }
     const v = this._views[cat] || this._config.program_view || "icons";
-    return ["icons", "images", "display"].includes(v) ? v : "icons";
+    return ["icons", "images", "photos", "display"].includes(v) ? v : "icons";
   }
   _setProgView(cat, v) {
     this._views = { ...(this._views || {}), [cat]: v };
@@ -2821,7 +2821,7 @@ class HomeConnectCard extends HTMLElement {
     if (c.program_images && typeof c.program_images === "object") {
       for (const [k, v] of Object.entries(c.program_images)) if (keys.includes(canon(k))) return v;
     }
-    const src = c.image_source || (c.program_image_path ? "custom" : "drawn");
+    const src = this._srcOverride || c.image_source || (c.program_image_path ? "custom" : "drawn");
     if (!this._m) return null;
     if (src === "photo") {
       const mk = motifKey(this._m, p);
@@ -2863,7 +2863,9 @@ class HomeConnectCard extends HTMLElement {
     list = list.slice(0, 150);
     const qc = this.shadowRoot.querySelector(".qc");
     if (qc) qc.textContent = `${total} ${T.results}`;
-    const pvMode = this._progView(cat) === "images";
+    const pvV = this._progView(cat);
+    const pvMode = pvV === "images" || pvV === "photos";
+    this._srcOverride = pvV === "photos" ? "photo" : null;
     const color = this._accent || "var(--hc-accent)";
     box.innerHTML = list.length ? list.map((p) => {
       const parts = p.label.split(" · ");
@@ -2874,6 +2876,7 @@ class HomeConnectCard extends HTMLElement {
       }
       return `<button class="tile ${p.canon === m.selectedCanon ? "on" : ""}" data-prog="${esc(p.canon)}">${this._progIcon(m, p)}<span>${esc(parts[0])}</span>${parts[1] ? `<small>${esc(parts[1])}</small>` : ""}</button>`;
     }).join("") : `<div class="empty" style="grid-column:1/-1">${esc(T.no_results)}</div>`;
+    this._srcOverride = null;
     box.scrollTop = 0;
   }
   // Karussell wie am Gerätedisplay
@@ -3631,7 +3634,7 @@ class HomeConnectCardEditor extends HTMLElement {
       { name: "color", selector: { color_rgb: {} } },
       { name: "device_type", selector: { select: { mode: "dropdown", options: [{ value: "", label: T.auto }, ...Object.keys(TYPE_META).filter((t) => t !== "generic").map((t) => ({ value: t, label: T[`t_${t}`] || t }))] } } },
       { name: "price_entity", selector: { entity: { domain: "sensor" } } },
-      { name: "program_view", selector: { select: { mode: "dropdown", options: [{ value: "icons", label: T.pv_icons }, { value: "images", label: T.pv_images }, { value: "display", label: T.pv_display }] } } },
+      { name: "program_view", selector: { select: { mode: "dropdown", options: [{ value: "icons", label: T.pv_icons }, { value: "images", label: T.pv_images }, { value: "photos", label: T.pv_photos }, { value: "display", label: T.pv_display }] } } },
       { name: "image_source", selector: { select: { mode: "dropdown", options: [{ value: "drawn", label: T.src_drawn }, { value: "photo", label: T.src_photo }, { value: "custom", label: T.src_custom }] } } },
       { name: "program_image_path", selector: { text: {} } },
       { name: "sub_buttons", selector: { boolean: {} } },
