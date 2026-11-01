@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.11.0";
+const HC_VERSION = "1.11.1";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -3784,8 +3784,18 @@ class HcStyleCard extends HTMLElement {
     this._mine = vals;
     await this._hass.callWS({ type: "frontend/set_user_data", key: "hc_glass", value: this._ud });
   }
+  // Die eigenen Knöpfe sehen aus wie die Bubble Cards im gewählten Stil
+  _btnLook(c) {
+    const a = this._alpha(c), b = c.blur ?? 20, h = this.style;
+    const set = (bg, border, shadow, filter) => { h.setProperty("--hcs-bg", bg); h.setProperty("--hcs-border", border); h.setProperty("--hcs-shadow", shadow); h.setProperty("--hcs-filter", filter); };
+    if (c.style === "frosted") set(`rgba(22,24,28,${a})`, "0", "none", `blur(${b}px)`);
+    else if (c.style === "liquid") set("rgba(0,0,0,.4)", "0", "inset 0px 1px 2px rgba(255,255,255,0.4),inset 0px 2px 4px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.6)", `blur(${Math.max(1, Math.round(b / 5))}px) saturate(120%)`);
+    else if (c.style === "glow") set(`radial-gradient(60px 40px at 0% 0%,rgba(255,255,255,0.15),transparent 65%),linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.06)),rgba(22,24,28,${a})`, "1px solid rgba(120,120,120,0.18)", "none", `blur(${b}px)`);
+    else ["--hcs-bg", "--hcs-border", "--hcs-shadow", "--hcs-filter"].forEach((k) => h.removeProperty(k));
+  }
   _activate(c) {
     if (!c) return;
+    this._btnLook(c);
     window.__hcGlass = window.__hcGlass || {};
     window.__hcGlass[this._dash()] = { style: c.style, alpha: this._alpha(c), blur: c.blur ?? 20 };
     this._applyVars(c);
@@ -3910,7 +3920,7 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
   _render() {
     this.shadowRoot.innerHTML = `<style>
       :host{display:flex;justify-content:flex-end;align-items:center;height:100%}
-      .btn{width:38px;height:38px;border-radius:50%;border:0.8px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+      .btn{width:38px;height:38px;border-radius:50%;border:var(--hcs-border,0);background:var(--hcs-bg,var(--bubble-button-main-background-color,var(--bubble-main-background-color,var(--background-color-2,var(--secondary-background-color,#1c1e22)))));box-shadow:var(--hcs-shadow,none);color:var(--primary-text-color,#f2f3f5);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:var(--hcs-filter,none);backdrop-filter:var(--hcs-filter,none);transition:background .3s,box-shadow .3s}
       .btn:active{transform:scale(.94)}
       :host{gap:8px}.kbtn.on{background:rgba(240,163,94,.25);border-color:rgba(240,163,94,.6)}
     </style>${this._base?.kiosk_button ? `<button class="btn kbtn" aria-label="Menü ein/aus" title="Kopfzeile und Seitenleiste ein/aus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/></svg></button>` : ""}<button class="btn pal" aria-label="Darstellung" title="Darstellung"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg></button>`;
