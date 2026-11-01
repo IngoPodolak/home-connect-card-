@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.9.0";
+const HC_VERSION = "1.9.1";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2140,12 +2140,12 @@ font-family:var(--paper-font-body1_-_font-family,inherit);color:var(--hc-text)}
 *{box-sizing:border-box}
 button{font:inherit;color:inherit}
 .wrap{display:flex;flex-direction:column;gap:12px}
-.box{background:var(--hc-card);-webkit-backdrop-filter:var(--hc-glass-filter,none);backdrop-filter:var(--hc-glass-filter,none);border-radius:var(--hc-radius);padding:16px;display:flex;flex-direction:column;gap:12px}
+.box{border:var(--hc-glass-border,0);box-shadow:var(--hc-glass-shadow,none);background:var(--hc-card);-webkit-backdrop-filter:var(--hc-glass-filter,none);backdrop-filter:var(--hc-glass-filter,none);border-radius:var(--hc-radius);padding:16px;display:flex;flex-direction:column;gap:12px}
 .lbl{font-size:12px;color:var(--hc-muted);font-weight:500}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
 .pill{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;background:var(--hc-card);-webkit-backdrop-filter:var(--hc-glass-filter,none);backdrop-filter:var(--hc-glass-filter,none);border-radius:32px;padding:8px;min-height:60px;cursor:pointer;border:0;width:100%;text-align:left}
-.pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--bubble-border,0.8px solid rgba(120,120,120,.18));background:var(--bubble-main-background-color,radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,.12),transparent 70%),var(--hc-card))}
+.pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--hc-glass-border,var(--bubble-border,0.8px solid rgba(120,120,120,.18)));background:var(--hc-glass-bg,var(--bubble-main-background-color,radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,.12),transparent 70%),var(--hc-card)));box-shadow:var(--hc-glass-shadow,none)}
 .pill.compact .ico{width:38px;height:38px}
 .pill.compact .ico svg{width:20px;height:20px}
 :host{container-type:inline-size;position:relative}
@@ -2526,7 +2526,8 @@ class HomeConnectCard extends HTMLElement {
     const cc = cfg.color;
     const color = Array.isArray(cc) ? `rgb(${cc.join(",")})` : (cc || m.color || TYPE_META[m.type]?.color || TYPE_META.generic.color);
     const hide = new Set(cfg.hide || []);
-    let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}}</style>`;
+    const gv = hcGlassVars(cfg.glass);
+    let html = `<style>${STYLE}:host{--hc-accent:${esc(color)}${gv ? ";" + Object.entries(gv).map(([k, v]) => `${k}:${v}`).join(";") : ""}}</style>`;
     if (cfg.layout === "compact") {
       html += this._compact(m, T);
     } else {
@@ -3645,6 +3646,18 @@ class HomeConnectCardEditor extends HTMLElement {
 //  hc-style-card: Stil-Umschalter für das ganze Dashboard
 //  (Bubble-Module Frosted Glass / Liquid Glass 2 / Window Glow, Transparenz, Blur, Hintergrund)
 // =====================================================================
+function hcGlassVars(g) {
+  if (!g || !g.style || g.style === "none") return null;
+  const a = g.alpha ?? 0.4, b = g.blur ?? 20;
+  const v = { "--hc-glass-bg": `rgba(22,24,28,${a})`, "--hc-glass-filter": `blur(${b}px) saturate(130%)`, "--hc-glass-border": "0.8px solid rgba(255,255,255,.14)", "--hc-glass-shadow": "none" };
+  if (g.style === "liquid") {
+    v["--hc-glass-bg"] = `linear-gradient(135deg,rgba(255,255,255,${Math.min(0.3, a * 0.5 + 0.06)}),rgba(255,255,255,.02) 55%,rgba(0,0,0,${Math.min(0.6, a)}))`;
+    v["--hc-glass-filter"] = `blur(${Math.max(2, Math.round(b / 5))}px) saturate(140%)`;
+    v["--hc-glass-border"] = "0.8px solid rgba(255,255,255,.28)";
+    v["--hc-glass-shadow"] = "inset 1px 1px 1px rgba(255,255,255,.35),inset -1px -1px 1px rgba(255,255,255,.1)";
+  }
+  return v;
+}
 const HC_GRADIENTS = [
   { id: "g-night", name: "Nacht", css: "linear-gradient(160deg,#0f1424 0%,#1b1033 55%,#06070b 100%)" },
   { id: "g-aurora", name: "Polarlicht", css: "radial-gradient(120% 80% at 10% 0%,#1d6b62 0%,transparent 55%),radial-gradient(90% 70% at 100% 30%,#4a2a7a 0%,transparent 60%),linear-gradient(180deg,#071214,#05060a)" },
@@ -3671,26 +3684,34 @@ class HcStyleCard extends HTMLElement {
   get lang() { return (this._hass?.language || "de").startsWith("de") ? "de" : "en"; }
   getCardSize() { return 1; }
   getGridOptions() { return { columns: 2, rows: 1, min_columns: 1, min_rows: 1 }; }
-  connectedCallback() { this._applyVars(this._config); }
+  connectedCallback() { setTimeout(() => this._applyVars(this._config), 0); }
   disconnectedCallback() { this._clearVars(); }
   _alpha(c) { return Math.round(Math.max(0.04, Math.min(0.95, (100 - (c.transparency ?? 60)) / 100)) * 100) / 100; }
   _applyVars(c) {
     if (!c) return;
-    const r = document.documentElement.style;
-    if (c.style === "none") { this._clearVars(); return; }
+    // Variablen am View-Element setzen (überschreibt das Theme nur für dieses Dashboard; gilt auch für Badges und andere Karten)
+    const el = this._findView(true);
+    if (!el) { if (!this._retry) { this._retry = setTimeout(() => { this._retry = null; this._applyVars(this._config); }, 800); } return; }
+    this._clearVars();
+    const v = hcGlassVars({ style: c.style, alpha: this._alpha(c), blur: c.blur });
+    if (!v) return;
     const a = this._alpha(c), b = c.blur ?? 20;
-    r.setProperty("--hc-glass-bg", `rgba(22,24,28,${a})`);
-    r.setProperty("--hc-glass-filter", `blur(${b}px) saturate(130%)`);
-    r.setProperty("--ha-card-background", `rgba(22,24,28,${a})`);
-    r.setProperty("--ha-card-backdrop-filter", `blur(${b}px) saturate(130%)`);
-    r.setProperty("--ha-card-border-color", "rgba(255,255,255,0.08)");
-    this._vars = true;
+    const all = { ...v,
+      "--ha-card-background": c.style === "liquid" ? v["--hc-glass-bg"] : `rgba(22,24,28,${a})`,
+      "--ha-card-backdrop-filter": v["--hc-glass-filter"],
+      "--ha-card-border-color": "rgba(255,255,255,.14)",
+      "--ha-card-border-width": "0.8px",
+      "--ha-card-box-shadow": v["--hc-glass-shadow"],
+      "--card-background-color": `rgba(22,24,28,${Math.min(0.9, a + 0.15)})`,
+      "--ha-badge-background-color": `rgba(22,24,28,${a})`,
+    };
+    for (const [k, val] of Object.entries(all)) el.style.setProperty(k, val);
+    this._varEl = el; this._varKeys = Object.keys(all);
   }
   _clearVars() {
-    if (!this._vars) return;
-    const r = document.documentElement.style;
-    ["--hc-glass-bg", "--hc-glass-filter", "--ha-card-background", "--ha-card-backdrop-filter", "--ha-card-border-color"].forEach((v) => r.removeProperty(v));
-    this._vars = false;
+    if (!this._varEl) return;
+    for (const k of this._varKeys || []) this._varEl.style.removeProperty(k);
+    this._varEl = null;
   }
   _render() {
     this.shadowRoot.innerHTML = `<style>
@@ -3796,13 +3817,13 @@ class HcStyleCard extends HTMLElement {
     const css = this._bgCss(bg);
     if (css) view.style.setProperty("--view-background", css); else view.style.removeProperty("--view-background");
   }
-  _findView() {
+  _findView(strict) {
     let n = this;
-    for (let i = 0; i < 40 && n; i++) {
+    for (let i = 0; i < 60 && n; i++) {
       n = n.parentNode || n.host;
       if (n && n.tagName && /^HUI-(SECTIONS|MASONRY|PANEL|SIDEBAR)-VIEW$/.test(n.tagName)) return n;
-      if (n && n.tagName === "HUI-VIEW-BACKGROUND") return n;
     }
+    if (strict) return null;
     return document.querySelector("home-assistant")?.shadowRoot?.querySelector("home-assistant-main")?.shadowRoot?.querySelector("ha-panel-lovelace")?.shadowRoot?.querySelector("hui-root")?.shadowRoot?.querySelector("hui-view-container") || null;
   }
   _close(ov, keep) {
@@ -3825,6 +3846,7 @@ class HcStyleCard extends HTMLElement {
       const fix = (c) => {
         if (!c || typeof c !== "object") return c;
         if (c.type === "custom:hc-style-card") return { ...c, ...me };
+        if (c.type === "custom:home-connect-card") { if (d.style === "none") delete c.glass; else c.glass = { style: d.style, alpha, blur }; }
         if (c.type === "custom:bubble-card" && c.card_type !== "separator") {
           const ct = c.card_type || "button";
           let mods = (c.modules || []).filter((m) => !HC_GLASS_MODS.includes(m));
