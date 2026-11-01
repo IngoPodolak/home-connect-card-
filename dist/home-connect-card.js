@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.11.1";
+const HC_VERSION = "1.11.2";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -3805,7 +3805,7 @@ class HcStyleCard extends HTMLElement {
     if (!this._skinT && this.isConnected) this._skinT = setInterval(() => {
       if (!this.isConnected) return;
       const cc = this._draft && this.shadowRoot.querySelector(".hcsov") ? this._draft : this._config;
-      this._skin(cc); this._applyBg(cc.background); if (cc.kiosk) this._kioskOn();
+      this._skin(cc); this._applyBg(cc.background); this._fixCams(); if (cc.kiosk) this._kioskOn();
     }, 2000);
   }
   _deep(sel, root, out = [], depth = 0) {
@@ -3883,6 +3883,20 @@ ${tiles}{background-color:rgba(0,0,0,.18) !important;border-color:rgba(120,120,1
     return `.app{background:transparent !important}
 .p,.chip,.person{background:rgba(22,24,28,${a}) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
 ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent !important}`;
+  }
+  // Kameras in der Desktop-Karte: Seitenverhältnis wie das echte Bild (z. B. 4:3 statt fest 16:9)
+  _fixCams() {
+    const view = this._findView(true); if (!view) return;
+    const deep = (root, sel, out = [], d = 0) => { if (!root || d > 10) return out; root.querySelectorAll("*").forEach((e) => { if (e.matches(sel)) out.push(e); if (e.shadowRoot) deep(e.shadowRoot, sel, out, d + 1); }); return out; };
+    for (const pc of this._deep("podolan-desktop-card", view.shadowRoot || view)) {
+      pc.shadowRoot?.querySelectorAll(".cam").forEach((cam) => {
+        const m = deep(cam, "video,img").find((x) => (x.videoWidth || x.naturalWidth) > 0);
+        if (!m) return;
+        const ar = `${m.videoWidth || m.naturalWidth} / ${m.videoHeight || m.naturalHeight}`;
+        if (cam.style.aspectRatio !== ar) { cam.style.aspectRatio = ar; cam.style.height = "auto"; cam.style.maxHeight = "70vh"; cam.style.margin = "0 auto"; cam.style.width = "100%"; }
+        const g = cam.closest(".camgrid"); if (g && g.style.gridTemplateRows !== "none") { g.style.gridTemplateRows = "none"; g.style.height = "auto"; }
+      });
+    }
   }
   _skin(c) {
     const view = this._findView(true); if (!view) return;
