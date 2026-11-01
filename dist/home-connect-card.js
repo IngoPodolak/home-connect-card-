@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.10.4";
+const HC_VERSION = "1.11.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -3745,8 +3745,8 @@ const HC_GRADIENTS = [
   { id: "g-graphite", name: "Graphit", css: "linear-gradient(160deg,#2a2d33 0%,#15171b 60%,#0b0c0e 100%)" },
 ];
 const HC_STY = {
-  de: { title: "Darstellung", style: "Stil", none: "Standard", frosted: "Frosted Glass", liquid: "Liquid Glass", glow: "Window Glow", transp: "Transparenz", blur: "Unschärfe", bg: "Hintergrund", nobg: "Keiner", upload: "Foto hochladen", url: "Bild-Adresse (URL)", apply: "Übernehmen", cancel: "Abbrechen", saving: "Speichere Dashboard …", saved: "Dashboard umgestellt", err: "Fehler: ", hint: "Gilt für alle Bubble Cards und Pop-ups dieses Dashboards und für alle Geräte." },
-  en: { title: "Appearance", style: "Style", none: "Default", frosted: "Frosted glass", liquid: "Liquid glass", glow: "Window glow", transp: "Transparency", blur: "Blur", bg: "Background", nobg: "None", upload: "Upload photo", url: "Image URL", apply: "Apply", cancel: "Cancel", saving: "Saving dashboard …", saved: "Dashboard updated", err: "Error: ", hint: "Applies to all Bubble Cards and pop-ups of this dashboard, on every device." },
+  de: { title: "Darstellung", style: "Stil", none: "Standard", frosted: "Frosted Glass", liquid: "Liquid Glass", glow: "Window Glow", transp: "Transparenz", blur: "Unschärfe", bg: "Hintergrund", nobg: "Keiner", upload: "Foto hochladen", url: "Bild-Adresse (URL)", apply: "Übernehmen", cancel: "Abbrechen", saving: "Speichere Dashboard …", saved: "Dashboard umgestellt", err: "Fehler: ", hint: "Gilt nur für dich und nur für dieses Dashboard – auf allen deinen Geräten." },
+  en: { title: "Appearance", style: "Style", none: "Default", frosted: "Frosted glass", liquid: "Liquid glass", glow: "Window glow", transp: "Transparency", blur: "Blur", bg: "Background", nobg: "None", upload: "Upload photo", url: "Image URL", apply: "Apply", cancel: "Cancel", saving: "Saving dashboard …", saved: "Dashboard updated", err: "Error: ", hint: "Applies only to you and only to this dashboard – on all your devices." },
 };
 const HC_GLASS_MODS = ["frosted_glass", "liquid_glass_2", "light_window_glow", "hc_glow_separator"];
 const HC_LIQUID_OK = ["button", "calendar", "climate", "cover", "media-player", "select", "separator"];
@@ -3754,16 +3754,89 @@ const HC_LIQUID_OK = ["button", "calendar", "climate", "cover", "media-player", 
 class HcStyleCard extends HTMLElement {
   static getStubConfig() { return { style: "frosted", transparency: 60, blur: 20 }; }
   setConfig(c) {
-    this._config = { style: "frosted", transparency: 60, blur: 20, background: null, images: [], ...c };
+    this._base = { style: "none", transparency: 60, blur: 20, background: null, images: [], ...c };
+    this._config = { ...this._base, ...(this._mine || {}) };
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
-    this._render(); this._applyVars(this._config);
+    this._render(); this._activate(this._config);
   }
-  set hass(h) { this._hass = h; }
+  set hass(h) {
+    const first = !this._hass; this._hass = h;
+    if (first) this._loadUser();
+  }
   get lang() { return (this._hass?.language || "de").startsWith("de") ? "de" : "en"; }
   getCardSize() { return 1; }
   getGridOptions() { return { columns: 2, rows: 1, min_columns: 1, min_rows: 1 }; }
-  connectedCallback() { setTimeout(() => this._applyVars(this._config), 0); }
-  disconnectedCallback() { this._clearVars(); }
+  connectedCallback() { setTimeout(() => this._activate(this._config), 0); }
+  disconnectedCallback() { this._clearVars(); this._kioskOff(true); if (this._skinT) { clearInterval(this._skinT); this._skinT = null; } }
+  // ---------- pro Nutzer + pro Dashboard (HA-Benutzerdaten) ----------
+  _dash() { return location.pathname.split("/")[1] || "lovelace"; }
+  async _loadUser() {
+    try {
+      const r = await this._hass.callWS({ type: "frontend/get_user_data", key: "hc_glass" });
+      this._ud = (r && r.value) || {};
+    } catch (e) { this._ud = {}; }
+    this._mine = this._ud[this._dash()] || null;
+    this._config = { ...this._base, ...(this._mine || {}) };
+    this._activate(this._config);
+  }
+  async _storeUser(vals) {
+    this._ud = { ...(this._ud || {}), [this._dash()]: vals };
+    this._mine = vals;
+    await this._hass.callWS({ type: "frontend/set_user_data", key: "hc_glass", value: this._ud });
+  }
+  _activate(c) {
+    if (!c) return;
+    window.__hcGlass = window.__hcGlass || {};
+    window.__hcGlass[this._dash()] = { style: c.style, alpha: this._alpha(c), blur: c.blur ?? 20 };
+    this._applyVars(c);
+    this._applyBg(c.background);
+    this._refreshBubble();
+    if (c.kiosk) this._kioskOn(); else this._kioskOff();
+    if (!this._skinT && this.isConnected) this._skinT = setInterval(() => {
+      if (!this.isConnected) return;
+      const cc = this._draft && this.shadowRoot.querySelector(".hcsov") ? this._draft : this._config;
+      this._skin(cc); this._applyBg(cc.background); if (cc.kiosk) this._kioskOn();
+    }, 2000);
+  }
+  _deep(sel, root, out = [], depth = 0) {
+    if (!root || depth > 14) return out;
+    root.querySelectorAll("*").forEach((el) => { if (el.matches(sel)) out.push(el); if (el.shadowRoot) this._deep(sel, el.shadowRoot, out, depth + 1); });
+    return out;
+  }
+  _refreshBubble() {
+    clearTimeout(this._rbT);
+    // Bubble Card wertet alle Modul-Stile neu aus, wenn dieses Ereignis kommt (wie nach einer Modul-Änderung)
+    this._rbT = setTimeout(() => window.dispatchEvent(new CustomEvent("bubble-card-module-updated", { detail: { id: "hc_glass" } })), 30);
+  }
+  _applyBg(bg) {
+    const css = this._bgCss(bg);
+    for (const el of this._deep("hui-view-background", document.querySelector("home-assistant")?.shadowRoot)) {
+      if (css) el.style.setProperty("--view-background", css, "important");
+      else if (bg === "") el.style.setProperty("--view-background", "none", "important");
+      else if (el.style.getPropertyPriority("--view-background") === "important") el.style.removeProperty("--view-background");
+    }
+  }
+  // ---------- Kopfzeile + Seitenleiste ein/aus ----------
+  _huiRoot() { return this._deep("hui-root", document.querySelector("home-assistant")?.shadowRoot)[0]; }
+  _kioskOn() {
+    const r = this._huiRoot(); if (!r?.shadowRoot) return;
+    if (!r.shadowRoot.getElementById("hc-kiosk")) { const st = document.createElement("style"); st.id = "hc-kiosk"; st.textContent = ".header{display:none !important}:host{--header-height:0px !important}#view{padding-top:0 !important;min-height:100vh !important}hui-view-container{padding-top:0 !important}"; r.shadowRoot.appendChild(st); }
+    if (!this._kioskSide) { this._kioskSide = true; document.querySelector("home-assistant")?.dispatchEvent(new CustomEvent("hass-dock-sidebar", { detail: { dock: "always_hidden" }, bubbles: true, composed: true })); }
+    this._renderKioskBtn(true);
+  }
+  _kioskOff(leaving) {
+    const r = this._huiRoot();
+    r?.shadowRoot?.getElementById("hc-kiosk")?.remove();
+    if (this._kioskSide) { this._kioskSide = false; document.querySelector("home-assistant")?.dispatchEvent(new CustomEvent("hass-dock-sidebar", { detail: { dock: "docked" }, bubbles: true, composed: true })); }
+    if (!leaving) this._renderKioskBtn(false);
+  }
+  async _toggleKiosk() {
+    const on = !this._config.kiosk;
+    this._config = { ...this._config, kiosk: on };
+    if (on) this._kioskOn(); else this._kioskOff();
+    try { await this._storeUser({ ...(this._mine || {}), style: this._config.style, transparency: this._config.transparency, blur: this._config.blur, background: this._config.background, images: this._config.images, kiosk: on }); } catch (e) { /* */ }
+  }
+  _renderKioskBtn(on) { const b = this.shadowRoot?.querySelector(".kbtn"); if (b) b.classList.toggle("on", !!on); }
   _alpha(c) { return Math.round(Math.max(0.04, Math.min(0.95, (100 - (c.transparency ?? 60)) / 100)) * 100) / 100; }
   _applyVars(c) {
     if (!c) return;
@@ -3785,7 +3858,6 @@ class HcStyleCard extends HTMLElement {
     for (const [k, val] of Object.entries(all)) el.style.setProperty(k, val);
     this._varEl = el; this._varKeys = Object.keys(all);
     this._skin(c);
-    if (!this._skinT) this._skinT = setInterval(() => this._skin(this._draft && this.shadowRoot.querySelector(".hcsov") ? this._draft : this._config), 2000);
   }
   // Fremde Karten mit eigenem Design (z. B. podolan-desktop-card) mit anpassen
   _skinCss(c) {
@@ -3831,7 +3903,6 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
     }
   }
   _clearVars() {
-    if (this._skinT) { clearInterval(this._skinT); this._skinT = null; }
     if (!this._varEl) return;
     for (const k of this._varKeys || []) this._varEl.style.removeProperty(k);
     this._varEl = null;
@@ -3841,8 +3912,10 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
       :host{display:flex;justify-content:flex-end;align-items:center;height:100%}
       .btn{width:38px;height:38px;border-radius:50%;border:0.8px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
       .btn:active{transform:scale(.94)}
-    </style><button class="btn" aria-label="Darstellung" title="Darstellung"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg></button>`;
-    this.shadowRoot.querySelector(".btn").addEventListener("click", (e) => { e.stopPropagation(); this._open(); });
+      :host{gap:8px}.kbtn.on{background:rgba(240,163,94,.25);border-color:rgba(240,163,94,.6)}
+    </style>${this._base?.kiosk_button ? `<button class="btn kbtn" aria-label="Menü ein/aus" title="Kopfzeile und Seitenleiste ein/aus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/></svg></button>` : ""}<button class="btn pal" aria-label="Darstellung" title="Darstellung"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg></button>`;
+    this.shadowRoot.querySelector(".pal").addEventListener("click", (e) => { e.stopPropagation(); this._open(); });
+    this.shadowRoot.querySelector(".kbtn")?.addEventListener("click", (e) => { e.stopPropagation(); this._toggleKiosk(); });
   }
   _open() {
     const L = HC_STY[this.lang];
@@ -3894,11 +3967,11 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
     </div>`;
     this.shadowRoot.appendChild(ov);
     const q = (s) => ov.querySelector(s);
-    const preview = () => { this._applyVars(this._draft); this._previewBg(this._draft.background); };
+    const preview = () => this._activate({ ...this._draft, kiosk: this._config.kiosk });
     ov.addEventListener("click", (e) => {
       if (e.target === ov) return this._close(ov, false);
       const st = e.target.closest("[data-st]"); if (st) { this._draft.style = st.dataset.st; ov.querySelectorAll(".st").forEach((b) => b.classList.toggle("on", b === st)); preview(); }
-      const bg = e.target.closest("[data-bg]"); if (bg) { this._draft.background = bg.dataset.bg || null; ov.querySelectorAll(".bg").forEach((b) => b.classList.toggle("on", b === bg)); preview(); }
+      const bg = e.target.closest("[data-bg]"); if (bg) { this._draft.background = bg.dataset.bg || ""; ov.querySelectorAll(".bg").forEach((b) => b.classList.toggle("on", b === bg)); preview(); }
       if (e.target.closest("[data-upload]")) q("input[type=file]").click();
       if (e.target.closest("[data-url]")) { const u = q(".url").value.trim(); if (u) this._addImage(ov, u); }
       const x = e.target.closest("[data-x]"); if (x) { if (x.dataset.x === "apply") this._save(ov); else this._close(ov, false); }
@@ -3926,7 +3999,7 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
     const b = document.createElement("button"); b.className = "bg"; b.dataset.bg = url; b.style.backgroundImage = `url('${url}')`;
     grid.insertBefore(b, up);
     ov.querySelectorAll(".bg").forEach((x) => x.classList.toggle("on", x === b));
-    this._previewBg(url);
+    this._activate({ ...this._draft, kiosk: this._config.kiosk });
   }
   _bgCss(bg) {
     if (!bg) return null;
@@ -3951,7 +4024,7 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
   }
   _close(ov, keep) {
     ov.remove();
-    if (!keep) { this._applyVars(this._config); this._previewBg(this._config.background); }
+    if (!keep) this._activate(this._config);
   }
   _toast(msg) {
     this.dispatchEvent(new CustomEvent("hass-notification", { detail: { message: msg }, bubbles: true, composed: true }));
@@ -3961,56 +4034,33 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
     if (!this._hass) return;
     this._toast(L.saving);
     try {
-      const url_path = (location.pathname.split("/")[1] || "lovelace");
+      // 1) Dashboard einmalig vorbereiten: alle Bubble Cards bekommen das Modul "hc_glass" (Stil kommt dann pro Nutzer)
+      const url_path = this._dash();
       const cfg = await this._hass.callWS({ type: "lovelace/config", url_path: url_path === "lovelace" ? null : url_path });
-      const alpha = this._alpha(d), blur = d.blur;
-      const me = { type: this._config.type, style: d.style, transparency: d.transparency, blur: d.blur, background: d.background || null, images: d.images || [] };
-      if (this._config.grid_options) me.grid_options = this._config.grid_options;
+      let changed = false;
       const fix = (c) => {
         if (!c || typeof c !== "object") return c;
-        if (c.type === "custom:hc-style-card") return { ...c, ...me };
-        if (c.type === "custom:home-connect-card") { if (d.style === "none") delete c.glass; else c.glass = { style: d.style, alpha, blur }; }
+        if (c.type === "custom:home-connect-card" && c.glass) { delete c.glass; changed = true; }
         if (c.type === "custom:bubble-card") {
-          const ct = c.card_type || "button";
-          let mods = (c.modules || []).filter((m) => !HC_GLASS_MODS.includes(m));
-          const frosted = () => {
-            mods.push("frosted_glass");
-            c.frosted_glass = { icon_background: "dark", border: "bubble", main_shadow: false, ...(c.frosted_glass || {}), background: c.frosted_glass?.background || [22, 24, 28], opacity: alpha, blur };
-          };
-          if (d.style === "frosted") frosted();
-          else if (d.style === "liquid") {
-            if (HC_LIQUID_OK.includes(ct)) { mods.push("liquid_glass_2"); c.liquid_glass_2 = { radius: 28, saturate: 120, depth: 4, strength: 100, chromaticAberration: 3, ...(c.liquid_glass_2 || {}), blur: Math.round(blur / 5) }; }
-            else frosted();
-          } else if (d.style === "glow" && ct === "separator") {
-            // eigenes Bubble-Modul (über Bubble Card Tools angelegt): gleicher Schimmer wie Window Glow
-            mods.push("hc_glow_separator"); c.hc_glow_separator = { opacity: alpha, blur };
-          } else if (d.style === "glow") {
-            frosted();
-            // Window Glow auf allen Buttons – auch Räume ohne Licht (z. B. nur Rollläden) bekommen den "aus"-Schimmer
-            if (ct === "button") {
-              mods.push("light_window_glow");
-              const le = c.light_window_glow?.light_entity || (String(c.entity || "").startsWith("light.") ? c.entity : undefined);
-              c.light_window_glow = { rgb_off_left: [255, 255, 255], rgb_off_right: [255, 255, 255], ...(c.light_window_glow || {}) };
-              if (le) c.light_window_glow.light_entity = le;
-            }
-          }
-          if (ct === "pop-up") { c.bg_opacity = String(Math.round(alpha * 100)); c.bg_blur = String(blur); }
+          const before = JSON.stringify(c.modules || []);
+          const mods = (c.modules || []).filter((m) => !HC_GLASS_MODS.includes(m));
+          mods.push("hc_glass");
           c.modules = [...new Set(mods)];
+          if ((c.card_type || "button") === "button" && !c.light_window_glow) { c.light_window_glow = { rgb_off_left: [255, 255, 255], rgb_off_right: [255, 255, 255] }; if (String(c.entity || "").startsWith("light.")) c.light_window_glow.light_entity = c.entity; changed = true; }
+          if (JSON.stringify(c.modules) !== before) changed = true;
         }
         for (const k of ["cards", "card"]) if (c[k]) c[k] = Array.isArray(c[k]) ? c[k].map(fix) : fix(c[k]);
         if (Array.isArray(c.sections)) c.sections = c.sections.map(fix);
         return c;
       };
-      const css = this._bgCss(d.background);
-      cfg.views = (cfg.views || []).map((v) => {
-        v = fix(v);
-        if (css) v.background = css; else if (typeof v.background === "string" && (v.background.includes("gradient") || v.background.includes("url("))) delete v.background;
-        return v;
-      });
-      await this._hass.callWS({ type: "lovelace/config/save", url_path: url_path === "lovelace" ? null : url_path, config: cfg });
-      this._config = { ...this._config, ...me };
+      cfg.views = (cfg.views || []).map(fix);
+      if (changed) await this._hass.callWS({ type: "lovelace/config/save", url_path: url_path === "lovelace" ? null : url_path, config: cfg });
+      // 2) Einstellung nur für diesen Nutzer und dieses Dashboard speichern
+      const vals = { style: d.style, transparency: d.transparency, blur: d.blur, background: d.background ?? null, images: d.images || [], kiosk: !!this._config.kiosk };
+      await this._storeUser(vals);
+      this._config = { ...this._base, ...vals };
       this._close(ov, true);
-      this._applyVars(this._config);
+      this._activate(this._config);
       this._toast(L.saved);
     } catch (e) { this._toast(L.err + (e.message || e)); }
   }
