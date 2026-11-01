@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.8.1";
+const HC_VERSION = "1.9.0";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2131,7 +2131,7 @@ function animSvg(kind, color, m) {
 /* ------------------------------------------------------------------ */
 const STYLE = `
 :host{display:block;--hc-accent:#ff8a3d;--hc-text:var(--primary-text-color,#f2f3f5);--hc-muted:var(--secondary-text-color,#a0a6af);
---hc-card:var(--bubble-main-background-color,var(--ha-card-background,var(--card-background-color,#1c1e22)));
+--hc-card:var(--hc-glass-bg,var(--bubble-main-background-color,var(--ha-card-background,var(--card-background-color,#1c1e22))));
 --hc-s1:rgba(var(--rgb-primary-text-color,242,243,245),.07);--hc-s2:rgba(var(--rgb-primary-text-color,242,243,245),.11);
 --hc-line:rgba(var(--rgb-primary-text-color,242,243,245),.18);--hc-line2:rgba(var(--rgb-primary-text-color,242,243,245),.26);
 --hc-deep:rgba(0,0,0,.28);--hc-cupline:rgba(var(--rgb-primary-text-color,242,243,245),.75);
@@ -2140,11 +2140,11 @@ font-family:var(--paper-font-body1_-_font-family,inherit);color:var(--hc-text)}
 *{box-sizing:border-box}
 button{font:inherit;color:inherit}
 .wrap{display:flex;flex-direction:column;gap:12px}
-.box{background:var(--hc-card);border-radius:var(--hc-radius);padding:16px;display:flex;flex-direction:column;gap:12px}
+.box{background:var(--hc-card);-webkit-backdrop-filter:var(--hc-glass-filter,none);backdrop-filter:var(--hc-glass-filter,none);border-radius:var(--hc-radius);padding:16px;display:flex;flex-direction:column;gap:12px}
 .lbl{font-size:12px;color:var(--hc-muted);font-weight:500}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
-.pill{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;background:var(--hc-card);border-radius:32px;padding:8px;min-height:60px;cursor:pointer;border:0;width:100%;text-align:left}
+.pill{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;background:var(--hc-card);-webkit-backdrop-filter:var(--hc-glass-filter,none);backdrop-filter:var(--hc-glass-filter,none);border-radius:32px;padding:8px;min-height:60px;cursor:pointer;border:0;width:100%;text-align:left}
 .pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--bubble-border,0.8px solid rgba(120,120,120,.18));background:var(--bubble-main-background-color,radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,.12),transparent 70%),var(--hc-card))}
 .pill.compact .ico{width:38px;height:38px}
 .pill.compact .ico svg{width:20px;height:20px}
@@ -3640,10 +3640,234 @@ class HomeConnectCardEditor extends HTMLElement {
   }
 }
 
+
+// =====================================================================
+//  hc-style-card: Stil-Umschalter für das ganze Dashboard
+//  (Bubble-Module Frosted Glass / Liquid Glass 2 / Window Glow, Transparenz, Blur, Hintergrund)
+// =====================================================================
+const HC_GRADIENTS = [
+  { id: "g-night", name: "Nacht", css: "linear-gradient(160deg,#0f1424 0%,#1b1033 55%,#06070b 100%)" },
+  { id: "g-aurora", name: "Polarlicht", css: "radial-gradient(120% 80% at 10% 0%,#1d6b62 0%,transparent 55%),radial-gradient(90% 70% at 100% 30%,#4a2a7a 0%,transparent 60%),linear-gradient(180deg,#071214,#05060a)" },
+  { id: "g-sunset", name: "Abendrot", css: "radial-gradient(100% 70% at 80% 0%,#c2542d 0%,transparent 55%),radial-gradient(90% 80% at 0% 60%,#5b1e4d 0%,transparent 60%),linear-gradient(180deg,#1a0d14,#07060a)" },
+  { id: "g-ocean", name: "Ozean", css: "radial-gradient(110% 80% at 0% 0%,#1565a8 0%,transparent 55%),radial-gradient(90% 70% at 100% 100%,#0b7a8a 0%,transparent 60%),linear-gradient(180deg,#06121e,#04070c)" },
+  { id: "g-forest", name: "Wald", css: "radial-gradient(100% 80% at 20% 10%,#2f6b3a 0%,transparent 55%),radial-gradient(80% 70% at 100% 90%,#6b5a22 0%,transparent 60%),linear-gradient(180deg,#0a120b,#050705)" },
+  { id: "g-graphite", name: "Graphit", css: "linear-gradient(160deg,#2a2d33 0%,#15171b 60%,#0b0c0e 100%)" },
+];
+const HC_STY = {
+  de: { title: "Darstellung", style: "Stil", none: "Standard", frosted: "Frosted Glass", liquid: "Liquid Glass", glow: "Window Glow", transp: "Transparenz", blur: "Unschärfe", bg: "Hintergrund", nobg: "Keiner", upload: "Foto hochladen", url: "Bild-Adresse (URL)", apply: "Übernehmen", cancel: "Abbrechen", saving: "Speichere Dashboard …", saved: "Dashboard umgestellt", err: "Fehler: ", hint: "Gilt für alle Bubble Cards und Pop-ups dieses Dashboards und für alle Geräte." },
+  en: { title: "Appearance", style: "Style", none: "Default", frosted: "Frosted glass", liquid: "Liquid glass", glow: "Window glow", transp: "Transparency", blur: "Blur", bg: "Background", nobg: "None", upload: "Upload photo", url: "Image URL", apply: "Apply", cancel: "Cancel", saving: "Saving dashboard …", saved: "Dashboard updated", err: "Error: ", hint: "Applies to all Bubble Cards and pop-ups of this dashboard, on every device." },
+};
+const HC_GLASS_MODS = ["frosted_glass", "liquid_glass_2", "light_window_glow"];
+const HC_LIQUID_OK = ["button", "calendar", "climate", "cover", "media-player", "select"];
+
+class HcStyleCard extends HTMLElement {
+  static getStubConfig() { return { style: "frosted", transparency: 60, blur: 20 }; }
+  setConfig(c) {
+    this._config = { style: "frosted", transparency: 60, blur: 20, background: null, images: [], ...c };
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    this._render(); this._applyVars(this._config);
+  }
+  set hass(h) { this._hass = h; }
+  get lang() { return (this._hass?.language || "de").startsWith("de") ? "de" : "en"; }
+  getCardSize() { return 1; }
+  getGridOptions() { return { columns: 2, rows: 1, min_columns: 1, min_rows: 1 }; }
+  connectedCallback() { this._applyVars(this._config); }
+  disconnectedCallback() { this._clearVars(); }
+  _alpha(c) { return Math.round(Math.max(0.04, Math.min(0.95, (100 - (c.transparency ?? 60)) / 100)) * 100) / 100; }
+  _applyVars(c) {
+    if (!c) return;
+    const r = document.documentElement.style;
+    if (c.style === "none") { this._clearVars(); return; }
+    const a = this._alpha(c), b = c.blur ?? 20;
+    r.setProperty("--hc-glass-bg", `rgba(22,24,28,${a})`);
+    r.setProperty("--hc-glass-filter", `blur(${b}px) saturate(130%)`);
+    r.setProperty("--ha-card-background", `rgba(22,24,28,${a})`);
+    r.setProperty("--ha-card-backdrop-filter", `blur(${b}px) saturate(130%)`);
+    r.setProperty("--ha-card-border-color", "rgba(255,255,255,0.08)");
+    this._vars = true;
+  }
+  _clearVars() {
+    if (!this._vars) return;
+    const r = document.documentElement.style;
+    ["--hc-glass-bg", "--hc-glass-filter", "--ha-card-background", "--ha-card-backdrop-filter", "--ha-card-border-color"].forEach((v) => r.removeProperty(v));
+    this._vars = false;
+  }
+  _render() {
+    this.shadowRoot.innerHTML = `<style>
+      :host{display:flex;justify-content:flex-end;align-items:center;height:100%}
+      .btn{width:38px;height:38px;border-radius:50%;border:0.8px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:#f2f3f5;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+      .btn:active{transform:scale(.94)}
+    </style><button class="btn" aria-label="Darstellung" title="Darstellung"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg></button>`;
+    this.shadowRoot.querySelector(".btn").addEventListener("click", (e) => { e.stopPropagation(); this._open(); });
+  }
+  _open() {
+    const L = HC_STY[this.lang];
+    const c = { ...this._config };
+    this._draft = c;
+    const ov = document.createElement("div");
+    ov.className = "hcsov";
+    const imgs = [...(c.images || []), ...(c.background && !String(c.background).startsWith("g-") && !(c.images || []).includes(c.background) ? [c.background] : [])];
+    const styles = ["none", "frosted", "liquid", "glow"];
+    const prev = { none: "background:#1c1e22", frosted: "background:rgba(255,255,255,.12);backdrop-filter:blur(6px)", liquid: "background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)", glow: "background:rgba(255,255,255,.1);box-shadow:0 0 18px rgba(255,190,90,.75),inset 0 0 0 1px rgba(255,210,150,.4)" };
+    ov.innerHTML = `<style>
+      .hcsov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;font-family:var(--paper-font-body1_-_font-family,Inter,system-ui,sans-serif);color:#f2f3f5}
+      .sheet{width:min(520px,100%);max-height:88vh;overflow:auto;background:rgba(24,26,30,.92);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:0.8px solid rgba(255,255,255,.1);border-radius:28px 28px 0 0;padding:18px 18px 24px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box;animation:up .2s ease-out}
+      @media (min-width:600px){.hcsov{align-items:center}.sheet{border-radius:28px}}
+      @keyframes up{from{transform:translateY(30px);opacity:0}}
+      h3{margin:0;font-size:18px;font-weight:700}.lbl{font-size:12px;color:#a0a6af}
+      .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .styles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+      .st{border:0;border-radius:18px;background:rgba(255,255,255,.06);color:#f2f3f5;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;font-weight:600;outline:2px solid transparent}
+      .st.on{outline-color:#f0a35e;background:rgba(240,163,94,.14)}
+      .sw{width:42px;height:26px;border-radius:13px}
+      input[type=range]{width:100%;accent-color:#f0a35e}
+      .bgs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+      .bg{aspect-ratio:1;border-radius:16px;border:0;cursor:pointer;background-size:cover;background-position:center;outline:2px solid transparent;color:#f2f3f5;font-size:11px;font-weight:600;display:flex;align-items:flex-end;justify-content:center;padding:6px;box-sizing:border-box;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+      .bg.on{outline-color:#f0a35e}.bg.none{background:#111;border:1px dashed rgba(255,255,255,.25);align-items:center}
+      .bg.up{background:rgba(255,255,255,.06);align-items:center;flex-direction:column;justify-content:center;gap:4px}
+      .urlrow{display:flex;gap:8px}.urlrow input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:0;border-radius:14px;padding:10px 12px;color:#f2f3f5;font:inherit;font-size:13px}
+      .act{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .act button,.urlrow button{height:46px;border-radius:23px;border:0;font:inherit;font-weight:600;font-size:14px;cursor:pointer;background:rgba(255,255,255,.08);color:#f2f3f5}
+      .urlrow button{height:40px;padding:0 14px}
+      .act .pri{background:#f0a35e;color:#141414}
+      .val{font-size:13px;font-weight:600}
+    </style>
+    <div class="sheet" role="dialog" aria-label="${L.title}">
+      <div class="row"><h3>${L.title}</h3><span class="lbl">v${HC_VERSION}</span></div>
+      <div><div class="lbl" style="margin-bottom:8px">${L.style}</div><div class="styles">${styles.map((k) => `<button class="st ${c.style === k ? "on" : ""}" data-st="${k}"><span class="sw" style="${prev[k]}"></span>${L[k]}</button>`).join("")}</div></div>
+      <div><div class="row"><span class="lbl">${L.transp}</span><span class="val" data-v="transparency">${c.transparency}%</span></div><input type="range" min="0" max="95" step="5" value="${c.transparency}" data-r="transparency"></div>
+      <div><div class="row"><span class="lbl">${L.blur}</span><span class="val" data-v="blur">${c.blur}px</span></div><input type="range" min="0" max="40" step="1" value="${c.blur}" data-r="blur"></div>
+      <div><div class="lbl" style="margin-bottom:8px">${L.bg}</div><div class="bgs">
+        <button class="bg none ${!c.background ? "on" : ""}" data-bg="">${L.nobg}</button>
+        ${HC_GRADIENTS.map((g) => `<button class="bg ${c.background === g.id ? "on" : ""}" data-bg="${g.id}" style="background:${g.css}">${g.name}</button>`).join("")}
+        ${imgs.map((u) => `<button class="bg ${c.background === u ? "on" : ""}" data-bg="${u}" style="background-image:url('${u}')"></button>`).join("")}
+        <button class="bg up" data-upload="1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>${L.upload}</button>
+      </div>
+      <input type="file" accept="image/*" hidden>
+      <div class="urlrow" style="margin-top:8px"><input type="text" placeholder="${L.url}" class="url"><button data-url="1">OK</button></div></div>
+      <div class="lbl">${L.hint}</div>
+      <div class="act"><button data-x="cancel">${L.cancel}</button><button class="pri" data-x="apply">${L.apply}</button></div>
+    </div>`;
+    this.shadowRoot.appendChild(ov);
+    const q = (s) => ov.querySelector(s);
+    const preview = () => { this._applyVars(this._draft); this._previewBg(this._draft.background); };
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) return this._close(ov, false);
+      const st = e.target.closest("[data-st]"); if (st) { this._draft.style = st.dataset.st; ov.querySelectorAll(".st").forEach((b) => b.classList.toggle("on", b === st)); preview(); }
+      const bg = e.target.closest("[data-bg]"); if (bg) { this._draft.background = bg.dataset.bg || null; ov.querySelectorAll(".bg").forEach((b) => b.classList.toggle("on", b === bg)); preview(); }
+      if (e.target.closest("[data-upload]")) q("input[type=file]").click();
+      if (e.target.closest("[data-url]")) { const u = q(".url").value.trim(); if (u) this._addImage(ov, u); }
+      const x = e.target.closest("[data-x]"); if (x) { if (x.dataset.x === "apply") this._save(ov); else this._close(ov, false); }
+    });
+    ov.querySelectorAll("[data-r]").forEach((r) => r.addEventListener("input", () => {
+      this._draft[r.dataset.r] = +r.value;
+      ov.querySelector(`[data-v="${r.dataset.r}"]`).textContent = r.dataset.r === "blur" ? `${r.value}px` : `${r.value}%`;
+      preview();
+    }));
+    q("input[type=file]").addEventListener("change", async (e) => {
+      const f = e.target.files?.[0]; if (!f || !this._hass) return;
+      try {
+        const fd = new FormData(); fd.append("file", f);
+        const res = await this._hass.fetchWithAuth("/api/image/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const j = await res.json();
+        this._addImage(ov, `/api/image/serve/${j.id}/original`);
+      } catch (err) { this._toast(HC_STY[this.lang].err + (err.message || err)); }
+    });
+  }
+  _addImage(ov, url) {
+    this._draft.images = [...new Set([...(this._draft.images || []), url])];
+    this._draft.background = url;
+    const grid = ov.querySelector(".bgs"), up = ov.querySelector("[data-upload]");
+    const b = document.createElement("button"); b.className = "bg"; b.dataset.bg = url; b.style.backgroundImage = `url('${url}')`;
+    grid.insertBefore(b, up);
+    ov.querySelectorAll(".bg").forEach((x) => x.classList.toggle("on", x === b));
+    this._previewBg(url);
+  }
+  _bgCss(bg) {
+    if (!bg) return null;
+    const g = HC_GRADIENTS.find((x) => x.id === bg);
+    return g ? `${g.css} fixed` : `center / cover no-repeat fixed url('${bg}')`;
+  }
+  _previewBg(bg) {
+    const view = this._findView();
+    if (!view) return;
+    if (this._origBg === undefined) this._origBg = view.style.getPropertyValue("--view-background") || "";
+    const css = this._bgCss(bg);
+    if (css) view.style.setProperty("--view-background", css); else view.style.removeProperty("--view-background");
+  }
+  _findView() {
+    let n = this;
+    for (let i = 0; i < 40 && n; i++) {
+      n = n.parentNode || n.host;
+      if (n && n.tagName && /^HUI-(SECTIONS|MASONRY|PANEL|SIDEBAR)-VIEW$/.test(n.tagName)) return n;
+      if (n && n.tagName === "HUI-VIEW-BACKGROUND") return n;
+    }
+    return document.querySelector("home-assistant")?.shadowRoot?.querySelector("home-assistant-main")?.shadowRoot?.querySelector("ha-panel-lovelace")?.shadowRoot?.querySelector("hui-root")?.shadowRoot?.querySelector("hui-view-container") || null;
+  }
+  _close(ov, keep) {
+    ov.remove();
+    if (!keep) { this._applyVars(this._config); this._previewBg(this._config.background); }
+  }
+  _toast(msg) {
+    this.dispatchEvent(new CustomEvent("hass-notification", { detail: { message: msg }, bubbles: true, composed: true }));
+  }
+  async _save(ov) {
+    const L = HC_STY[this.lang], d = this._draft;
+    if (!this._hass) return;
+    this._toast(L.saving);
+    try {
+      const url_path = (location.pathname.split("/")[1] || "lovelace");
+      const cfg = await this._hass.callWS({ type: "lovelace/config", url_path: url_path === "lovelace" ? null : url_path });
+      const alpha = this._alpha(d), blur = d.blur;
+      const me = { type: this._config.type, style: d.style, transparency: d.transparency, blur: d.blur, background: d.background || null, images: d.images || [] };
+      if (this._config.grid_options) me.grid_options = this._config.grid_options;
+      const fix = (c) => {
+        if (!c || typeof c !== "object") return c;
+        if (c.type === "custom:hc-style-card") return { ...c, ...me };
+        if (c.type === "custom:bubble-card" && c.card_type !== "separator") {
+          const ct = c.card_type || "button";
+          let mods = (c.modules || []).filter((m) => !HC_GLASS_MODS.includes(m));
+          const frosted = () => {
+            mods.push("frosted_glass");
+            c.frosted_glass = { icon_background: "dark", border: "bubble", main_shadow: false, ...(c.frosted_glass || {}), background: c.frosted_glass?.background || [22, 24, 28], opacity: alpha, blur };
+          };
+          if (d.style === "frosted") frosted();
+          else if (d.style === "liquid") {
+            if (HC_LIQUID_OK.includes(ct)) { mods.push("liquid_glass_2"); c.liquid_glass_2 = { radius: 28, saturate: 120, depth: 4, strength: 100, chromaticAberration: 3, ...(c.liquid_glass_2 || {}), blur: Math.round(blur / 5) }; }
+            else frosted();
+          } else if (d.style === "glow") {
+            frosted();
+            const le = c.light_window_glow?.light_entity || (String(c.entity || "").startsWith("light.") ? c.entity : null);
+            if (le && ct === "button") { mods.push("light_window_glow"); c.light_window_glow = { rgb_off_left: [255, 255, 255], rgb_off_right: [255, 255, 255], state_source: "entity", ...(c.light_window_glow || {}), light_entity: le }; }
+          }
+          if (ct === "pop-up") { c.bg_opacity = String(Math.round(alpha * 100)); c.bg_blur = String(blur); }
+          c.modules = [...new Set(mods)];
+        }
+        for (const k of ["cards", "card"]) if (c[k]) c[k] = Array.isArray(c[k]) ? c[k].map(fix) : fix(c[k]);
+        if (Array.isArray(c.sections)) c.sections = c.sections.map(fix);
+        return c;
+      };
+      const css = this._bgCss(d.background);
+      cfg.views = (cfg.views || []).map((v) => {
+        v = fix(v);
+        if (css) v.background = css; else if (typeof v.background === "string" && (v.background.includes("gradient") || v.background.includes("url("))) delete v.background;
+        return v;
+      });
+      await this._hass.callWS({ type: "lovelace/config/save", url_path: url_path === "lovelace" ? null : url_path, config: cfg });
+      this._config = { ...this._config, ...me };
+      this._close(ov, true);
+      this._applyVars(this._config);
+      this._toast(L.saved);
+    } catch (e) { this._toast(L.err + (e.message || e)); }
+  }
+}
+if (!customElements.get("hc-style-card")) customElements.define("hc-style-card", HcStyleCard);
 if (!customElements.get("home-connect-card")) customElements.define("home-connect-card", HomeConnectCard);
 if (!customElements.get("home-connect-card-editor")) customElements.define("home-connect-card-editor", HomeConnectCardEditor);
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === "home-connect-card")) {
+  window.customCards.push({ type: "hc-style-card", name: "HC Stil-Umschalter", description: "Kleiner Button: Stil (Frosted/Liquid Glass/Window Glow), Transparenz, Unschärfe und Hintergrund für das ganze Dashboard.", preview: false });
   window.customCards.push({
     type: "home-connect-card", name: "Home Connect Card", preview: true,
     description: "Bubble-Card-Stil für Home-Connect-Geräte – kombiniert offizielle, Alt-, Local- und Oven-Private-Integration.",
