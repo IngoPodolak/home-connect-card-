@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.10.3";
+const HC_VERSION = "1.10.4";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2145,7 +2145,7 @@ button{font:inherit;color:inherit}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
 .pill{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;background:var(--hc-card);-webkit-backdrop-filter:var(--hc-glass-filter,none);backdrop-filter:var(--hc-glass-filter,none);border-radius:32px;padding:8px;min-height:60px;cursor:pointer;border:0;width:100%;text-align:left}
-.pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--hc-glass-border,var(--bubble-border,0.8px solid rgba(120,120,120,.18)));background:var(--hc-glass-bg,var(--bubble-main-background-color,radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,.12),transparent 70%),var(--hc-card)));box-shadow:var(--hc-glass-shadow,none)}
+.pill.compact{min-height:50px;padding:5px;gap:10px;border-radius:var(--bubble-border-radius,28px);border:var(--hc-glass-border,var(--bubble-border,0.8px solid rgba(120,120,120,.18)));background:var(--hc-glass-bg,var(--bubble-button-main-background-color,var(--bubble-main-background-color,var(--background-color-2,var(--secondary-background-color,var(--hc-card))))));box-shadow:var(--hc-glass-shadow,none)}
 .pill.compact .ico{width:38px;height:38px}
 .pill.compact .ico svg{width:20px;height:20px}
 :host{container-type:inline-size;position:relative}
@@ -2158,7 +2158,7 @@ button{font:inherit;color:inherit}
 .ddi:hover,.ddi:focus-visible{background:var(--hc-s2);outline:none}
 .ddi.on{background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:color-mix(in srgb,var(--hc-accent) 55%,var(--hc-text));font-weight:600}
 .qs{position:relative;display:flex;align-items:center;gap:5px;margin-left:auto;flex:none;z-index:1}
-.qb{position:relative;height:36px;min-width:36px;border-radius:18px;border:0;background:var(--bubble-sub-button-background-color,var(--hc-s2));color:var(--hc-text);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
+.qb{position:relative;height:36px;min-width:36px;border-radius:18px;border:0;background:var(--bubble-sub-button-background-color,var(--bubble-secondary-background-color,var(--card-background-color,var(--hc-s2))));color:var(--hc-text);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
 .qb.on{background:var(--hc-accent);color:#141414}
 .qsel select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px}
 .qstep{padding:0 2px;gap:0;cursor:default}
@@ -2170,7 +2170,7 @@ button{font:inherit;color:inherit}
 @container (max-width: 360px){.qstep button{width:22px}.qstep .stepval{min-width:30px}.qb{padding:0 6px}.pill.compact .txt .name{font-size:14px}.pill.compact:has(.qs) .val{display:none}}
 .pill .fill{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--hc-accent) 16%,transparent);transition:width 1s linear}
 .ico{position:relative;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--hc-accent) 22%,transparent);color:var(--hc-accent)}
-.pill.compact .ico.idle{background:var(--bubble-icon-background-color,#000);color:var(--primary-text-color,#e1e1e1)}
+.pill.compact .ico.idle{background:var(--bubble-icon-background-color,var(--bubble-secondary-background-color,var(--card-background-color,#000)));color:var(--primary-text-color,#e1e1e1)}
 .pill.compact .name{font-size:14px;font-weight:700;line-height:18px}.pill.compact .state{font-size:12.5px}
 .ico.off{background:color-mix(in srgb,var(--hc-accent) 12%,transparent);color:color-mix(in srgb,var(--hc-accent) 65%,var(--hc-muted))}
 .txt{position:relative;flex:1;min-width:0;display:flex;flex-direction:column}
@@ -3748,7 +3748,7 @@ const HC_STY = {
   de: { title: "Darstellung", style: "Stil", none: "Standard", frosted: "Frosted Glass", liquid: "Liquid Glass", glow: "Window Glow", transp: "Transparenz", blur: "Unschärfe", bg: "Hintergrund", nobg: "Keiner", upload: "Foto hochladen", url: "Bild-Adresse (URL)", apply: "Übernehmen", cancel: "Abbrechen", saving: "Speichere Dashboard …", saved: "Dashboard umgestellt", err: "Fehler: ", hint: "Gilt für alle Bubble Cards und Pop-ups dieses Dashboards und für alle Geräte." },
   en: { title: "Appearance", style: "Style", none: "Default", frosted: "Frosted glass", liquid: "Liquid glass", glow: "Window glow", transp: "Transparency", blur: "Blur", bg: "Background", nobg: "None", upload: "Upload photo", url: "Image URL", apply: "Apply", cancel: "Cancel", saving: "Saving dashboard …", saved: "Dashboard updated", err: "Error: ", hint: "Applies to all Bubble Cards and pop-ups of this dashboard, on every device." },
 };
-const HC_GLASS_MODS = ["frosted_glass", "liquid_glass_2", "light_window_glow"];
+const HC_GLASS_MODS = ["frosted_glass", "liquid_glass_2", "light_window_glow", "hc_glow_separator"];
 const HC_LIQUID_OK = ["button", "calendar", "climate", "cover", "media-player", "select", "separator"];
 
 class HcStyleCard extends HTMLElement {
@@ -3791,15 +3791,15 @@ class HcStyleCard extends HTMLElement {
   _skinCss(c) {
     if (!c || c.style === "none") return "";
     const a = this._alpha(c), b = c.blur ?? 20;
-    const tiles = ".chip,.person,.room,.clim,.efl,.tile,.cam,.ev,.day,.trash";
+    const tiles = ".room,.clim,.efl,.tile,.cam,.ev,.day,.trash";
     if (c.style === "liquid") return `.app{background:transparent !important}
-.p{background:none !important;border:0 !important;box-shadow:inset 0px 1px 2px rgba(255,255,255,0.4),inset 0px 2px 4px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.6) !important;transform:translateZ(0)}
+.p,.chip,.person{background:none !important;border:0 !important;box-shadow:inset 0px 1px 2px rgba(255,255,255,0.4),inset 0px 2px 4px rgba(0,0,0,0.1),0 2px 4px rgba(0,0,0,0.6) !important;transform:translateZ(0)}
 ${tiles}{background-color:rgba(0,0,0,.4) !important;border-color:transparent !important}`;
     if (c.style === "glow") return `.app{background:transparent !important}
-.p{background:radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,0.15),transparent 65%),linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.06)),rgba(22,24,28,${a}) !important;border:1px solid rgba(120,120,120,0.18) !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
+.p,.chip,.person{background:radial-gradient(600px 220px at 0% 0%,rgba(255,255,255,0.15),transparent 65%),linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.06)),rgba(22,24,28,${a}) !important;border:1px solid rgba(120,120,120,0.18) !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
 ${tiles}{background-color:rgba(0,0,0,.18) !important;border-color:rgba(120,120,120,0.18) !important}`;
     return `.app{background:transparent !important}
-.p{background:rgba(22,24,28,${a}) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
+.p,.chip,.person{background:rgba(22,24,28,${a}) !important;border:0 !important;box-shadow:none !important;-webkit-backdrop-filter:blur(${b}px) !important;backdrop-filter:blur(${b}px) !important}
 ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent !important}`;
   }
   _skin(c) {
@@ -3817,17 +3817,17 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
     for (const el of found) {
       const sr = el.shadowRoot; if (!sr) continue;
       let st = sr.getElementById("hc-glass-skin");
-      if (!css) { st?.remove(); sr.querySelectorAll(".p").forEach((p) => { p.style.backdropFilter = ""; }); continue; }
+      if (!css) { st?.remove(); sr.querySelectorAll(".p,.chip,.person").forEach((p) => { p.style.backdropFilter = ""; p._lqW = 0; }); continue; }
       if (!st) { st = document.createElement("style"); st.id = "hc-glass-skin"; }
       if (st.textContent !== css) st.textContent = css;
       if (st.parentNode !== sr || sr.lastChild !== st) sr.appendChild(st);
-      if (c.style === "liquid") sr.querySelectorAll(".p").forEach((p) => {
+      if (c.style === "liquid") sr.querySelectorAll(".p,.chip,.person").forEach((p) => {
         const w = p.clientWidth, h = p.clientHeight; if (!w || !h) return;
         if (p._lqW === w && p._lqH === h) return; p._lqW = w; p._lqH = h;
         const r = Math.min(parseFloat(getComputedStyle(p).borderTopLeftRadius) || 28, h / 2);
         p.style.backdropFilter = `blur(${Math.max(1, Math.round((c.blur ?? 10) / 5))}px) saturate(120%) url("${hcLiquidFilter({ height: h, width: w, radius: r, depth: 4, strength: 100, chromaticAberration: 3 })}")`;
       });
-      else sr.querySelectorAll(".p").forEach((p) => { p.style.backdropFilter = ""; p._lqW = 0; });
+      else sr.querySelectorAll(".p,.chip,.person").forEach((p) => { p.style.backdropFilter = ""; p._lqW = 0; });
     }
   }
   _clearVars() {
@@ -3981,6 +3981,9 @@ ${tiles}{background-color:rgba(15,15,15,.2) !important;border-color:transparent 
           else if (d.style === "liquid") {
             if (HC_LIQUID_OK.includes(ct)) { mods.push("liquid_glass_2"); c.liquid_glass_2 = { radius: 28, saturate: 120, depth: 4, strength: 100, chromaticAberration: 3, ...(c.liquid_glass_2 || {}), blur: Math.round(blur / 5) }; }
             else frosted();
+          } else if (d.style === "glow" && ct === "separator") {
+            // eigenes Bubble-Modul (über Bubble Card Tools angelegt): gleicher Schimmer wie Window Glow
+            mods.push("hc_glow_separator"); c.hc_glow_separator = { opacity: alpha, blur };
           } else if (d.style === "glow") {
             frosted();
             // Window Glow auf allen Buttons – auch Räume ohne Licht (z. B. nur Rollläden) bekommen den "aus"-Schimmer
