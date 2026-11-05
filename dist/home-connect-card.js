@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.13.0";
+const HC_VERSION = "1.13.1";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -963,12 +963,23 @@ function parsePrices(st) {
   const unit = a.unit_of_measurement || "";
   return { slots: out, unit };
 }
-let _priceCache = { t: 0, id: null };
+// Entitäts-IDs aus der Registry statt aus hass.states: hass.states komplett zu durchlaufen
+// ist teuer und schaltet die Update-Filterung von Kiosk-Apps (z. B. Kiosk Satellite) ab.
+function registryIds(hass, prefix) {
+  const reg = hass && hass.entities;
+  return reg ? Object.keys(reg).filter((id) => id.startsWith(prefix)) : [];
+}
+const PRICE_PLATFORMS = /tibber|epex|nordpool|awattar|entsoe|energi_data|octopus|easyenergy|energyzero|frank_energie|strompreis|dynamic/;
+let _priceCache = { t: 0, id: null, reg: null };
 function findPriceEntity(hass) {
-  if (Date.now() - _priceCache.t < 120000 && _priceCache.states === hass.states) return _priceCache.id;
+  // Ergebnis 10 min halten; nur neu suchen, wenn sich die Registry ändert (nicht bei jedem Zustandswechsel)
+  if (Date.now() - _priceCache.t < 600000 && _priceCache.reg === hass.entities) return _priceCache.id;
   let best = null, score = 0;
-  for (const [id, st] of Object.entries(hass.states)) {
-    if (!id.startsWith("sensor.")) continue;
+  for (const id of registryIds(hass, "sensor.")) {
+    const re = hass.entities[id];
+    if (!PRICE_PLATFORMS.test(re?.platform || "") && !/price|preis|tarif/.test(id)) continue;
+    const st = hass.states[id];
+    if (!st) continue;
     const a = st.attributes || {};
     let sc = 0;
     if (a.outlook_quarters?.prices) sc = 5; else if (Array.isArray(a.outlook_hours)) sc = 4;
@@ -976,7 +987,7 @@ function findPriceEntity(hass) {
     else if (Array.isArray(a.raw_today)) sc = 2;
     if (sc > score) { score = sc; best = id; }
   }
-  _priceCache = { t: Date.now(), id: best, states: hass.states };
+  _priceCache = { t: Date.now(), id: best, reg: hass.entities };
   return best;
 }
 function cheapestStart(prices, durSec, maxH, stepH) {
@@ -3398,7 +3409,7 @@ class HomeConnectCard extends HTMLElement {
   _planCal() {
     const c = this._config.schedule_calendar;
     if (c && this._hass.states[c]) return c;
-    const ids = Object.keys(this._hass.states).filter((id) => id.startsWith("calendar."));
+    const ids = registryIds(this._hass, "calendar.");
     return ids.find((id) => /haushalt/.test(id)) || ids.find((id) => /home_connect|planung|schedul/.test(id)) || null;
   }
   _enterPlan() {
@@ -3449,7 +3460,7 @@ class HomeConnectCard extends HTMLElement {
     if (!this._hass || (!force && this._plansBusy)) return;
     this._plansAt = Date.now(); this._plansBusy = true;
     try {
-      const cals = Object.keys(this._hass.states).filter((id) => id.startsWith("calendar.") && /haushalt|home_connect|planung|schedul/.test(id));
+      const cals = registryIds(this._hass, "calendar.").filter((id) => /haushalt|home_connect|planung|schedul/.test(id));
       const c = this._config.schedule_calendar; if (c && !cals.includes(c)) cals.unshift(c);
       const start = new Date().toISOString(), end = new Date(Date.now() + 30 * 86400000).toISOString();
       const key = this._planKey(), name = this._config.name || this._m?.name;
