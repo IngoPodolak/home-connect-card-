@@ -4,7 +4,7 @@
  * und Home Connect Oven Private. Lokale Daten haben Vorrang.
  * https://github.com/IngoPodolak/home-connect-card-
  */
-const HC_VERSION = "1.13.1";
+const HC_VERSION = "1.13.2";
 
 // Eingebautes Foto-Bildpaket (KI-generiert mit Google Gemini): liegt neben der Karte in images/
 const PHOTO_KEYS = new Set("espresso ristretto doppio espressomacchiato caffecrema caffexl cappuccino lattemacchiato milkcoffee flatwhite milkfroth warmmilk hotwater coldbrew chocolate meat poultry_whole poultry_pieces ham meatballs skewers stew fish bread breadrolls pretzel puffpastry stollen cake muffins fruittart quiche pizza filledpastry scones cookies meringue souffle crumble gratin potatoes sweetpotatoes fries hashbrowns rice couscous grains polenta vegetables cheese reheat cup popcorn odourfilter".split(" "));
@@ -2447,19 +2447,42 @@ class HomeConnectCard extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
+    // Unsichtbar (geschlossenes Pop-up, außerhalb des Bildschirms): nichts rechnen, nur vormerken
+    if (this._visible === false) { this._dirty = true; return; }
     this._update();
     if (!this._config?.demo && this._config?.schedule !== false && Date.now() - (this._plansAt || 0) > 60000) this._loadPlans();
+  }
+  _setVisible(v) {
+    if (v === this._visible) return;
+    this._visible = v;
+    if (v && this._hass) {
+      if (this._dirty) { this._dirty = false; this._update(); }
+      this._refreshCam();
+      if (!this._config?.demo && this._config?.schedule !== false && Date.now() - (this._plansAt || 0) > 60000) this._loadPlans();
+    }
   }
   get lang() { return (this._config?.language || this._hass?.language || "de").startsWith("de") ? "de" : "en"; }
   connectedCallback() {
     this._timer = setInterval(() => this._tick(), 1000);
+    if (typeof IntersectionObserver === "function" && !this._io) {
+      this._io = new IntersectionObserver((entries) => {
+        const e = entries[entries.length - 1];
+        this._setVisible(!!e && e.isIntersecting);
+      });
+      this._io.observe(this);
+    }
   }
-  disconnectedCallback() { clearInterval(this._timer); }
+  disconnectedCallback() {
+    clearInterval(this._timer);
+    if (this._io) { this._io.disconnect(); this._io = null; }
+    this._visible = undefined;
+  }
   getCardSize() { return this._config?.layout === "compact" ? 1 : 8; }
   getGridOptions() { return this._config?.layout === "compact" ? { columns: 12, rows: 1, min_rows: 1 } : { columns: 12, rows: "auto" }; }
 
   _tick() {
     if (!this._hass && !this._config?.demo) return;
+    if (this._visible === false) return; // unsichtbar: Timer, Kamera und Live-Texte ruhen
     this._tickN = (this._tickN || 0) + 1;
     if (this._config?.demo) { this._update(); return; }
     if (this._tickN % 30 === 0 && this._m) { const T = I18N[this.lang]; this._updateLive(this._m, { state: this._statusText(this._m, T) }); }
